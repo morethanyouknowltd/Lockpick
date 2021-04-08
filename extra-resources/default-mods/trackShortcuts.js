@@ -34,6 +34,44 @@ Mod.registerAction({
     }
 })
 
+Mod.registerAction({
+    title: "Enter Group Track",
+    id: "enter-group-track",
+    description: 'Enters the currently selected group track',
+    defaultSetting: {
+        keys: ['Meta', 'Control', 'S']
+    },
+    action: () => {
+        Bitwig.sendPacket({
+            type: 'action',
+            data: [
+                `focus_track_header_area`,
+                `Enter Group`,
+                `select_track1`
+            ]
+        })
+    }
+})
+
+Mod.registerAction({
+    title: "Exit Group Track",
+    id: "exit-group-track",
+    description: 'Exits the currently entered group track',
+    defaultSetting: {
+        keys: ['Meta', 'Control', 'W']
+    },
+    action: () => {
+        Bitwig.sendPacket({
+            type: 'action',
+            data: [
+                `focus_track_header_area`,
+                `Exit Group`,
+                `select_track1`
+            ]
+        })
+    }
+})
+
 if (process.env.NODE_ENV === 'dev') {
     Mod.registerAction({
         title: `Expand/Collapse Selected Group Track`,
