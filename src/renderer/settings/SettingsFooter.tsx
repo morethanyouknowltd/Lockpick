@@ -81,8 +81,8 @@ export const SettingsFooter = ({ versionInfo, preferencesOpen, togglePreferences
                 </option>
             })} />
             <LabelledSelect label="UI Layout" value={state.uiLayout[0]} onChange={onSettingChange('uiLayout')}options={[
-                // 'Single Display (Small)', 
-                'Single Display (Large)'
+                'Single Display (Large)',
+                'Single Display (Small)', 
             ].map(size => {
                 return <option key={size} value={size}>
                     {size}
