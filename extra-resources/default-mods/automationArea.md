@@ -1,0 +1,1 @@
+Adds various shortcuts for editing automation. Toggling automation for group track does not also toggle automation for children.
