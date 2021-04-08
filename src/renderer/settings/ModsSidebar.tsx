@@ -53,7 +53,7 @@ const SidebarModList = ({ mods, currentMod, setCurrentMod }) => {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
                     }}>
-                        <span style={{marginRight: '.8em', width: '.6em'}}><Indicator on={enabled} /></span>
+                        <span style={{marginRight: '.8em', width: '.6em'}}><Indicator on={enabled ? "true" : ''} /></span>
                         <span>{mod.name || mod.key}{mod.error ? <Warning title={`There was an error loading this mod (click for details)`} /> : null}</span>
                     </div>
                     {/* <span>{mod.actions.length}</span> */}
