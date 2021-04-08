@@ -1,6 +1,10 @@
 const path = require('path')
 const FOR_REAL = process.env.FOR_REAL === 'true'
 const disableCodeSign = false
+const modsFolder = path.join(__dirname, 'extra-resources', 'default-mods')
+const disabledMods = fs.readdirSync(modsFolder).filter(file => {
+    return fs.readFileSync(path.join(modsFolder, file)).toString().indexOf('@disabled') >= 0
+})
 
 module.exports = {
     appId: "co.uk.morethanyouknow.lockpick",
@@ -12,6 +16,7 @@ module.exports = {
     },
     files: [
         "{package.json,node_modules,dist,extra-resources}/**/*",
+        `!extra-resources/default-mods/{${disabledMods.join(',')}}`,
         "build/Release/bes.node",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
