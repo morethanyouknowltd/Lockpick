@@ -1,7 +1,7 @@
 import { interceptPacket } from "../core/WebsocketToSocket"
 import { BESService, EventRouter, getService, makeEvent } from "../core/Service"
 import { SettingsService } from "../core/SettingsService"
-import { ShortcutsService } from "../shortcuts/Shortcuts"
+import { ShortcutsService } from "../shortcuts/ShortcutsService"
 import _ from 'underscore'
 import { BitwigService } from "../bitwig/BitwigService"
 import { wait } from "../../connector/shared/engine/Debounce"
@@ -27,6 +27,7 @@ export class UIService extends BESService {
     activeToolKeyDownAt = new Date()
     uiMainWindow = new UI.BitwigWindow({})
     uiScale = 1
+    uiLayout = 'Single Display (Large)'
     apiEventRouter = new EventRouter<any>()
     idsByEventType: {[type: string] : number} = {}
     modalWasOpen = false
@@ -36,7 +37,6 @@ export class UIService extends BESService {
     events = {       
         toolChanged: makeEvent<number>()
     }
-
 
     addExtras() {
         const uiService = this
@@ -223,6 +223,9 @@ export class UIService extends BESService {
                 get activeTool() {
                     return that.activeTool
                 },
+                get layout() {
+                    return that.uiLayout
+                },
                 ...makeEmitterEvents({
                     activeToolChanged: this.events.toolChanged
                 }),
@@ -291,6 +294,12 @@ export class UIService extends BESService {
             this.uiScale = parseInt(val, 10) / 100
             UI.updateUILayoutInfo({scale: parseInt(val, 10) / 100})
             this.log(`Ui scale set to ${this.uiScale}`)
+        })
+
+        this.settingsService.onSettingValueChange('uiLayout', val => {
+            this.uiLayout = val
+            UI.updateUILayoutInfo({layout: val})
+            this.log(`Ui layout set to ${this.uiLayout}`)
         })
 
         interceptPacket('ui', undefined, (packet) => {
