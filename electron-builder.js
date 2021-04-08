@@ -1,6 +1,7 @@
 const path = require('path')
 const FOR_REAL = process.env.FOR_REAL === 'true'
 const disableCodeSign = false
+const fs = require('fs')
 const modsFolder = path.join(__dirname, 'extra-resources', 'default-mods')
 const disabledMods = fs.readdirSync(modsFolder).filter(file => {
     return fs.readFileSync(path.join(modsFolder, file)).toString().indexOf('@disabled') >= 0
