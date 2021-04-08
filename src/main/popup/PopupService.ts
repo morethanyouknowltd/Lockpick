@@ -1,7 +1,7 @@
 import { addAPIMethod } from "../core/WebsocketToSocket"
 import { BESService, getService } from "../core/Service"
 import { SettingsService } from "../core/SettingsService"
-import { ShortcutsService } from "../shortcuts/Shortcuts"
+import { ShortcutsService } from "../shortcuts/ShortcutsService"
 import _ from 'underscore'
 import { containsPoint } from '../../connector/shared/Rect'
 import { BitwigService } from "../bitwig/BitwigService"

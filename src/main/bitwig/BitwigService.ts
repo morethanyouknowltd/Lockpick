@@ -1,7 +1,7 @@
 import { interceptPacket } from "../core/WebsocketToSocket"
 import { BESService, getService, makeEvent } from "../core/Service"
 import { SettingsService } from "../core/SettingsService"
-import { ShortcutsService } from "../shortcuts/Shortcuts"
+import { ShortcutsService } from "../shortcuts/ShortcutsService"
 import _ from 'underscore'
 import { PopupService } from "../popup/PopupService"
 import { APP_NAME } from "../../connector/shared/Constants"

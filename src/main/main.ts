@@ -1,5 +1,5 @@
 import { app, shell, BrowserWindow, Tray } from "electron";
-import { ShortcutsService } from "./shortcuts/Shortcuts";
+import { ShortcutsService } from "./shortcuts/ShortcutsService";
 import { registerService } from "./core/Service";
 import { SocketMiddlemanService } from "./core/WebsocketToSocket";
 import { TrayService } from "./core/Tray";

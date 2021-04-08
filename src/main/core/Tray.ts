@@ -5,7 +5,7 @@ import { url } from "./Url";
 import { addAPIMethod, interceptPacket, SocketMiddlemanService } from "./WebsocketToSocket";
 import { SettingsService } from "./SettingsService";
 import { ModsService } from "../mods/ModsService";
-import { ShortcutsService } from "../shortcuts/Shortcuts";
+import { ShortcutsService } from "../shortcuts/ShortcutsService";
 import { APP_NAME, APP_VERSION } from "../../connector/shared/Constants";
 const { Bitwig } = require('bindings')('bes')
 

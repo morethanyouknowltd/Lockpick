@@ -3,7 +3,7 @@ import { BESService, getService, makeEvent } from "../core/Service"
 import { SettingsService } from "../core/SettingsService"
 import { PopupService } from "../popup/PopupService"
 import { UIService } from "../ui/UIService"
-
+const colors = require('colors')
 const { Keyboard, Bitwig } = require('bindings')('bes')
 
 let lastKeyPressed = new Date()
@@ -145,9 +145,13 @@ export class ShortcutsService extends BESService {
         this.log(`State code is ${code}`)
         if (code in this.newCache) {
             for (const func of this.newCache[code]) {
-                func({
-                    keyState: state
-                })
+                try {
+                    func({
+                        keyState: state
+                    })
+                } catch (e) {
+                    this.error(e)
+                }
                 ran = true
             }
         }
@@ -188,11 +192,17 @@ export class ShortcutsService extends BESService {
                 if (action.contexts && !this.isCurrentContextRunnable(action.contexts)) {
                     return
                 }
-                const result = await action.action(...args)
-                if (action) {
-                    this.events.actionTriggered.emit(action)
+                try {
+                    const result = await action.action(...args)
+                    this.log(...args)
+                    if (action) {
+                        this.events.actionTriggered.emit(action, ...args)
+                    }
+                    return result
+                } catch (e) {
+                    this.error(`The following error occured while running action ${colors.green(action.id)} from mod ${colors.green(action.mod)}`)
+                    throw e
                 }
-                return result
             })
         }
     }
