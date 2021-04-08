@@ -34,47 +34,49 @@ Mod.registerAction({
     }
 })
 
-// Mod.registerAction({
-//     title: `Expand/Collapse Selected Group Track`,
-//     id: `toggle-group-track-expanded`,
-//     description: `Expands of collapses the selected group track with the mouse.`,
-//     category: 'arranger',
-//     contexts: ['-browser'],
-//     defaultSetting: {
-//         keys: ["G"]
-//     },
-//     action: async () => {
-//         const tracks = UI.MainWindow.getArrangerTracks()
-//         if (tracks === null || tracks.length === 0) {
-//             return log('No tracks found, spoopy...')
-//         }
-//         const selected = tracks.find(t => t.selected)
-//         if (!selected) {
-//             return showMessage(`Couldn't find selected track`)
-//         }
-//         selected.toggleExpandedWithMouse()
-//     }
-// })
+if (process.env.NODE_ENV === 'dev') {
+    Mod.registerAction({
+        title: `Expand/Collapse Selected Group Track`,
+        id: `toggle-group-track-expanded`,
+        description: `Expands of collapses the selected group track with the mouse.`,
+        category: 'arranger',
+        contexts: ['-browser'],
+        defaultSetting: {
+            keys: ["G"]
+        },
+        action: async () => {
+            const tracks = UI.MainWindow.getArrangerTracks()
+            if (tracks === null || tracks.length === 0) {
+                return log('No tracks found, spoopy...')
+            }
+            const selected = tracks.find(t => t.selected)
+            if (!selected) {
+                return showMessage(`Couldn't find selected track`)
+            }
+            selected.toggleExpandedWithMouse()
+        }
+    })
 
-// Mod.registerAction({
-//     title: `Expand/Collapse Hovered Group Track`,
-//     id: `toggle-hovered-group-track-expanded`,
-//     description: `Expands of collapses the hovered group track with the mouse.`,
-//     category: 'arranger',
-//     contexts: ['-browser'],
-//     defaultSetting: {
-//         keys: ["Shift", "G"]
-//     },
-//     action: async () => {
-//         const tracks = UI.MainWindow.getArrangerTracks()
-//         if (tracks === null || tracks.length === 0) {
-//             return log('No tracks found, spoopy...')
-//         }
-//         const mousePos = Mouse.getPosition()
-//         const inside = tracks.find(t => mousePos.y >= t.rect.y && mousePos.y < t.rect.y + t.rect.h)
-//         if (!inside) {
-//             return showMessage(`Couldn't find hovered track`)
-//         }
-//         inside.toggleExpandedWithMouse()
-//     }
-// })
+    Mod.registerAction({
+        title: `Expand/Collapse Hovered Group Track`,
+        id: `toggle-hovered-group-track-expanded`,
+        description: `Expands of collapses the hovered group track with the mouse.`,
+        category: 'arranger',
+        contexts: ['-browser'],
+        defaultSetting: {
+            keys: ["Shift", "G"]
+        },
+        action: async () => {
+            const tracks = UI.MainWindow.getArrangerTracks()
+            if (tracks === null || tracks.length === 0) {
+                return log('No tracks found, spoopy...')
+            }
+            const mousePos = Mouse.getPosition()
+            const inside = tracks.find(t => mousePos.y >= t.rect.y && mousePos.y < t.rect.y + t.rect.h)
+            if (!inside) {
+                return showMessage(`Couldn't find hovered track`)
+            }
+            inside.toggleExpandedWithMouse()
+        }
+    })
+}

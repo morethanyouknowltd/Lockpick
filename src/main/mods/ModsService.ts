@@ -13,7 +13,7 @@ import { promises as fs } from 'fs'
 import * as path from 'path'
 import { Setting } from "../db/entities/Setting"
 import { createDirIfNotExist, exists, exists as fileExists, getTempDirectory, rmRfDir, writeStrFile } from "../core/Files"
-import { ShortcutsService } from "../shortcuts/Shortcuts"
+import { ShortcutsService } from "../shortcuts/ShortcutsService"
 import { debounce, wait } from '../../connector/shared/engine/Debounce'
 import _ from 'underscore'
 import { clipboard } from "electron"
@@ -279,6 +279,34 @@ export class ModsService extends BESService {
                 }
                 return cb(...args)
             }
+        }
+        const makeSettingWrapper = settingKey => {
+            const settingApi = {
+                value: false,
+                getValue: async () => {
+                    if (!(await that.settingsService.settingExists(settingKey))) {
+                        settingApi.value = false
+                        return false
+                    } 
+                    const val = (await that.settingsService.getSettingValue(settingKey))
+                    settingApi.value = val
+                    return val
+                },
+                setValue: async (value) => {
+                    if (!mod.enabled) {
+                        return
+                    }
+                    that.settingsService.setSettingValue(settingKey, value)
+                    settingApi.value = value
+                }
+            }
+            const listenId = this.settingsService.events.settingUpdated.listen(setting => {
+                settingApi.value = this.settingsService.postload(setting).value.enabled
+            })
+            this.onReloadMods.push(() => {
+                this.settingsService.events.settingUpdated.stopListening(listenId)
+            })
+            return settingApi
         }
 
         const api = {
@@ -1190,12 +1218,12 @@ ${mod.contents}
                     const allApi = {...api, ...this.staticApi}
                     await fn(allApi)
                 } catch (e) {
-                    this.log(`Error loading mod ${mod.id}`)
+                    this.error(`Error loading mod ${mod.id}`)
                     logger.error(e)
                 }
             }
         } catch (e) {
-            this.log(`Error loading mods`)
+            this.error(`Error loading mods`)
             logger.error(e)
         }
 

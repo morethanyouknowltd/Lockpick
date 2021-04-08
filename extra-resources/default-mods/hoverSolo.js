@@ -187,10 +187,9 @@ Mouse.on('mousemove', debounce(async event => {
     
 Mouse.on('mouseup', async event => {
     // log('mouseup', event)
-    if (event.button === 3) {
+    if (event.button === 3 && lastTracks) {
         // We held click for a while, unsolo the previously solo'd track
         const timeDif = new Date() - downAt
-
         const soloed = lastTracks[soloedIndex]
         if (!soloed.selected) {
             await soloed.selectWithMouse()
