@@ -160,7 +160,7 @@ export const SettingShortcut = ({setting}) => {
     const onKeyDown = event => {
         // debugger
         event.preventDefault()
-        let key = charMapMac[event.keyCode]
+        let key = charMapMac[event.keyCode] || event.key
         const nativecode = event.nativeEvent.code
         if (nativecode.indexOf('Numpad') == 0) {
             key = nativecode
