@@ -123,6 +123,21 @@ const IconNotification = ({notification: notif, children}) => {
     </IconNotifWrap>
 }
 
+class NotificationErrorBoundary extends React.Component {
+    state = {
+        error: null
+    }
+    componentDidCatch(e) {
+        this.setState({error: e})
+    }
+    render() {
+        if (this.state.error) {
+            return `Error rendering notification`
+        }
+        return this.props.children
+    }    
+}
+
 export class Canvas extends ModwigComponent<any> {
     canvasRef = React.createRef<HTMLCanvasElement>()
     state = {
@@ -194,7 +209,7 @@ export class Canvas extends ModwigComponent<any> {
         if (!notif.type) {
             return <IconNotification notification={notif}>{notif.content}</IconNotification>
         } else if (notif.type) {
-            return {
+            const typeRenderers = {
                 progress: (notif) => {
                     return <IconNotification notification={notif}>
                         {notif.title}
@@ -203,10 +218,16 @@ export class Canvas extends ModwigComponent<any> {
                 },
                 actionTriggered: (notif) => {
                     return <IconNotification notification={notif}>
-                        {shortcutToTextDescription({value: notif.data.state})} {notif.data.title}
+                        {shortcutToTextDescription({value: notif.data.keyState})} {notif.data.title}
                     </IconNotification>
                 }
-            }[notif.type](notif)
+            }
+            
+            if (notif.type in typeRenderers) {
+                return typeRenderers[notif.type](notif)
+            } else {
+                return <div>Unsupported notification type: {notif.type}</div>
+            }
         }
     }
 
@@ -214,7 +235,9 @@ export class Canvas extends ModwigComponent<any> {
         return <NotificatinosWrap>
             {this.state.notifications.map(notif => {
                 return <Notification key={notif.type === 'progress' ? ('progress'+notif.progressId) : notif.id}>
-                    {this.renderNotification(notif)}
+                    <NotificationErrorBoundary>
+                        {this.renderNotification(notif)}
+                    </NotificationErrorBoundary>
                 </Notification>
             })}
         </NotificatinosWrap>
