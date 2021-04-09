@@ -15,7 +15,7 @@
     },
     action: () => {
         Bitwig.runAction([`Create Effect Track`])
-        Mod.runAction('openDeviceBrowser')
+        Mod.runAction('open-browser')
     }
 })
 
@@ -29,7 +29,7 @@ Mod.registerAction({
     },
     action: () => {
         Bitwig.runAction([`clear_arm`, `Create Instrument Track`])
-        Mod.runAction('openDeviceBrowser')
+        Mod.runAction('open-browser')
         // Bitwig.runAction([`toggle_track_arm`])
     }
 })
