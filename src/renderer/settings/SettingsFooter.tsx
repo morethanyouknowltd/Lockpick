@@ -18,7 +18,21 @@ const LabelledSelect = ({label, options, value, onChange, ...rest}) => {
 }
 
 const VersionInfo = ({ versionInfo }) => {
-    if (!versionInfo || versionInfo.version === APP_VERSION) {
+    function cmp (a, b) {
+        var pa = a.split('.');
+        var pb = b.split('.');
+        for (var i = 0; i < 3; i++) {
+            var na = Number(pa[i]);
+            var nb = Number(pb[i]);
+            if (na > nb) return 1;
+            if (nb > na) return -1;
+            if (!isNaN(na) && isNaN(nb)) return 1;
+            if (isNaN(na) && !isNaN(nb)) return -1;
+        }
+        return 0;
+    }
+
+    if (!versionInfo || cmp(versionInfo.version, APP_VERSION) <= 0) {
         return null
     }
 
