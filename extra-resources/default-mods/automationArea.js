@@ -1,6 +1,6 @@
 /**
  * @name Automation Area Shortcuts
- * @id automation-area.modwig
+ * @id automation-area.lockpick
  * @description Adds various shortcuts for showing/hiding automation in the arranger.
  * @category arranger
  * @disabled
@@ -34,7 +34,7 @@ async function showAutomationImpl(all, { onlyShow } = { onlyShow: false }) {
         }, [track])
     }
     await Bitwig.sendPacketPromise({
-        type: 'show-automation.automation-area.modwig',
+        type: 'show-automation.automation-area.lockpick',
         data: { all, automationShown, exclusiveAutomation }
     })
     await Db.setTrackData(track, {
@@ -44,7 +44,7 @@ async function showAutomationImpl(all, { onlyShow } = { onlyShow: false }) {
 
 Mod.registerAction({
     title: "Hide All Automation",
-    id: "hide-all-automation.automation-area.modwig",
+    id: "hide-all-automation.automation-area.lockpick",
     category: showHideAutomationCategory,
     contexts: ['-browser'],
     description: `Hides automation for all tracks in the arranger.`,
@@ -56,7 +56,7 @@ Mod.registerAction({
             automationShown: false
         })
         Bitwig.makeMainWindowActive()
-        Bitwig.sendPacket({ type: 'hide-all-automation.automation-area.modwig' })
+        Bitwig.sendPacket({ type: 'hide-all-automation.automation-area.lockpick' })
     }
 })
 
@@ -71,7 +71,7 @@ Mod.registerAction({
 
 Mod.registerAction({
     title: "Toggle Automation for Current Track",
-    id: "show-current-automation.automation-area.modwig",
+    id: "show-current-automation.automation-area.lockpick",
     category: showHideAutomationCategory,
     contexts: ['-browser'],
     description: `Toggle automation for current track.`,
@@ -83,7 +83,7 @@ Mod.registerAction({
 
 Mod.registerAction({
     title: "Toggle All Automation for Current Track",
-    id: "show-all-current-automation.automation-area.modwig",
+    id: "show-all-current-automation.automation-area.lockpick",
     category: showHideAutomationCategory,
     contexts: ['-browser'],
     description: `Toggle all automation for current track.`,

@@ -1,7 +1,7 @@
 import React from 'react'
 import { addPacketListener } from '../bitwig-api/Bitwig'
 
-export class ModwigComponent<T> extends React.Component<T> { 
+export class LockpickComponent<T> extends React.Component<T> { 
     onUnmount = []
     componentWillUnmount() {
         for (const func of this.onUnmount) {

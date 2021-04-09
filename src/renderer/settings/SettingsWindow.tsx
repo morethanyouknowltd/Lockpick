@@ -2,7 +2,7 @@ import React from 'react'
 import { ContentWrap, ScrollableSection, SettingsViewWrap } from './SettingsWindowStyles'
 import _ from 'underscore'
 import { SettingsFooter } from './SettingsFooter'
-import { ModwigComponent } from '../core/ModwigComponent'
+import { LockpickComponent } from '../core/LockpickComponent'
 import { ModsSidebar } from './ModsSidebar'
 import { ModView } from './ModView'
 import { MTYK_API_ROOT } from '../../connector/shared/Constants'
@@ -12,7 +12,7 @@ import { Switch, Route, withRouter } from 'react-router-dom'
 import { state } from '../core/State'
 import { observer, Observer } from 'mobx-react-lite'
 
-const Classs = class SettingsWindow extends ModwigComponent<any> {
+const Classs = class SettingsWindow extends LockpickComponent<any> {
 
     state = {
         loading: true,

@@ -1,6 +1,6 @@
 import React from 'react'
 import { styled } from 'linaria/react'
-import { ModwigComponent } from '../core/ModwigComponent'
+import { LockpickComponent } from '../core/LockpickComponent'
 import { shortcutToTextDescription } from '../settings/helpers/settingTitle'
 import { faBolt, faInfo } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -138,7 +138,7 @@ class NotificationErrorBoundary extends React.Component {
     }    
 }
 
-export class Canvas extends ModwigComponent<any> {
+export class Canvas extends LockpickComponent<any> {
     canvasRef = React.createRef<HTMLCanvasElement>()
     state = {
         notifications: [],

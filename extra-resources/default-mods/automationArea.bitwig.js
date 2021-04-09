@@ -1,6 +1,6 @@
 /**
  * @name Automation Area Shortcuts
- * @id automation-area.modwig
+ * @id automation-area.lockpick
  * @disabled
  */
 
@@ -15,7 +15,7 @@ let trackName = ''
 let firstChildName = ''
 let lastHid = new Date(0)
 
-packetManager.listen('hide-all-automation.automation-area.modwig', (packet) => {
+packetManager.listen('hide-all-automation.automation-area.lockpick', (packet) => {
     if (new Date().getTime() - lastHid.getTime() < 5000) {
         // If we press again after a short period of time, assume ALL tracks have automation
         // open, which means toggling twice won't help us
@@ -31,7 +31,7 @@ packetManager.listen('hide-all-automation.automation-area.modwig', (packet) => {
     lastHid = new Date()
 })
 
-packetManager.listen('show-automation.automation-area.modwig', (packet) => {
+packetManager.listen('show-automation.automation-area.lockpick', (packet) => {
     firstChildName = cursorTrack.isGroup().get() ? firstChild.name().get() : ''
     trackName = cursorTrack.name().get()
 

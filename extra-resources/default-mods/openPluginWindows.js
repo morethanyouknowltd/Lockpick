@@ -8,12 +8,12 @@
 const autoOpen = await Mod.registerSetting({
     id: 'auto-open',
     name: 'Automatically reopen plugins from last session',
-    description: `When switching tracks, plugin windows that were open last session (or last run of Modwig) are reopened.`
+    description: `When switching tracks, plugin windows that were open last session (or last run of Lockpick) are reopened.`
 })
 
 async function hasTrackOpenedPlugins(trackName) {
     const data = await Db.getCurrentProjectData()
-    return (data.openedPluginsForTracks?.[trackName] ?? false) && data.pid === Bitwig.getPid()
+    return (data?.openedPluginsForTracks?.[trackName] ?? false) && data.pid === Bitwig.getPid()
 }
 
 async function setTrackHasOpenedPlugins(trackName) {

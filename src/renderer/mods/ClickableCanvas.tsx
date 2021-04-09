@@ -1,10 +1,10 @@
 import React from 'react'
 import { styled } from 'linaria/react'
-import { ModwigComponent } from '../core/ModwigComponent'
+import { LockpickComponent } from '../core/LockpickComponent'
 import { PopupRenderer } from './PopupRenderer'
 import { send } from '../bitwig-api/Bitwig'
 
-export class ClickableCanvas extends ModwigComponent<any> {
+export class ClickableCanvas extends LockpickComponent<any> {
     state = {
         popups: []
     }
