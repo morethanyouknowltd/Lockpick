@@ -84,10 +84,10 @@ Mod.registerAction({
 })
 
 Mod.registerAction({
-    title: "Move Plugin Windows Offscreen",
+    title: "Move Plugin Windows To Corner",
     id: "move-plugin-windows-offscreen",
     category: categories.moving,
-    description: `Moves plugin windows offscreen, remembering their location for later restoration.`,
+    description: `Moves plugin windows out of the way to the corner of the screen, remembering their location for later restoration. Alternates between top right and bottom right corner.`,
     contexts: ['-browser'],
     defaultSetting: {
         keys: ["Escape"]
@@ -121,10 +121,10 @@ Mod.registerAction({
 })
 
 Mod.registerAction({
-    title: "Restore Plugin Windows Onscreen",
+    title: "Restore Plugin Windows From Corner",
     id: "restore-plugin-windows-onscreen",
     category: categories.moving,
-    description: `Restores the position of plugin windows previously moved offscreen.`,
+    description: `Restores the position of plugin windows previously moved to the corner.`,
     contexts: ['-browser'],
     defaultSetting: {
         keys: ["F1"]
