@@ -984,14 +984,16 @@ export class ModsService extends BESService {
             })
         })
         
-        this.shortcutsService.events.actionTriggered.listen(((action, context) => {
-            this.popupService.showNotification({
-                type: 'actionTriggered',
-                data: {
-                    title: action.title || action.id,
-                    ...context
-                }
-            })
+        this.shortcutsService.events.actionTriggered.listen((async (action, context) => {
+            if ((await this.settingsService.getSettingValue('notifications-actions')).enabled)  {
+                this.popupService.showNotification({
+                    type: 'actionTriggered',
+                    data: {
+                        title: action.title || action.id,
+                        ...context
+                    }
+                })
+            }
         }) as any)
 
         this.bitwigService.events.browserOpen.listen(isOpen => {
@@ -1306,22 +1308,27 @@ modsImpl(api)
         
         await this.refreshLocalMods()
         await this.refreshBitwigMods(localOnly)
-        if (this.refreshCount === 0) {
-            this.popupService.showMessage(`${Object.keys(this.latestFoundModsMap).length} Mods loaded`)
-        } else {
-            this.popupService.showMessage(`Reloaded ${localOnly ? 'local' : 'all'} mods (${Object.keys(this.latestFoundModsMap).length} loaded)`)
-        }
+
+
         this.refreshCount++
         modsLoading = false
-
+        
         sendPacketToBrowser({
             type: 'event/mods-reloaded'
         })
         this.events.modsReloaded.emit()
-
+        
         if (this.waitingOnAnotherReload) {
             this.waitingOnAnotherReload = false
             this.refreshMods(false)
+        }
+
+        if ((await this.settingsService.getSettingValue('notifications-reloading')).enabled) {
+            if (this.refreshCount === 0) {
+                this.popupService.showMessage(`${Object.keys(this.latestFoundModsMap).length} Mods loaded`)
+            } else {
+                this.popupService.showMessage(`Reloaded ${localOnly ? 'local' : 'all'} mods (${Object.keys(this.latestFoundModsMap).length} loaded)`)
+            }
         }
     }
 }

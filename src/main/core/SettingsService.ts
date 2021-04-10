@@ -28,8 +28,11 @@ export class SettingsService extends BESService {
         addAPIMethod('api/settings/set', async (setting) => {
             await this.setSettingValue(setting.key, setting.value)
         })
-        addAPIMethod('api/settings/get', async (key) => {
+        addAPIMethod('api/settings/get-value', async (key) => {
             return await this.getSettingValue(key)
+        })
+        addAPIMethod('api/settings/get', async (key) => {
+            return await this.getSetting(key)
         })
 
         const settings = [

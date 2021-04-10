@@ -59,9 +59,9 @@ export const SettingsFooter = ({ versionInfo, preferencesOpen, togglePreferences
     useEffect(() => {
         (async () => {
             for (const key in state) {
-                const { data: value } = await sendPromise({ type: 'api/settings/get', data: key })
+                const { data: setting } = await sendPromise({ type: 'api/settings/get', data: key })
                 // console.log(value)
-                state[key][1](value)
+                state[key][1](setting.value)
             }
         })()
     }, [1])
@@ -78,9 +78,9 @@ export const SettingsFooter = ({ versionInfo, preferencesOpen, togglePreferences
     // console.log(state)
     return <Footer>
         <Flex alignItems="center">
-        {/* <SettingsIcon onClick={togglePreferencesOpen}>
+        <SettingsIcon onClick={togglePreferencesOpen}>
             <FontAwesomeIcon icon={faCogs} />
-        </SettingsIcon> */}
+        </SettingsIcon>
         <VersionInfo versionInfo={versionInfo} />
         </Flex>
         <Flex alignItems="center">

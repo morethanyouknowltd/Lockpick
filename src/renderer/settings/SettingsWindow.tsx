@@ -47,6 +47,12 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
                 console.error(e)
             }
         }, 1000 * 60 * 60 * 5, true)
+
+        // Prepare preferences window
+        state.loadSettings([
+            `notifications-actions`,
+            `notifications-reloading`
+        ])
     }
 
     renderSettings = () => {
@@ -77,11 +83,9 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
         return <MainErrorBoundary>       
             <Observer>{() => {
                 return <SettingsViewWrap>
-                    <Switch>
-                        <Route path={`${match.path}/preferences`} component={Preferences} />
-                        <Route render={this.renderSettings} />
-                    </Switch>
+                    <Route render={this.renderSettings} />
                     <SettingsFooter togglePreferencesOpen={togglePreferencesOpen} preferencesOpen={this.props.location.pathname.indexOf('preferences') >= 0} versionInfo={this.state.versionInfo} />
+                    <Route path={`${match.path}/preferences`} component={Preferences} />
                 </SettingsViewWrap>
             }}
             </Observer>

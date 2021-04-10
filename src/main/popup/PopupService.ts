@@ -365,6 +365,17 @@ export class PopupService extends BESService {
             this.canvas.window.destroy()
             this.clickableCanvas.window.destroy()
         })
+
+        await this.settingsService.insertSettingIfNotExist({
+            key: 'notifications-actions',
+            value: {enabled: true},
+            type: 'boolean'
+        })
+        await this.settingsService.insertSettingIfNotExist({
+            key: 'notifications-reloading',
+            value: {enabled: true},
+            type: 'boolean'
+        })
     }
 
     async postActivate() {

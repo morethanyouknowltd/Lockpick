@@ -5,6 +5,7 @@ import _ from 'underscore'
 class State {
     modsById: {[id: string]: any} = {};
     disableOneFetch = false;
+    settingsByKey: {[key: string]: any} = {};
 
     *fetchMods({ selected }: any = {}) {
         if (this.disableOneFetch) {
@@ -21,6 +22,22 @@ class State {
             console.log(`Also fetched ${mod.id}`)
         }
         this.modsById = modsById
+    }
+
+    *loadSettings(keys) {
+        let newSettings = {}
+        for (const key of keys) {
+            try {
+                const setting = (yield sendPromise({type: 'api/settings/get', data: key })).data
+                newSettings[key] = setting
+            } catch (e) {
+                console.error(e)
+            }            
+        }
+        this.settingsByKey = {
+            ...this.settingsByKey,
+            ...newSettings
+        }
     }
 
     get modsArray() {
