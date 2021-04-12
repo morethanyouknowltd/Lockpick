@@ -9,7 +9,7 @@ HWND hWndServer = NULL;
 HINSTANCE hInstance;
 UINT HWM_MOUSEHOOK;
 HHOOK mouseHook;
-//HHOOK keyboardHook;
+HHOOK keyboardHook;
 
 typedef struct tagMYREC
 {
@@ -19,11 +19,18 @@ typedef struct tagMYREC
     UINT button;
 } MYREC;
 
+typedef struct tagKEY
+{
+    UINT vkCode;
+    bool down;
+    bool shift, control, alt;
+} KEY;
+
 HRESULT hResult;
 
 // Forward declaration
 static LRESULT CALLBACK mouseHookProc(int nCode, WPARAM wParam, LPARAM lParam);
-//static LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam);
+static LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 extern "C" __declspec(dllexport) BOOL WINAPI setMyHook(HWND hWnd)
 {
@@ -34,10 +41,16 @@ extern "C" __declspec(dllexport) BOOL WINAPI setMyHook(HWND hWnd)
         (HOOKPROC)mouseHookProc,
         hInstance,
         0);
-    if (mouseHook != NULL)
+    keyboardHook = SetWindowsHookEx(
+        WH_KEYBOARD,
+        (HOOKPROC)keyboardHookProc,
+        hInstance,
+        0);
+    hWndServer = hWnd;
+    
+    if (mouseHook != NULL && keyboardHook != NULL)
     {
         // success
-        hWndServer = hWnd;
         return TRUE;
     }
     return FALSE;
@@ -47,9 +60,10 @@ extern "C" __declspec(dllexport) BOOL clearMyHook(HWND hWnd)
 {
     if (hWnd != hWndServer)
         return FALSE;
-    BOOL unhooked = UnhookWindowsHookEx(mouseHook);
-    if (unhooked)
-        hWndServer = NULL;
+
+    BOOL unhooked = UnhookWindowsHookEx(mouseHook) && UnhookWindowsHookEx(keyboardHook);
+   
+    hWndServer = NULL;
     return unhooked;
 }
 
@@ -130,69 +144,40 @@ static LRESULT CALLBACK mouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(mouseHook, nCode,
         wParam, lParam);
 }
-//
-//static LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
-//{
-//    // If the value of nCode is < 0, just pass it on and return 0
-//    // this is required by the specification of hook handlers
-//    if (nCode < 0)
-//    { /* pass it on */
-//        CallNextHookEx(mouseHook, nCode,
-//            wParam, lParam);
-//        return 0;
-//    } /* pass it on */
-//
-//    // on WM_CHAR message
-//    switch (wParam)
-//    {
-//    case 0x08:
-//        // backspace. 
-//        break;
-//    case 0x0A:
-//        // linefeed. 
-//        break;
-//    case 0x1B:
-//        // escape. 
-//        break;
-//    case 0x09:
-//        // tab. 
-//        break;
-//    case 0x0D:
-//        // carriage return. 
-//        break;
-//    default:
-//        // displayable characters. 
-//        break;
-//    }
-//
-//    COPYDATASTRUCT MyCDS;
-//    MYREC MyRec;
-//    MyCDS.cbData = sizeof(MyRec);
-//    MyCDS.dwData = 1;
-//    MyCDS.lpData = &MyRec;
-//
-//    if (wParam == WM_LBUTTONDOWN
-//        || wParam == WM_LBUTTONUP
-//        || wParam == WM_RBUTTONDOWN
-//        || wParam == WM_RBUTTONUP) {
-//
-//        MyRec.x = GET_X_LPARAM(lParam);
-//        MyRec.y = GET_Y_LPARAM(lParam);
-//        if (wParam == WM_LBUTTONDOWN || wParam == WM_RBUTTONDOWN) {
-//            strcpy(MyRec.type, "mousedown");
-//            MyRec.button = WM_LBUTTONDOWN ? 0 : 1;
-//        }
-//        else if (wParam == WM_LBUTTONUP || wParam == WM_RBUTTONUP) {
-//            strcpy(MyRec.type, "mouseup");
-//            MyRec.button = WM_LBUTTONUP ? 0 : 1;
-//        }
-//        PostMessage(hWndServer,
-//            WM_COPYDATA,
-//            0,
-//            (LPARAM)(LPVOID)&MyCDS);
-//    }
-//
-//    // Pass the message on to the next hook
-//    return CallNextHookEx(mouseHook, nCode,
-//        wParam, lParam);
-//}
+
+static LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    // If the value of nCode is < 0, just pass it on and return 0
+    // this is required by the specification of hook handlers
+    if (nCode < 0)
+    { /* pass it on */
+        CallNextHookEx(mouseHook, nCode,
+            wParam, lParam);
+        return 0;
+    } /* pass it on */
+
+    COPYDATASTRUCT MyCDS;
+    tagKEY MyRec;
+    MyRec.vkCode = wParam;
+    MyRec.down = lParam & (1U << 31);
+    MyRec.shift = GetKeyState(VK_SHIFT) & 0x8000;
+    MyRec.alt = GetKeyState(VK_MENU) & 0x8000;
+    MyRec.control = GetKeyState(VK_CONTROL) & 0x8000;
+
+    MyCDS.cbData = sizeof(MyRec);
+    MyCDS.dwData = 2;
+    MyCDS.lpData = &MyRec;
+
+    // Must use SendMessage vs PostMessage here because copy data
+        // needs to know when to free the copied memory
+    SendMessage(hWndServer,
+        WM_COPYDATA,
+        0,
+        (LPARAM)(LPVOID)&MyCDS);
+
+    std::cout << "Keyboard hook proc triggered" << std::endl;
+
+    // Pass the message on to the next hook
+    return CallNextHookEx(keyboardHook, nCode,
+        wParam, lParam);
+}

@@ -6,6 +6,7 @@
 #include <string>
 #include <thread>
 #include "events.h"
+#include "keycodes.h"
 
 int nextId = 0;
 bool threadSetup = false;
@@ -45,6 +46,13 @@ typedef struct tagMYREC
     UINT y;
     UINT button;
 } MYREC;
+
+typedef struct tagKEY
+{
+    UINT vkCode;
+    bool down;
+    bool shift, control, alt;
+} KEY;
 
 /// Note that mousemove events seem to get fired when mouse is clicked too - TODO investigate
 Napi::Value on(const Napi::CallbackInfo &info) {
@@ -104,6 +112,9 @@ JSEvent jsEvent;
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     std::cout << "Got something" << uMsg <<  std::endl;
 
+    MYREC* e;
+    KEY* b;
+
     if (uMsg == WM_COPYDATA) {
       std::cout << "Got a message!" << std::endl;
       auto pMyCDS = (PCOPYDATASTRUCT) lParam;
@@ -111,7 +122,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
       {
           case 1:
               // Mouse event
-            auto e = (MYREC*)pMyCDS->lpData;
+            e = (MYREC*)pMyCDS->lpData;
             jsEvent.type = e->type;
             jsEvent.button = e->button;
             jsEvent.x = e->x;
@@ -140,6 +151,40 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
             }
             m.unlock();
             break;
+          case 2:
+              // KeyboardEvent event
+            b = (KEY*)pMyCDS->lpData;
+            jsEvent.type = b->down ? "keydown" : "keyup";
+            jsEvent.lowerKey = stringForKeyCode(b->vkCode);
+            jsEvent.nativeKeyCode = b->vkCode;
+            jsEvent.Meta = false;
+            jsEvent.Control = b->control;
+            jsEvent.Alt = b->alt;
+            jsEvent.Shift = b->shift;
+            jsEvent.Fn = false;
+
+            auto keyboardCallback = []( Napi::Env env, Napi::Function jsCallback, JSEvent* value ) {
+                Napi::Object obj = Napi::Object::New(env);
+
+                obj.Set(Napi::String::New(env, "nativeKeyCode"), Napi::Number::New(env, value->nativeKeyCode));
+                obj.Set(Napi::String::New(env, "lowerKey"), Napi::String::New(env, value->lowerKey));
+                obj.Set(Napi::String::New(env, "Meta"), Napi::Boolean::New(env, value->Meta));
+                obj.Set(Napi::String::New(env, "Shift"), Napi::Boolean::New(env, value->Shift));
+                obj.Set(Napi::String::New(env, "Control"), Napi::Boolean::New(env, value->Control));
+                obj.Set(Napi::String::New(env, "Alt"), Napi::Boolean::New(env, value->Alt));
+                obj.Set(Napi::String::New(env, "Fn"), Napi::Boolean::New(env, value->Fn));
+
+                jsCallback.Call( {obj} );
+            };
+            m.lock();
+            if (callbacksByEventType.count(jsEvent.type)) {
+                auto callbacks = callbacksByEventType[jsEvent.type];
+                for (auto cb : callbacks) {
+                    cb->cb.BlockingCall( &jsEvent, keyboardCallback );
+                }
+            }
+            m.unlock(); 
+            break;
       }
     }
 
@@ -163,7 +208,7 @@ Napi::Value InitKeyboardOS(Napi::Env env, Napi::Object exports) {
             std::cout << "Failed to create message-only window" << std::endl;
             return 1;
         }
-        auto hinstDLL = LoadLibrary(TEXT("Y:\\Github\\modwig-windows\\src\\connector\\native\\HookDll\\x64\\Debug\\HookDll.dll")); 
+        auto hinstDLL = LoadLibrary(TEXT("C:\\Users\\andrewshand\\Github\\Lockpick\\src\\connector\\native\\HookDll\\x64\\Debug\\HookDll.dll")); 
         MYPROC setMyHook = (MYPROC)GetProcAddress(hinstDLL, "setMyHook"); 
         setMyHook(messageWindow);
 
