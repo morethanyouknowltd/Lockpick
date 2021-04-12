@@ -1197,6 +1197,8 @@ export class ModsService extends BESService {
                     continue
                 }
                 if ((!process.env.SCREENSHOTS && disabled) || !osMatches) {
+                    mod.enabled = false
+                    mod.disabled = true
                     // Disable dev only mods (@disabled) and mods where the os doesn't match
                     continue
                 } else {
