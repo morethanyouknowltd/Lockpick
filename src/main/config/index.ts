@@ -10,7 +10,7 @@ const getAppDataPath = () => {
     if (isMac()) {  
         return path.join(homedir, 'Library', 'Application Support')
     } else if (isWindows()) {
-        return path.join(homedir, 'AppData')
+        return path.join(homedir, 'AppData', 'Roaming')
     } else {
         throw new Error('Unsupported OS')
     }
