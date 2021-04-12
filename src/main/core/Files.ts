@@ -7,7 +7,13 @@ export async function createDirIfNotExist(path: string) {
     try {
         await fs.stat(path)
     } catch (e) {
-        await fs.mkdir(path)
+        try {
+            await fs.mkdir(path)
+        } catch (e) {
+            if (e?.code !== 'EEXIST') {
+                throw e
+            }
+        }
     }
 }
 
