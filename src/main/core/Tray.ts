@@ -7,6 +7,7 @@ import { SettingsService } from "./SettingsService";
 import { ModsService } from "../mods/ModsService";
 import { ShortcutsService } from "../shortcuts/ShortcutsService";
 import { APP_NAME, APP_VERSION } from "../../connector/shared/Constants";
+import { isWindows } from "./Os";
 const { Bitwig } = require('bindings')('bes')
 
 export class TrayService extends BESService {
@@ -41,7 +42,7 @@ export class TrayService extends BESService {
                 minHeight: 620,
                 show: false,
                 titleBarStyle: 'hiddenInset',
-                frame: false,
+                frame: isWindows(),
                 webPreferences: {
                     enableRemoteModule: true,
                     webSecurity: false,
