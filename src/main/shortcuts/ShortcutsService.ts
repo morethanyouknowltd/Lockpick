@@ -3,6 +3,7 @@ import { BESService, getService, makeEvent } from "../core/Service"
 import { SettingsService } from "../core/SettingsService"
 import { PopupService } from "../popup/PopupService"
 import { UIService } from "../ui/UIService"
+import { isPreferencesActive } from "../core/Os"
 const colors = require('colors')
 const { Keyboard, Bitwig } = require('bindings')('bes')
 
@@ -252,6 +253,10 @@ export class ShortcutsService extends BESService {
         Keyboard.on('keydown', event => {
             try {
                 if (this.pausedHolders > 0) {
+                    return
+                }
+
+                if (isPreferencesActive()) {
                     return
                 }
 
