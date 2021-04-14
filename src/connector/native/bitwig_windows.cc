@@ -9,6 +9,8 @@
 
 using namespace std::string_literals;
 
+std::string activeApplication = "";
+
 Napi::Value AccessibilityEnabled(const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
     return Napi::Boolean::New(
@@ -95,15 +97,19 @@ Napi::Value FocusPluginWindow(const Napi::CallbackInfo &info) {
 }
 
 bool isAppActive(std::string app) {
-    return false;
+    std::size_t found = activeApplication.find(app);
+    return found != std::string::npos;
 }
 
 bool isBitwigActive() {
-    return isAppActive("Bitwig Studio");
+    return isAppActive("Bitwig Studio.exe");
 }
 
 bool isPluginWindowActive() {
-    return isAppActive("Bitwig Plug-in Host 64") || isAppActive("Bitwig Studio Engine");
+    return isAppActive("BitwigPluginHost64.exe") 
+    || isAppActive("BitwigPluginHost32.exe") 
+    || isAppActive("BitwigAudioEngineAVX2.exe") 
+    || isAppActive("BitwigAudioEngine.exe");
 }
 
 Napi::Value IsActiveApplication(const Napi::CallbackInfo &info) {
@@ -162,4 +168,58 @@ Napi::Value GetAudioEnginePid(const Napi::CallbackInfo &info) {
 Napi::Value GetPid(const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
     return Napi::Number::New(env, -1);
+}
+
+HWINEVENTHOOK foregroundEventHook;
+
+void CALLBACK WinEventProc(
+    HWINEVENTHOOK hWinEventHook,
+    DWORD         event,
+    HWND          hwnd,
+    LONG          idObject,
+    LONG          idChild,
+    DWORD         idEventThread,
+    DWORD         dwmsEventTime)
+{   
+    DWORD processId;
+    GetWindowThreadProcessId(
+        hwnd,
+        &processId
+    );
+    
+    HANDLE processHandle = OpenProcess( 
+        PROCESS_QUERY_INFORMATION,
+        FALSE,
+        processId
+    );
+
+    DWORD maxPath = MAX_PATH;
+    char app_path[MAX_PATH];
+    auto result = QueryFullProcessImageNameA(
+        processHandle,
+        0,
+        app_path,
+        &maxPath
+    );
+    if (result != 0) {
+        activeApplication = app_path;
+        std::cout << ("Active application set to " + activeApplication) << std::endl;
+    }
+
+    CloseHandle(processHandle);
+}
+
+void InitBitwigOS(Napi::Env env, Napi::Object exports) {
+    foregroundEventHook = SetWinEventHook(
+        EVENT_SYSTEM_FOREGROUND, 
+        EVENT_SYSTEM_FOREGROUND,
+        NULL, 
+        WinEventProc,
+        0, 
+        0,
+        WINEVENT_OUTOFCONTEXT
+    );
+    if (!foregroundEventHook) {
+        std::cout << "Couldn't set foreground hook" << std::endl;
+    }
 }

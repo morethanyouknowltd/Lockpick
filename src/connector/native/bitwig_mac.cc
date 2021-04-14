@@ -355,3 +355,7 @@ Napi::Value GetPid(const Napi::CallbackInfo &info) {
     }
     return Napi::Number::New(env, -1);
 }
+
+void InitBitwigOS(Napi::Env env, Napi::Object exports) {
+    
+}

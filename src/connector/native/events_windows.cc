@@ -123,6 +123,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
           case 1:
               // Mouse event
             e = (MYREC*)pMyCDS->lpData;
+            std::cout << "Got a mouse event message!" << std::endl;
             jsEvent.type = e->type;
             jsEvent.button = e->button;
             jsEvent.x = e->x;
@@ -154,6 +155,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
           case 2:
               // KeyboardEvent event
             b = (KEY*)pMyCDS->lpData;
+            std::cout << "Got a keyboard event message!" << std::endl;
             jsEvent.type = b->down ? "keydown" : "keyup";
             jsEvent.lowerKey = stringForKeyCode(b->vkCode);
             jsEvent.nativeKeyCode = b->vkCode;

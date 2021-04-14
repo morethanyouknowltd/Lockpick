@@ -1,10 +1,10 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 
-#pragma data_seg(".EVENTS")
+#pragma comment(linker, "/SECTION:.SHARED,RWS")
+#pragma data_seg(".SHARED")
 HWND hWndServer = NULL;
 #pragma data_seg()
-#pragma comment("linker, /section:.EVENTS,rws")
 
 HINSTANCE hInstance;
 UINT HWM_MOUSEHOOK;
@@ -104,7 +104,7 @@ static LRESULT CALLBACK mouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
         return 0;
     } /* pass it on */
 
-    std::cout << "Mouse hook proc triggered" << std::endl;
+   // std::cout << "Mouse hook proc triggered" << std::endl;
 
     COPYDATASTRUCT MyCDS;
     MYREC MyRec;

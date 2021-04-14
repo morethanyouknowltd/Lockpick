@@ -8,6 +8,8 @@
 static std::atomic<bool> activeAppDirty;
 #endif
 
+void InitBitwigOS(Napi::Env env, Napi::Object exports);
+
 Napi::Value IsActiveApplication(const Napi::CallbackInfo &info);
 Napi::Value IsPluginWindowActive(const Napi::CallbackInfo &info);
 Napi::Value MakeMainWindowActive(const Napi::CallbackInfo &info);
@@ -42,7 +44,10 @@ Napi::Value InitBitwig(Napi::Env env, Napi::Object exports)
         nullptr,
         nullptr
     });
+
     #endif
+
+    InitBitwigOS(env, exports);
 
     obj.Set("isActiveApplication", Napi::Function::New(env, IsActiveApplication));
     obj.Set("isPluginWindowActive", Napi::Function::New(env, IsPluginWindowActive));
@@ -56,5 +61,6 @@ Napi::Value InitBitwig(Napi::Env env, Napi::Object exports)
     obj.Set("getAudioEnginePid", Napi::Function::New(env, GetAudioEnginePid));
     obj.Set("getPid", Napi::Function::New(env, GetPid));
     exports.Set("Bitwig", obj);
+    
     return exports;
 }
