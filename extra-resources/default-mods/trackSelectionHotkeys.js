@@ -140,7 +140,6 @@ for (const dir of ["Previous", "Next"]) {
                     historyIndex--
                     const name = trackHistory[historyIndex].name
                     Bitwig.sendPacket({type: 'track/select', data: { name, allowExitGroup: true }})
-                    Bitwig.showMessage(name)
                 }
             } else {
                 if (historyIndex < trackHistory.length - 1) {
@@ -148,7 +147,6 @@ for (const dir of ["Previous", "Next"]) {
                     historyIndex++
                     const name = trackHistory[historyIndex].name
                     Bitwig.sendPacket({type: 'track/select', data: { name, allowExitGroup: true }})
-                    Bitwig.showMessage(name)
                 }
             }
             const dim = MainDisplay.getDimensions()
