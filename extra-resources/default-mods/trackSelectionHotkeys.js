@@ -132,7 +132,7 @@ for (const dir of ["Previous", "Next"]) {
         title: `Go to ${dir} Track`,
         id: `go-to-${dir.toLowerCase()}-track`,
         category: categories.history,
-        description: `Go to the ${dir.toLowerCase()} track in the track history.`,
+        description: `Go to the ${dir.toLowerCase()} track in the track history. Currently doesn't support nested return tracks.`,
         action: async () => {
             if (dir === 'Previous') {
                 if (historyIndex > 0) {
