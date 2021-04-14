@@ -65,7 +65,8 @@ interface Device {
 
 interface SettingInfo {
     name: string
-    description?: string
+    description?: string,
+    hidden: boolean
 }
 
 export class ModsService extends BESService {
@@ -559,7 +560,8 @@ export class ModsService extends BESService {
                     this.settingsService.insertSettingIfNotExist(setting)
                     this.settingKeyInfo[actualKey] = {
                         name: settingSpec.name,
-                        description: settingSpec.description
+                        description: settingSpec.description,
+                        hidden: !!settingSpec.hidden
                     }
 
                     

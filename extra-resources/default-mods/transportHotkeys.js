@@ -23,7 +23,8 @@ for (let i = 0; i < launchMarkerCount; i++) {
     launchMarkerDisabledSettings.push(await Mod.registerSetting({
         id: `marker-${i}-disabled`,
         name: `Disable Marker ${i + 1}`,
-        description: `Skips marker ${i + 1} when launching`
+        description: `Skips marker ${i + 1} when launching`,
+        hidden: true
     }))
 }
 

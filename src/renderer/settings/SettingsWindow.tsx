@@ -16,21 +16,36 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
 
     state = {
         loading: true,
-        selectedMod: null,
+        selectedModId: null,
         searchQuery: '',
         versionInfo: null
+    }
+
+    get selectedMod() {
+        return state.modsById[this.state.selectedModId]
     }
 
     async fetchData() {
         this.setState({
             loading: true
         })
-        await state.fetchMods({ selected: this.state.selectedMod })
+        await state.fetchMods({ selected: this.selectedMod })
+
+        let selectedMod = null
+        let idPrecedence = [this.state.selectedModId, window.localStorage.getItem('lastSelectedModId'), state.modsArray[0]?.id]
+        while (!selectedMod && idPrecedence.length) {
+            selectedMod = state.modsById[idPrecedence.shift()]
+        }
         const newState = {
             loading: false,
-            selectedMod: this.state.selectedMod || state.modsArray[0]
+            selectedModId: selectedMod?.id 
         }
         this.setState(newState)
+    }
+
+    setSelectedMod(modId) {
+        this.setState({selectedModId: modId})
+        window.localStorage.setItem('lastSelectedModId', modId)
     }
 
     async componentDidMount() {
@@ -60,12 +75,12 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
             return <ContentWrap><ScrollableSection style={{width: '20%'}}>
                 <ModsSidebar 
                     mods={state.modsArray} 
-                    currentMod={this.state.selectedMod} 
-                    setCurrentMod={(mod) => {this.setState({selectedMod: mod})}} 
+                    currentMod={this.selectedMod} 
+                    setCurrentMod={(mod) => this.setSelectedMod(mod.id)}
                     searchQuery={this.state.searchQuery} 
                     setSearchQuery={(q) => this.setState({searchQuery: q}) } />
                 </ScrollableSection>
-                {this.state.selectedMod ? <ScrollableSection style={{left: '20%', width: '80%'}}><ModView modId={this.state.selectedMod.id} /></ScrollableSection> : null}
+                {this.selectedMod ? <ScrollableSection style={{left: '20%', width: '80%'}}><ModView modId={this.state.selectedModId} /></ScrollableSection> : null}
             </ContentWrap>}
         }</Observer>
     }

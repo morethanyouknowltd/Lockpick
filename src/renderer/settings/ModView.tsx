@@ -73,7 +73,7 @@ export const ModView = observer(({ modId } : any) => {
                 </div> */}
             </ModRow> 
             {(mod.settings?.length ?? 0) ? <ModSettings>
-                {mod.settings.map(sett => {
+                {mod.settings.filter(sett => !sett.hidden).map(sett => {
                     return <ModSettingItem key={sett.key} setting={sett} />
                 })}
             </ModSettings> : null}
