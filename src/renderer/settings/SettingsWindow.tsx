@@ -1,6 +1,6 @@
 import React from 'react'
-import { ContentWrap, ScrollableSection, SettingsViewWrap } from './SettingsWindowStyles'
 import _ from 'underscore'
+import { ContentWrap, ScrollableSection, SettingsViewWrap } from './SettingsWindowStyles'
 import { SettingsFooter } from './SettingsFooter'
 import { LockpickComponent } from '../core/LockpickComponent'
 import { ModsSidebar } from './ModsSidebar'
@@ -8,9 +8,9 @@ import { ModView } from './ModView'
 import { MTYK_API_ROOT } from '../../connector/shared/Constants'
 import { MainErrorBoundary } from '../core/MainErrorBoundary'
 import { Preferences } from './Preferences'
-import { Switch, Route, withRouter } from 'react-router-dom'
+import { Route, withRouter } from 'react-router-dom'
 import { state } from '../core/State'
-import { observer, Observer } from 'mobx-react-lite'
+import { Observer } from 'mobx-react-lite'
 
 const Classs = class SettingsWindow extends LockpickComponent<any> {
 
@@ -72,7 +72,7 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
 
     renderSettings = () => {
         return <Observer>{() => {
-            return <ContentWrap><ScrollableSection style={{width: '20%'}}>
+            return <ContentWrap><ScrollableSection style={{width: '15rem'}}>
                 <ModsSidebar 
                     mods={state.modsArray} 
                     currentMod={this.selectedMod} 
@@ -80,7 +80,7 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
                     searchQuery={this.state.searchQuery} 
                     setSearchQuery={(q) => this.setState({searchQuery: q}) } />
                 </ScrollableSection>
-                {this.selectedMod ? <ScrollableSection style={{left: '20%', width: '80%'}}><ModView modId={this.state.selectedModId} /></ScrollableSection> : null}
+                {this.selectedMod ? <ScrollableSection style={{left: '15rem', width: 'calc(100% - 15rem)'}}><ModView modId={this.state.selectedModId} /></ScrollableSection> : null}
             </ContentWrap>}
         }</Observer>
     }
