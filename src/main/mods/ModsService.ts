@@ -1223,6 +1223,7 @@ ${mod.contents}
                     await fn(allApi)
                 } catch (e) {
                     this.error(`Error loading mod ${mod.id}`)
+                    this.popupService.showMessage(`Error loading ${mod.id}: ${e.stack}`)
                     logger.error(e)
                 }
             }

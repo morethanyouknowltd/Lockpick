@@ -9,6 +9,7 @@ import { Timer } from './canvas/Timer'
 import { ErrorBoundary } from './canvas/ErrorBoundary'
 import { CueProgress } from './canvas/CueProgress'
 import { TwitchChat } from './popups/TwitchChat'
+import { TrackHistoryPopup } from './popups/TrackHistoryPopup'
 
 const Wrap = styled.div`
     position: fixed;
@@ -45,7 +46,8 @@ const ComponentMap = {
     TrackOverlay: TrackOverlay,
     Timer: Timer,
     CueProgress: CueProgress,
-    TwitchChat: TwitchChat
+    TwitchChat: TwitchChat,
+    TrackHistoryPopup: TrackHistoryPopup
 }
 
 export const PopupRenderer = (props) => {

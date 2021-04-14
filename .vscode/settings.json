@@ -83,6 +83,15 @@
         "**/*.code-search": true,
         "**/build": true,
         "**/dist": true,
-        "**/extraResources/controller-script": true
+        "**/extraResources/controller-script": true,
+        "**/.env": true
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/.env": true
     }
 }
