@@ -68,11 +68,11 @@ const GlobalStyle = css`
         background: rgba(0,0,0,0);
     }
     ::-webkit-scrollbar-thumb {
-        background-color: #555;
-        border-radius: 6px;
+        background-color: #333;
+        border-radius: 1000px;
         border: 4px solid rgba(0,0,0,0);
         background-clip: content-box;
-        min-width: 32px;
+        width: 20px;
         min-height: 32px;
     }
     ::-webkit-scrollbar-track {

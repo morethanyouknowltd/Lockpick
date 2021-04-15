@@ -10,6 +10,8 @@ app/dist
 /extra-resources/built-mods
 /scripts/install
 
+producer-tools-src
+
 node_modules
 .linaria-cache
 .vscode/c_cpp_properties.json

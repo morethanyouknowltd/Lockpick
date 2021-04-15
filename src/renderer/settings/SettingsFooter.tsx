@@ -3,6 +3,7 @@ import { styled } from 'linaria/react'
 import { send, sendPromise } from '../bitwig-api/Bitwig'
 import { Select, Footer, VersionInfoWrap, SettingsIcon } from './SettingsFooterStyles'
 import { Button } from '../core/Button'
+import { withRouter } from 'react-router-dom'
 import { APP_VERSION } from '../../connector/shared/Constants'
 import { Flex } from '../core/Flex'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -44,7 +45,25 @@ const VersionInfo = ({ versionInfo }) => {
     </VersionInfoWrap>
 }
 
-export const SettingsFooter = ({ versionInfo, preferencesOpen, togglePreferencesOpen }) => {
+const NavLinkStyle = styled.div`
+    font-size: 1.2em;
+    padding: 0 1em;
+    color: ${(props: any) => props.isActive ? `white` : `#777`};
+    cursor: pointer;
+    &:hover {
+        color: ${(props: any) => props.isActive ? `white` : `#CCC`};
+    }
+` as any
+const FooterNavLink = withRouter(({href, match, children, history}) => {
+    const onClick = () => {
+        history.push(href)
+    }
+    return <NavLinkStyle isActive={match.path === href} onClick={onClick}>
+        {children}
+    </NavLinkStyle>
+})
+
+export const SettingsFooter = withRouter(({ versionInfo, history, preferencesOpen, togglePreferencesOpen }) => {
 
     const Settings = {
         'uiScale': '100%',
@@ -83,6 +102,10 @@ export const SettingsFooter = ({ versionInfo, preferencesOpen, togglePreferences
         </SettingsIcon>
         <VersionInfo versionInfo={versionInfo} />
         </Flex>
+        {/* <Flex>
+            <FooterNavLink href="/settings">Mods</FooterNavLink>
+            <FooterNavLink href="/settings/debug">Debug</FooterNavLink>
+        </Flex> */}
         <Flex alignItems="center">
             <LabelledSelect style={{marginRight: '1rem'}} label="UI Scale" value={state.uiScale[0]} onChange={onSettingChange('uiScale')} options={[
                 '100%', 
@@ -104,4 +127,4 @@ export const SettingsFooter = ({ versionInfo, preferencesOpen, togglePreferences
             })} />
         </Flex>
     </Footer>
-}
+})

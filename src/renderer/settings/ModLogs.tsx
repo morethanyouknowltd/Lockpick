@@ -4,15 +4,20 @@ import moment from 'moment'
 import { styled } from 'linaria/react'
 import _ from 'underscore'
 import { parse } from 'ansicolor'
+import util from 'util'
+import {
+    default as AnsiUp
+} from 'ansi_up';
+
+const ansi_up = new AnsiUp();
 
 
 const Logs = styled.div`
-    background: 0;  
     padding: 1em;
-    font-size: .7em;
-    font-family: Monaco, monospace;
+    font-size: .8em;
+    font-family: Menlo, monospace;
     > * {
-        @keyframes flashIn {
+        /* @keyframes flashIn {
             from {
                 background: #666;
             }
@@ -22,7 +27,7 @@ const Logs = styled.div`
             }
         }
         animation: flashIn 5s linear 1;
-        animation-fill-mode: forwards;
+        animation-fill-mode: forwards; */
         >:nth-child(1) {
             margin-right: 1em;
             color: #666;
@@ -47,25 +52,29 @@ export const ModLogs = ({mod}) => {
     setLogsG = setLogs
 
     useEffect(() => {
-        setLogs([{
-            id: nextLogId++,
-            date: new Date(),
-            msg: `Waiting for logs from ${mod.name}...`
-        }])
+        // setLogs([{
+        //     id: nextLogId++,
+        //     date: new Date(),
+        //     msg: `Waiting for logs from ${mod.name}...`
+        // }])
+        setLogs([])
         send({
             type: `api/mods/log`,
             data: mod.id
         })
         return addPacketListener(`log`, packet => {
-            newLogs.push({msg: packet.data, id: nextLogId++, date: new Date()})
+            const msg = packet.data.map(d => typeof d === 'string' ? d : util.inspect(d)).join(' ')
+            newLogs.push({msg, id: nextLogId++, date: new Date()})
+            console.log(packet.data)
             debouncedLogSetter()
         })
     }, [mod.id])
 
     return <Logs>
         {logs.map(log => {
+            const html = ansi_up.ansi_to_html(log.msg);
             return <div key={log.id}>
-                <span>{moment(log.date).format(`h:mm:ss`)}</span> <>{log.msg}</>
+                <span>{moment(log.date).format(`h:mm:ss`)}</span> <><span dangerouslySetInnerHTML={{__html: html}} /></>
             </div>
         })}
     </Logs>

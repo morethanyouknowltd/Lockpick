@@ -9,7 +9,6 @@
     id: 'focus-inspector',
     description: `Always focuses inspector, does not toggle.`,
     action: () => {
-        log(UI.layout)
         Bitwig.sendPacket({
             type: 'action',
             data: [
