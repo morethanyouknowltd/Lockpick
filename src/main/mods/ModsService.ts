@@ -1007,14 +1007,14 @@ export class ModsService extends BESService {
         app.on('before-quit', event => {
             this.log('Before quit')
             this.isQuitting = true
-            // refreshFolderWatcher()
-            // for (const cb of this.onReloadMods) {
-            //     try {
-            //         cb()
-            //     } catch (e) {
-            //         this.error(`Error when reloading mods on quit: `, e)
-            //     }
-            // }
+            refreshFolderWatcher()
+            for (const cb of this.onReloadMods) {
+                try {
+                    cb()
+                } catch (e) {
+                    this.error(`Error when reloading mods on quit: `, e)
+                }
+            }
         })
     }
 

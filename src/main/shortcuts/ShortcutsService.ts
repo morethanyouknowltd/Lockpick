@@ -333,7 +333,7 @@ export class ShortcutsService extends BESService {
                     return
                 }
 
-                if ((Bitwig.isActiveApplication() || this.popupService.clickableCanvas.window.isFocused()) && !this.enteringValue) {
+                if ((Bitwig.isActiveApplication() || (!this.popupService.isQuitting && this.popupService.clickableCanvas.window.isFocused())) && !this.enteringValue) {
                     const asJSON = JSON.stringify(keys)
                     this.log(asJSON)
 

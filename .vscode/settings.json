@@ -75,7 +75,8 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp",
-        "*.rh": "cpp"
+        "*.rh": "cpp",
+        "future": "cpp"
     },
     "search.exclude": {
         "**/node_modules": true,

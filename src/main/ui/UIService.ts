@@ -6,7 +6,7 @@ import _ from 'underscore'
 import { BitwigService } from "../bitwig/BitwigService"
 import { wait } from "../../connector/shared/engine/Debounce"
 import { returnMouseAfter } from "../../connector/shared/EventUtils"
-
+const { app } = require('electron')
 const { Keyboard, Bitwig, UI, Mouse: _Mouse, MainWindow } = require('bindings')('bes')
 
 /**
@@ -32,6 +32,7 @@ export class UIService extends BESService {
     idsByEventType: {[type: string] : number} = {}
     modalWasOpen = false
     Mouse
+    isQuitting = false
 
     // Events
     events = {       
@@ -266,6 +267,15 @@ export class UIService extends BESService {
     }
 
     async activate() {
+
+        app.on('before-quit', event => {
+            this.log('Before quit');
+            if (!this.isQuitting) {
+                this.isQuitting = true
+                Keyboard.beforeQuit()
+            }
+        });
+
         // Track tool changes via number keys
         Keyboard.on('keydown', event => {
             const asNumber = parseInt(event.lowerKey, 10)

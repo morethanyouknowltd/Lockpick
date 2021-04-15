@@ -67,6 +67,8 @@ export class PopupService extends BESService {
     canvas = this.openWindow({focusable: false, path: '/canvas'})
     clickableCanvas = this.openWindow({focusable: true, path: '/clickable-canvas'})
 
+    isQuitting = false
+
     // Events
     events = {       
         
@@ -362,8 +364,19 @@ export class PopupService extends BESService {
         })
         app.on('before-quit', event => {
             this.log('Before quit')
-            this.canvas.window.destroy()
-            this.clickableCanvas.window.destroy()
+            
+            if (!this.isQuitting) {
+                this.canvas.window.close()
+                this.clickableCanvas.window.close()
+                
+                this.canvas.window.destroy()
+                this.clickableCanvas.window.destroy()
+
+                ;(this.canvas as any).window = null
+                ;(this.clickableCanvas as any).window = null
+
+                this.isQuitting = true
+            }
         })
 
         await this.settingsService.insertSettingIfNotExist({
@@ -385,11 +398,13 @@ export class PopupService extends BESService {
                 if (event.lowerKey === 'Escape') {
                     this.closeAllPopups()
                 }
-                this.canvas.window.showInactive()
+                if (!this.isQuitting) {
+                    this.canvas.window.showInactive()
+                }
             }
         })
         uiService.Mouse.on('mouseup', event => {
-            if (Bitwig.isActiveApplication()) {
+            if (Bitwig.isActiveApplication() && !this.isQuitting) {
                 this.canvas.window.showInactive()
             }
         })

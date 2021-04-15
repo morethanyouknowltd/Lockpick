@@ -12,11 +12,14 @@
 #include <string>
 #include <mutex>
 #include <stdexcept>
+#include <chrono>
+#include <future>
 
 using std::forward_list;
 
 bool threadSetup = false;
 std::thread nativeThread;
+std::promise<void> exitSignal;
 CFRunLoopRef runLoop;
 
 struct WaitingLoopSrc {
@@ -30,6 +33,16 @@ std::mutex m;
 
 forward_list<CallbackInfo*> callbacks; 
 int lastMouseDownButton = 0;
+
+Napi::Value beforeQuitOS(const Napi::CallbackInfo &info) {
+    exitSignal.set_value();
+    std::cout << "Waiting for thread to join" << std::endl;
+    if (threadSetup) {
+        CFRunLoopStop(runLoop);
+        nativeThread.join();
+    }
+    std::cout << "Thread joined" << std::endl;
+}
 
 void processCallback(Napi::Env env, Napi::Function jsCallback, JSEvent* value) {
     Napi::Object obj = Napi::Object::New(env);
@@ -217,9 +230,11 @@ CallbackInfo* addEventListener(EventListenerSpec spec) {
 
     if (!threadSetup) {
         threadSetup = true;
-        nativeThread = std::thread( [] {
+        std::future<void> futureObj = exitSignal.get_future();
+        
+        nativeThread = std::thread( [] (std::future<void> futureObj) {
             runLoop = CFRunLoopGetCurrent();
-            while (true) {
+            while (futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout) {
                 CFRunLoopRunInMode(kCFRunLoopDefaultMode, 3, true);
                 m.lock();
                 if (waitingCbInfo.size() > 0) {
@@ -261,7 +276,7 @@ CallbackInfo* addEventListener(EventListenerSpec spec) {
                 waitingCbInfo.clear();
                 m.unlock();
             }
-        });
+        }, std::move(futureObj));
     }
 
     m.lock();
@@ -285,6 +300,7 @@ Napi::Value on(const Napi::CallbackInfo &info) {
         env
     }));
     return Napi::Number::New(env, ourInfo->id);
+    return Napi::Number::New(env, 1);
 }
 
 Napi::Value off(const Napi::CallbackInfo &info) {
