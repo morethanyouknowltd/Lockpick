@@ -471,6 +471,9 @@ Mod.registerAction({
 
 // Always restore automation control when 3 is pressed and mousedown (drawing automation)
 Mouse.on('mouseup', event => {
+    if (!Bitwig.connected) {
+        return
+    }
     if (restoreAutomationAfterDraw.value && event.button === 0 && UI.activeTool === 3) {
         Bitwig.sendPacket({ type: 'action', data: 'restore_automation_control' })
     }

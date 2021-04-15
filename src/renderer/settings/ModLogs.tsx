@@ -63,7 +63,7 @@ export const ModLogs = ({mod}) => {
             data: mod.id
         })
         return addPacketListener(`log`, packet => {
-            const msg = packet.data.map(d => typeof d === 'string' ? d : util.inspect(d)).join(' ')
+            const msg = packet.data.map(d => typeof d === 'string' ? d : util.inspect(d, false, null, true)).join(' ')
             newLogs.push({msg, id: nextLogId++, date: new Date()})
             console.log(packet.data)
             debouncedLogSetter()
@@ -74,7 +74,7 @@ export const ModLogs = ({mod}) => {
         {logs.map(log => {
             const html = ansi_up.ansi_to_html(log.msg);
             return <div key={log.id}>
-                <span>{moment(log.date).format(`h:mm:ss`)}</span> <><span dangerouslySetInnerHTML={{__html: html}} /></>
+                <span>{moment(log.date).format(`h:mm:ss`)}</span><span style={{whiteSpace: 'pre-wrap'}} dangerouslySetInnerHTML={{__html: html}} />
             </div>
         })}
     </Logs>
