@@ -39,7 +39,7 @@ Napi::Value beforeQuitOS(const Napi::CallbackInfo &info) {
     std::cout << "Waiting for thread to join" << std::endl;
     if (threadSetup) {
         CFRunLoopStop(runLoop);
-        nativeThread.join();
+        // nativeThread.join();
     }
     std::cout << "Thread joined" << std::endl;
 }
@@ -234,7 +234,7 @@ CallbackInfo* addEventListener(EventListenerSpec spec) {
         
         nativeThread = std::thread( [] (std::future<void> futureObj) {
             runLoop = CFRunLoopGetCurrent();
-            while (futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout) {
+            while (true) {
                 CFRunLoopRunInMode(kCFRunLoopDefaultMode, 3, true);
                 m.lock();
                 if (waitingCbInfo.size() > 0) {
