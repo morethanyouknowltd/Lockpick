@@ -314,7 +314,6 @@ Napi::Value on(const Napi::CallbackInfo &info) {
         env
     }));
     return Napi::Number::New(env, ourInfo->id);
-    return Napi::Number::New(env, 1);
 }
 
 Napi::Value off(const Napi::CallbackInfo &info) {
