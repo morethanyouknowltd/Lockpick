@@ -134,7 +134,8 @@ static LRESULT CALLBACK mouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
         #pragma warning(pop)
         // Must use SendMessage vs PostMessage here because copy data
         // needs to know when to free the copied memory
-        SendMessage(hWndServer,
+        SendNotifyMessage(
+            hWndServer,
             WM_COPYDATA,
             0,
             (LPARAM)(LPVOID)&MyCDS);

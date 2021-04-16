@@ -86,6 +86,9 @@
           "src/connector/native/events_windows.cc",
           "src/connector/native/bitwig_windows.cc",
           "src/connector/native/ui_windows.cc"
+        ],
+        'libraries': [
+          "psapi.lib"
         ]
       }]
     ]
