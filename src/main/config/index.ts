@@ -1,5 +1,6 @@
 const path = require('path')
 import { createDirIfNotExist, rmRfDir } from '../core/Files'
+import { fileLogger } from '../core/Log'
 import { isMac, isWindows } from '../core/Os'
 const os = require('os')
 const isRenderer = require('is-electron-renderer')
@@ -31,4 +32,8 @@ export const createFolders = async () => {
     await createDirIfNotExist(basePath)
     await createDirIfNotExist(storagePath)
     await createDirIfNotExist(sqliteBackupPath)
+
+    if (fileLogger) {
+        fileLogger.prepare()
+    }
 }

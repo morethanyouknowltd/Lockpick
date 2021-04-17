@@ -131,7 +131,7 @@ class CombineLogger extends ConsoleLogger {
 
 export const logger = new CombineLogger([
     new ConsoleLogger(),
-    ...(process.env.NODE_ENV === 'development' ? [] : [new FileLogger(`Lockpick`)])
+    new FileLogger(`Lockpick`)
 ])
 
 export const fileLogger: FileLogger = logger.loggers[1] as FileLogger
