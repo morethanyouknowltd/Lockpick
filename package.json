@@ -99,5 +99,5 @@
     "webpack-node-externals": "^2.5.0"
   },
   "gypfile": true,
-  "version": "0.0.7"
+  "version": "0.0.8"
 }
