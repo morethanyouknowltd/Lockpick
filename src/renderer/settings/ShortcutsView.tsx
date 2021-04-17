@@ -28,6 +28,7 @@ const TableWrap = styled.div`
     }
     th, td {
         padding: 0.3em 2rem;
+        user-select: none;
 
         &:not(:last-child) {
             /* border-right: 1px solid #111; */

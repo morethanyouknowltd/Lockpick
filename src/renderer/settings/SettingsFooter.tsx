@@ -125,6 +125,7 @@ export const SettingsFooter = withRouter(({ versionInfo, history, preferencesOpe
                     {size}
                 </option>
             })} />
+            {/* <Button style={{marginLeft: '1rem'}} >Upgrade</Button> */}
         </Flex>
     </Footer>
 })
