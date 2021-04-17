@@ -6,6 +6,26 @@
  */
 
 Mod.registerAction({
+    title: 'Focus Arranger',
+    id: 'focus-arranger',
+    description: `Focuses the arranger panel.`,
+    defaultSetting: {
+        keys: ['Shift', 'C']
+    },
+    action: () => {
+        Bitwig.sendPacket({
+            type: 'action',
+            data: [
+                `Focus panel to the ${UI.layout === 'Single Display (Large)' ? 'left' : 'right'}`,
+                `Focus panel below`,
+                `focus_or_toggle_arranger`
+            ]
+        })
+        Bitwig.makeMainWindowActive()
+    }
+})
+
+Mod.registerAction({
     title: 'Toggle Large Track Height*',
     id: 'toggle-large-track-height',
     description: `Toggles large track height, ensuring the arranger is focused first so the shortcut works when expected.`,
@@ -13,6 +33,7 @@ Mod.registerAction({
         keys: ['Shift', 'C']
     },
     action: () => {
+        Mod.runAction('focus-arranger')
         Bitwig.sendPacket({
             type: 'action',
             data: [
@@ -32,7 +53,7 @@ Mod.registerAction({
     },
     contexts: ['-browser'],
     action: () => {
-        sendPacketToBitwig({type: 'action', data: 'focus_track_header_area'})
+        Bitwig.sendPacket({type: 'action', data: 'focus_track_header_area'})
         Bitwig.makeMainWindowActive()
     } 
 })

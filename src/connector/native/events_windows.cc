@@ -83,7 +83,8 @@ Napi::Value off(const Napi::CallbackInfo &info) {
             }
             return willRemove;
         });
-        nonConstCbs.erase(removeIf, callbacks.end());
+        nonConstCbs.erase(removeIf, nonConstCbs.end());
+        callbacksByEventType[eventType] = nonConstCbs;
     }
     m.unlock();
     return Napi::Boolean::New(env, true);
@@ -191,6 +192,10 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+Napi::Value beforeQuitOS(const Napi::CallbackInfo &info) {
+    return Napi::Value();
 }
 
 typedef int (__cdecl *MYPROC)(HWND); 

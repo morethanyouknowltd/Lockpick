@@ -7,8 +7,14 @@
  */
 
 Mouse.on('mouseup', event => {
-    Bitwig.showMessage("mouseup: ", JSON.stringify(event))
+    log('mouseup', event)
 })
 Mouse.on('mousedown', event => {
-    Bitwig.showMessage("mousedown: ", JSON.stringify(event))
+    log('mousedown', event)
+})
+Keyboard.on('keyup', event => {
+    log('keyup', event)
+})
+Keyboard.on('keydown', event => {
+    log('keydown', event)
 })

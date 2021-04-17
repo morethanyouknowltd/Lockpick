@@ -63,14 +63,14 @@ const repositionLabels = () => {
     }
 }
 
-// Mod.registerAction({
-//     title: "Show Plugin Window Labels",
-//     id: "show-plugin-window-labels",
-//     description: `Shows labels to easily identify plugin windows`,
-//     action: () => {
-//         repositionLabels()
-//     }
-// })
+Mod.registerAction({
+    title: "Show Plugin Window Labels",
+    id: "show-plugin-window-labels",
+    description: `Shows labels to easily identify plugin windows`,
+    action: () => {
+        repositionLabels()
+    }
+})
 
 Mod.registerAction({
     id: 'close-plugin-windows',

@@ -34,6 +34,7 @@
             "${workspaceFolder}/dist/main/main.js",
             "--inspect=9229"
          ],
+         "preLaunchTask": "npm: buildc:dev",
          "stopAtEntry": false,
          "cwd": "${workspaceFolder}",
          "environment": [

@@ -60,6 +60,25 @@ const GlobalStyle = css`
             color: white;
         }
     }
+    
+    ::-webkit-scrollbar {
+        width: 20px;
+    }
+    ::-webkit-scrollbar-corner {
+        background: rgba(0,0,0,0);
+    }
+    ::-webkit-scrollbar-thumb {
+        background-color: #333;
+        border-radius: 1000px;
+        border: 4px solid rgba(0,0,0,0);
+        background-clip: content-box;
+        width: 20px;
+        min-height: 32px;
+    }
+    ::-webkit-scrollbar-track {
+        background-color: rgba(0,0,0,0);
+    }
+    
         .react-contextmenu {
             background-color: #222;
             background-clip: padding-box;

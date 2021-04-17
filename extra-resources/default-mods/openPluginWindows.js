@@ -18,6 +18,10 @@ async function hasTrackOpenedPlugins(trackName) {
 
 async function setTrackHasOpenedPlugins(trackName) {
     let data = await Db.getCurrentProjectData()
+    if (!data) {
+        // Project must not have been loaded
+        return
+    }
     const pidNow = Bitwig.getPid()
     if (data.pid !== pidNow) {
         data.openedPluginsForTracks = {}
@@ -214,9 +218,14 @@ async function restoreOpenedPluginsForTrack(track, presetNames) {
         })
     }
 
-    const { positions } = await Db.getTrackData(track, { 
+    const data = await Db.getTrackData(track, { 
         modId: 'move-plugin-windows'
     })
+    if (!data) {
+        // Project must not be loaded
+        return
+    }
+    const { positions } = data
     const windowIds = Object.keys(positions || {})
     if (windowIds.length) {
         presetNames = windowIds.map(id => id.split('/').slice(-1).join('').trim())

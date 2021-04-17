@@ -1,5 +1,6 @@
 import React from 'react'
 import { styled } from 'linaria/react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const ButtonStyle = styled.button`
 -webkit-appearance: none;
@@ -23,11 +24,17 @@ outline: none !important;
 &:hover:not(:disabled) {
     filter: brightness(85%);
 }
+svg {
+    font-size: .8em;
+    margin-right: 0.6em;
+}
 border-radius: .2em;
 `
-export const Button = ({ children, link, ...rest }: { link?: string, children: any } & any) => {
+export const Button = ({ icon, children, link, ...rest }: { link?: string, children: any } & any) => {
     if (link) {
         return <a href={link}><ButtonStyle {...rest}>{children}</ButtonStyle></a>
     } 
-    return <ButtonStyle {...rest}>{children}</ButtonStyle>
+    return <ButtonStyle {...rest}>
+        {icon ? <FontAwesomeIcon icon={icon} /> : null}{children}
+    </ButtonStyle>
 }

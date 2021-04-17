@@ -20,7 +20,7 @@ using std::forward_list;
 bool threadSetup = false;
 std::thread nativeThread;
 std::promise<void> exitSignal;
-CFRunLoopRef runLoop;
+CFRunLoopRef runLoop = nullptr;
 
 struct WaitingLoopSrc {
     CallbackInfo* callbackInfo;
@@ -39,7 +39,7 @@ Napi::Value beforeQuitOS(const Napi::CallbackInfo &info) {
     std::cout << "Waiting for thread to join" << std::endl;
     if (threadSetup) {
         CFRunLoopStop(runLoop);
-        // nativeThread.join();
+        nativeThread.join();
     }
     std::cout << "Thread joined" << std::endl;
 }
@@ -60,6 +60,8 @@ void processCallback(Napi::Env env, Napi::Function jsCallback, JSEvent* value) {
     jsCallback.Call( {obj} );
 }
 
+int skipMouseMoveUntilZero = 6;
+
 CGEventRef eventtap_callback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon) {
     if (CGEventGetIntegerValueField(event, kCGEventSourceUserData) == 42) {
         // Skip our own events
@@ -77,8 +79,19 @@ CGEventRef eventtap_callback(CGEventTapProxy proxy, CGEventType type, CGEventRef
         return event;
     }
 
+    if ((type == kCGEventMouseMoved || type == kCGEventOtherMouseDragged)) {
+        // Only process 1 in 20 mouse move events to save a lot of CPU
+        if (skipMouseMoveUntilZero != 0) {
+            skipMouseMoveUntilZero--;
+            return event;
+        } else {
+            skipMouseMoveUntilZero = 20;
+        }
+    }
+
     JSEvent *jsEvent = new JSEvent();
     jsEvent->type = e->eventType;
+
 
     CGEventFlags flags = CGEventGetFlags(event);
     if ((flags & kCGEventFlagMaskAlphaShift) != 0) {
@@ -137,8 +150,6 @@ CGEventRef eventtap_callback(CGEventTapProxy proxy, CGEventType type, CGEventRef
         CGPoint point = CGEventGetLocation(event);
         jsEvent->x = (int) point.x;
         jsEvent->y = (int) point.y;
-
-        
 
         if (type == kCGEventMouseMoved || type == kCGEventOtherMouseDragged) {
             // Mouse movement doesn't have a button (multiple buttons could theoretically be down)
@@ -234,8 +245,8 @@ CallbackInfo* addEventListener(EventListenerSpec spec) {
         
         nativeThread = std::thread( [] (std::future<void> futureObj) {
             runLoop = CFRunLoopGetCurrent();
-            while (true) {
-                CFRunLoopRunInMode(kCFRunLoopDefaultMode, 3, true);
+            while (futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout) {
+                CFRunLoopRunInMode(kCFRunLoopDefaultMode, 60, true);
                 m.lock();
                 if (waitingCbInfo.size() > 0) {
                     for(auto info : waitingCbInfo) {
@@ -285,6 +296,9 @@ CallbackInfo* addEventListener(EventListenerSpec spec) {
         .callbackInfo = ourInfo
     });
     m.unlock();
+    if (runLoop != nullptr) {
+        CFRunLoopStop(runLoop);
+    }
     return ourInfo;
 }
 
@@ -300,7 +314,6 @@ Napi::Value on(const Napi::CallbackInfo &info) {
         env
     }));
     return Napi::Number::New(env, ourInfo->id);
-    return Napi::Number::New(env, 1);
 }
 
 Napi::Value off(const Napi::CallbackInfo &info) {

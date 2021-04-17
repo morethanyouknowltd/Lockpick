@@ -70,7 +70,7 @@ export const ModsSidebar = ({mods, currentMod, setCurrentMod, searchQuery, setSe
     })
     return <ModSidebarWrap>
         <TopHalf style={{paddingTop: '2.5rem'}}>
-            {/* <Input type="search" placeholder="Search" style={{marginBottom: '1.5rem'}} /> */}
+            {/* <Input type="search" autoFocus placeholder="Search" style={{marginBottom: '1.5rem'}} /> */}
             {/* <SidebarSection title={null}>
                 <SidebarItem onClick={() => setCurrentMod(null)} filterId={null}>All Mods</SidebarItem>
             </SidebarSection> */}

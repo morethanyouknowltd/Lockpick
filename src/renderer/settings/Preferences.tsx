@@ -59,7 +59,7 @@ const BoolCheckSetting = observer(({setting, title}) => {
     </CheckLabelWrap>
 }) as any
 
-export const Preferences = withRouter(({ history }) => {
+export const Preferences = withRouter(({ history, togglePreferencesOpen }) => {
     state.loadSettings([
         `notifications-actions`,
         `notifications-reloading`
@@ -67,7 +67,7 @@ export const Preferences = withRouter(({ history }) => {
 
     // find out if setup complete
     return <div>
-        <Cover onClick={() => history.push('/settings')} />
+        <Cover onClick={togglePreferencesOpen} />
         <PreferencesWrap>
             <PrefTab title="Notifications">
                 <div style={{

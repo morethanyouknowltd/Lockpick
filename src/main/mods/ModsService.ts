@@ -122,6 +122,13 @@ export class ModsService extends BESService {
 
     logForMod(modId: string, ...args: any[]) {
         logger.info(colors.green(modId), ...args)
+        const socketLoggingMod = this.suckitService.getActiveWebsockets().find(sock => sock.activeModLogKey === modId)
+        if (socketLoggingMod) {
+            socketLoggingMod.send({
+                type: 'log',
+                data: args
+            })
+        }
     }
 
     isActive() {
@@ -217,7 +224,7 @@ export class ModsService extends BESService {
                     }
                     const wrappedCb = (...args) => {
                         try {
-                            this.logForMod(mod.id, `Event ${colors.yellow(eventName)} received`)
+                            // this.logForMod(mod.id, `Event ${colors.yellow(eventName)} received`)
                             cb(...args)
                         } catch (e) {
                             this.logForMod(mod.id, colors.red(e))
@@ -329,7 +336,7 @@ export class ModsService extends BESService {
                     }
                     const wrappedCb = (event, ...rest) => {
                         const eventCopy = {...event}
-                        this.logForMod(mod.id, `${eventName}`)
+                        // this.logForMod(mod.id, `${eventName}`)
                         Object.setPrototypeOf(eventCopy, KeyboardEvent)
                         return cb(eventCopy, ...rest)
                     }
@@ -730,9 +737,9 @@ export class ModsService extends BESService {
                 return (...args) => {
                     try {
                         const called = value.name || key || 'Unknown function'
-                        if (value !== api.log) {
-                            this.logForMod(mod.id, `Called ${called}`)
-                        }
+                        // if (value !== api.log) {
+                        //     this.logForMod(mod.id, `Called ${called}`)
+                        // }
                         return value(...args)
                     } catch (e) {
                         logger.error(colors.red(`${mod.id} threw an error while calling "${colors.yellow(value.name)}":`))
@@ -872,6 +879,10 @@ export class ModsService extends BESService {
         })
         addAPIMethod('api/mods', async () => {
             return await this.getModsWithInfo()
+        })
+        addAPIMethod('api/actions/run', async ({ id }) => {
+            this.log('Got packet with id ' + id)
+            return await this.shortcutsService.runAction(id)
         })
         addAPIMethod('api/mod', async ({ id }) => {
             const mod = 
@@ -1198,7 +1209,7 @@ export class ModsService extends BESService {
                     // Don't automatically run externally added mods because we should warn the user first before enabling
                     continue
                 }
-                if ((!process.env.SCREENSHOTS && disabled) || !osMatches) {
+                if ((process.env.NODE_ENV !== 'dev' && disabled) || !osMatches) {
                     mod.enabled = false
                     mod.disabled = true
                     // Disable dev only mods (@disabled) and mods where the os doesn't match
@@ -1225,7 +1236,11 @@ ${mod.contents}
                     await fn(allApi)
                 } catch (e) {
                     this.error(`Error loading mod ${mod.id}`)
-                    this.popupService.showMessage(`Error loading ${mod.id}: ${e.stack}`)
+                    mod.error = {
+                        message: e.message,
+                        stack: e.stack
+                    }
+                    this.popupService.showMessage(`Error loading ${mod.id}, check preferences for details`)
                     logger.error(e)
                 }
             }

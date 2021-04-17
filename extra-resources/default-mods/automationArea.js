@@ -187,7 +187,7 @@ for (const dir of ['left', 'right']) {
             Keyboard.keyPress('NumpadEnter')
 
             // Focus arranger
-            Mod.runAction('focusArranger')
+            Mod.runAction('focus-arranger')
 
             // Move to left/right automation point
             Keyboard.keyPress(`Arrow${capitalized}`)
@@ -209,7 +209,7 @@ for (const dir of ['left', 'right']) {
             Mod.setEnteringValue(false)
 
             // Focus arranger
-            Mod.runAction('focusArranger')
+            Mod.runAction('focus-arranger')
         }
     })
 }
@@ -229,7 +229,7 @@ Mod.registerAction({
         Keyboard.keyPress('c', { Meta: true })
         Keyboard.keyPress('NumpadEnter')
         Mod.setEnteringValue(false)
-        Mod.runAction('focusArranger')
+        Mod.runAction('focus-arranger')
     }
 })
 
@@ -248,7 +248,7 @@ Mod.registerAction({
         Keyboard.keyPress('v', { Meta: true })
         Keyboard.keyPress('NumpadEnter')
         Mod.setEnteringValue(false)
-        Mod.runAction('focusArranger')
+        Mod.runAction('focus-arranger')
     }
 })
 
@@ -262,7 +262,7 @@ Mod.registerAction({
     subCategory: 2,
     description: 'Focuses the automation value field in the inspector for quickly setting value of selected automation.',
     action: async () => {
-        Mod.runAction('focusArranger')
+        Mod.runAction('focus-arranger')
         const uiLayout = UI.MainWindow.getLayoutState()
         if (uiLayout.inspector) {
             // showMessage(JSON.stringify(uiLayout.inspector))
@@ -289,7 +289,7 @@ Mod.registerAction({
     subCategory: 2,
     description: 'Focuses the automation position field in the inspector for quickly setting position of selected automation.',
     action: async () => {
-        Mod.runAction('focusArranger')
+        Mod.runAction('focus-arranger')
         await Mouse.click(0, UI.bwToScreen({
             x: 140,
             y: 120,
@@ -471,6 +471,9 @@ Mod.registerAction({
 
 // Always restore automation control when 3 is pressed and mousedown (drawing automation)
 Mouse.on('mouseup', event => {
+    if (!Bitwig.connected) {
+        return
+    }
     if (restoreAutomationAfterDraw.value && event.button === 0 && UI.activeTool === 3) {
         Bitwig.sendPacket({ type: 'action', data: 'restore_automation_control' })
     }

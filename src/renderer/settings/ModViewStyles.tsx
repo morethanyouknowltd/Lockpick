@@ -7,11 +7,13 @@ export const Wrap = styled.div`
     bottom: 0;
     right: 0;
     left: 0;
-    > * {
+    > div {
         position: absolute;
         top: 0;
         bottom: 0;
-        overflow-y: auto;
+        &:nth-child(2) {
+            overflow-y: auto;
+        }
     }
 `
 export const SearchIconWrapStyle = styled.div`
@@ -30,7 +32,6 @@ export const SearchIconWrapStyle = styled.div`
     }
 `
 export const ModSettings = styled.div`
-    background: rgb(33, 33, 33);
     border-bottom: 1px solid #222;
     padding: 1rem 2rem;
 `

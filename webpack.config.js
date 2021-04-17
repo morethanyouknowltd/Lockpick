@@ -49,6 +49,7 @@ module.exports = {
         new webpack.HotModuleReplacementPlugin(),
         new webpack.DefinePlugin({
             'process.env.VERSION': JSON.stringify(version),
+            'process.env.NODE_ENV': isWebpackDevServer ? `"dev"` : `"production"`,
             'process.env.PLATFORM': JSON.stringify(process.env.PLATFORM)
         }),
         new MiniCssExtractPlugin({

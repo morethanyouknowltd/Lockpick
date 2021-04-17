@@ -18,7 +18,8 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
         loading: true,
         selectedModId: null,
         searchQuery: '',
-        versionInfo: null
+        versionInfo: null,
+        preferencesOpen: false
     }
 
     get selectedMod() {
@@ -70,6 +71,10 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
         ])
     }
 
+    renderDebug = () => {
+        return <div>hello i am debug</div>
+    }
+
     renderSettings = () => {
         return <Observer>{() => {
             return <ContentWrap><ScrollableSection style={{width: '15rem'}}>
@@ -89,18 +94,15 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
         const { match } = this.props
         // console.log(this.props)
         const togglePreferencesOpen = () => {
-            if (this.props.location.pathname.indexOf('preferences') >= 0) {
-                this.props.history.push('/settings')
-            } else {
-                this.props.history.push('/settings/preferences')
-            }
+            this.setState({preferencesOpen: !this.state.preferencesOpen})
         }
         return <MainErrorBoundary>       
             <Observer>{() => {
                 return <SettingsViewWrap>
-                    <Route render={this.renderSettings} />
-                    <SettingsFooter togglePreferencesOpen={togglePreferencesOpen} preferencesOpen={this.props.location.pathname.indexOf('preferences') >= 0} versionInfo={this.state.versionInfo} />
-                    <Route path={`${match.path}/preferences`} component={Preferences} />
+                    <Route exact path={`/settings`} render={this.renderSettings} />
+                    <Route exact path={`/settings/debug`} render={this.renderDebug} />
+                    <SettingsFooter togglePreferencesOpen={togglePreferencesOpen} preferencesOpen={this.state.preferencesOpen} versionInfo={this.state.versionInfo} />
+                    {this.state.preferencesOpen ? <Preferences togglePreferencesOpen={togglePreferencesOpen} /> : null}
                 </SettingsViewWrap>
             }}
             </Observer>
