@@ -121,13 +121,14 @@ export class ModsService extends BESService {
     waitingMessagesByModId: {[modId: string]: {msg: string, count: number}[]} = {}
 
     logForMod(modId: string, ...args: any[]) {
-        logger.info(colors.green(modId), ...args)
         const socketLoggingMod = this.suckitService.getActiveWebsockets().find(sock => sock.activeModLogKey === modId)
         if (socketLoggingMod) {
             socketLoggingMod.send({
                 type: 'log',
                 data: args
             })
+        } else {     
+            logger.info(colors.green(modId), ...args)
         }
     }
 
@@ -563,7 +564,7 @@ export class ModsService extends BESService {
                         key: actualKey,
                         mod: mod.id
                     }
-                    this.log(`Registering setting for ${mod.id}: `, setting.name)
+                    this.log(`Registering setting for ${colors.green(mod.id)}: `, colors.blue(setting.name))
                     this.settingsService.insertSettingIfNotExist(setting)
                     this.settingKeyInfo[actualKey] = {
                         name: settingSpec.name,
@@ -571,7 +572,6 @@ export class ModsService extends BESService {
                         hidden: !!settingSpec.hidden
                     }
 
-                    
                     const settingApi = {
                         value: false,
                         getValue: async () => {
@@ -625,23 +625,37 @@ export class ModsService extends BESService {
                         },
                         type: 'shortcut'
                     })
-                    const settingValue = await this.settingsService.getSettingValue(action.id)
-                    if (mod.enabled) {
-                        const wrappedAction = async (...args) => {
-                            try {
-                                await (async () => action.action(...args))()
-                            } catch (e) {
-                                this.logForMod(mod.id, colors.red(e))
+                    this.log(`Registering action for ${colors.green(mod.id)}: `, colors.yellow(action.id))
+
+                    // Some of the functions below are async, and we'd rather not restrict mod
+                    // authors to have to await registerAction() each time. So, we keep track of
+                    // how many are waiting to fulfil and then update the shortcut cache when
+                    // we know everything is done.
+                    this.shortcutsService.pauseCacheUpdate()
+                    try {
+                        const settingValue = await this.settingsService.getSettingValue(action.id)
+                        if (mod.enabled) {
+                            const wrappedAction = async (...args) => {
+                                try {
+                                    await (async () => action.action(...args))()
+                                } catch (e) {
+                                    this.logForMod(mod.id, colors.red(e))
+                                }
                             }
+                            this.shortcutsService.addActionToShortcutRegistry({
+                                ...action,
+                                action: wrappedAction
+                            }, settingValue)
+                            this.onReloadMods.push(() => {
+                                this.shortcutsService.removeActionFromShortcutRegistry(action.id)
+                            })
+                        } else {
+                            this.log(`Skipping action register ${action.id}, mod ${mod.id} not enabled`)
                         }
-                        this.shortcutsService.addActionToShortcutRegistry({
-                            ...action,
-                            action: wrappedAction
-                        }, settingValue)
-                        this.onReloadMods.push(() => {
-                            this.shortcutsService.removeActionFromShortcutRegistry(action.id)
-                        })
+                    } catch (e) {
+                        this.error(e)
                     }
+                    this.shortcutsService.unpauseCacheUpdate()
                 }, 
                 registerActionsWithRange: (name, start, end, cb) => {
                     for (let i = start; i <= end; i++) {
@@ -1191,7 +1205,7 @@ export class ModsService extends BESService {
     async refreshLocalMods() {
         const modsFolders = await this.getModsFolderPaths()
         this.activeModApiIds = {}
-        this.shortcutsService.pauseCacheUpdate = true
+        this.shortcutsService.pauseCacheUpdate()
 
         await rmRfDir(buildModsPath)
         await createDirIfNotExist(buildModsPath)
@@ -1249,8 +1263,7 @@ ${mod.contents}
             logger.error(e)
         }
 
-        this.shortcutsService.pauseCacheUpdate = false
-        this.shortcutsService.updateCache()
+        this.shortcutsService.unpauseCacheUpdate()
     }
 
     async refreshBitwigMods(noWriteFile: boolean) {

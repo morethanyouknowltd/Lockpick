@@ -66,7 +66,7 @@ export class ShortcutsService extends BESService {
 
     newShortcutRegistry: {[actionId: string]: {action: ActionSpec, shortcutInfo: ShortcutInfo}} = {}
     newCache: {[shortcutCode: string]: Function[]} = {}
-    pauseCacheUpdate = true
+    pauseCacheUpdateVar = 0
 
     settingsService = getService<SettingsService>('SettingsService')
     // searchWindow: BrowserWindow
@@ -169,21 +169,35 @@ export class ShortcutsService extends BESService {
 
     addActionToShortcutRegistry(action: ActionSpec, shortcutInfo: ShortcutInfo) {
         this.newShortcutRegistry[action.id] = { action, shortcutInfo }
+        this.log(`Added ${action.id} to registry`)
     }
 
     replaceActionIfExists(actionId: string, shortcutInfo: ShortcutInfo) {
         if (actionId in this.newShortcutRegistry) {
             this.newShortcutRegistry[actionId].shortcutInfo = shortcutInfo
+            this.log(`Replaced action ${actionId}`)
         }
         this.updateCache()
     }
 
     removeActionFromShortcutRegistry(actionId: string) {
         delete this.newShortcutRegistry[actionId]
+        this.log(`Removed action ${actionId}`)
+    }
+
+    pauseCacheUpdate() {
+        this.pauseCacheUpdateVar++
+    }
+
+    unpauseCacheUpdate() {
+        this.pauseCacheUpdateVar--
+        if (this.pauseCacheUpdateVar === 0) {
+            this.updateCache()
+        }
     }
 
     updateCache() {
-        if (this.pauseCacheUpdate) {
+        if (this.pauseCacheUpdateVar !== 0) {
             return
         }
         this.newCache = {}
