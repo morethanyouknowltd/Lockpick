@@ -436,7 +436,10 @@ Napi::Value BitwigWindow::GetArrangerTracks(const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
 
     auto layout = getLayoutState();
-    auto screenshot = this->updateScreenshot();
+
+    // This will always exist because getting layout
+    // implies a screenshot was taken
+    auto screenshot = this->latestImageDeets;
     auto tracks = std::vector<ArrangerTrack>();
 
     auto frame = this->lastBWFrame.frame;

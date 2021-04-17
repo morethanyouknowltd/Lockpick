@@ -244,7 +244,7 @@ export class UIService extends BESService {
         return api
     }
 
-    checkIfModalOpen() {
+    checkIfModalOpen = _.debounce(() => {
         if (process.env.SCREENSHOTS !== 'true') {
             return
         }
@@ -264,7 +264,7 @@ export class UIService extends BESService {
             this.shortcutsService.unpause()
             this.modalWasOpen = false
         }
-    }
+    }, 250)
 
     async activate() {
 
@@ -278,6 +278,9 @@ export class UIService extends BESService {
 
         // Track tool changes via number keys
         Keyboard.on('keydown', event => {
+            if (!Bitwig.isActiveApplication()) { 
+                return
+            }
             const asNumber = parseInt(event.lowerKey, 10)
             if (asNumber !== this.activeTool && !(event.Meta || event.Shift || event.Control || event.Alt) && asNumber > 0 && asNumber < 6)  {
                 this.previousTool = this.activeTool
@@ -288,7 +291,9 @@ export class UIService extends BESService {
         })
         
         Keyboard.on('keyup', event => {
-            UI.invalidateLayout()
+            if (!Bitwig.isActiveApplication()) { 
+                return
+            }
 
             const asNumber = parseInt(event.lowerKey, 10)
             if (asNumber === this.activeTool && new Date().getTime() - this.activeToolKeyDownAt.getTime() > 250)  {
@@ -327,8 +332,6 @@ export class UIService extends BESService {
             if (event.button === 0) {
                 this.apiEventRouter.unmuteEvent('mousedown')
             }
-            // Layout could have always changed on mouse up
-            UI.invalidateLayout()
 
             // Attempt to track when user is entering a text field
             // FIXME for scaling

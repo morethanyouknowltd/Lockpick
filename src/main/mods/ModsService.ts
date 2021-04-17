@@ -1209,7 +1209,7 @@ export class ModsService extends BESService {
                     // Don't automatically run externally added mods because we should warn the user first before enabling
                     continue
                 }
-                if ((process.env.NODE_ENV !== 'dev' && disabled) || !osMatches) {
+                if ((process.env.SCREENSHOTS !== 'true' && disabled) || !osMatches) {
                     mod.enabled = false
                     mod.disabled = true
                     // Disable dev only mods (@disabled) and mods where the os doesn't match

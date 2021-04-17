@@ -12,14 +12,15 @@
 #include <string>
 #include <mutex>
 #include <stdexcept>
-#include <chrono>
-#include <future>
+#include <atomic>
+
+std::atomic<bool> quitting(false);
+std::atomic<bool> cbsWaiting(false);
 
 using std::forward_list;
 
 bool threadSetup = false;
 std::thread nativeThread;
-std::promise<void> exitSignal;
 CFRunLoopRef runLoop = nullptr;
 
 struct WaitingLoopSrc {
@@ -35,7 +36,7 @@ forward_list<CallbackInfo*> callbacks;
 int lastMouseDownButton = 0;
 
 Napi::Value beforeQuitOS(const Napi::CallbackInfo &info) {
-    exitSignal.set_value();
+    quitting.store(true);
     std::cout << "Waiting for thread to join" << std::endl;
     if (threadSetup) {
         CFRunLoopStop(runLoop);
@@ -79,19 +80,8 @@ CGEventRef eventtap_callback(CGEventTapProxy proxy, CGEventType type, CGEventRef
         return event;
     }
 
-    if ((type == kCGEventMouseMoved || type == kCGEventOtherMouseDragged)) {
-        // Only process 1 in 20 mouse move events to save a lot of CPU
-        if (skipMouseMoveUntilZero != 0) {
-            skipMouseMoveUntilZero--;
-            return event;
-        } else {
-            skipMouseMoveUntilZero = 20;
-        }
-    }
-
     JSEvent *jsEvent = new JSEvent();
     jsEvent->type = e->eventType;
-
 
     CGEventFlags flags = CGEventGetFlags(event);
     if ((flags & kCGEventFlagMaskAlphaShift) != 0) {
@@ -241,53 +231,58 @@ CallbackInfo* addEventListener(EventListenerSpec spec) {
 
     if (!threadSetup) {
         threadSetup = true;
-        std::future<void> futureObj = exitSignal.get_future();
         
-        nativeThread = std::thread( [] (std::future<void> futureObj) {
+        nativeThread = std::thread( [] () {
             runLoop = CFRunLoopGetCurrent();
-            while (futureObj.wait_for(std::chrono::milliseconds(1)) == std::future_status::timeout) {
+            while (!quitting.load()) {
+                // std::cout << "New iteration of while loop" << std::endl;
                 CFRunLoopRunInMode(kCFRunLoopDefaultMode, 60, true);
-                m.lock();
-                if (waitingCbInfo.size() > 0) {
-                    for(auto info : waitingCbInfo) {
-                        auto thisInfo = info.callbackInfo;
-                        CGEventMask mask = kCGEventMaskForAllEvents;
-                        if ("keyup" == thisInfo->eventType) {
-                            mask = CGEventMaskBit(kCGEventKeyUp);
-                        } else if ("keydown" == thisInfo->eventType) {
-                            mask = CGEventMaskBit(kCGEventKeyDown);
-                        } else if ("mousemove" == thisInfo->eventType) {
-                            mask = CGEventMaskBit(kCGEventMouseMoved) | CGEventMaskBit(kCGEventOtherMouseDragged);
-                        } else if ("mousedown" == thisInfo->eventType) {
-                            mask = CGEventMaskBit(kCGEventLeftMouseDown) | CGEventMaskBit(kCGEventRightMouseDown) | CGEventMaskBit(kCGEventOtherMouseDown);
-                        } else if ("mouseup" == thisInfo->eventType) {
-                            mask = CGEventMaskBit(kCGEventLeftMouseUp) | CGEventMaskBit(kCGEventRightMouseUp) | CGEventMaskBit(kCGEventOtherMouseUp);
-                        } else if ("scroll" == thisInfo->eventType) {
-                            mask = CGEventMaskBit(kCGEventScrollWheel);
-                        } else {
-                            throw std::invalid_argument("Unrecognised event type: " + thisInfo->eventType);
-                        }
+                
+                if (cbsWaiting.load()) {
+                    m.lock();
+                    if (waitingCbInfo.size() > 0) {
+                        for(auto info : waitingCbInfo) {
+                            auto thisInfo = info.callbackInfo;
+                            CGEventMask mask = kCGEventMaskForAllEvents;
+                            if ("keyup" == thisInfo->eventType) {
+                                mask = CGEventMaskBit(kCGEventKeyUp);
+                            } else if ("keydown" == thisInfo->eventType) {
+                                mask = CGEventMaskBit(kCGEventKeyDown);
+                            } else if ("mousemove" == thisInfo->eventType) {
+                                mask = CGEventMaskBit(kCGEventMouseMoved) | CGEventMaskBit(kCGEventOtherMouseDragged);
+                            } else if ("mousedown" == thisInfo->eventType) {
+                                mask = CGEventMaskBit(kCGEventLeftMouseDown) | CGEventMaskBit(kCGEventRightMouseDown) | CGEventMaskBit(kCGEventOtherMouseDown);
+                            } else if ("mouseup" == thisInfo->eventType) {
+                                mask = CGEventMaskBit(kCGEventLeftMouseUp) | CGEventMaskBit(kCGEventRightMouseUp) | CGEventMaskBit(kCGEventOtherMouseUp);
+                            } else if ("scroll" == thisInfo->eventType) {
+                                mask = CGEventMaskBit(kCGEventScrollWheel);
+                            } else {
+                                throw std::invalid_argument("Unrecognised event type: " + thisInfo->eventType);
+                            }
 
-                        thisInfo->tap = CGEventTapCreate(
-                                kCGSessionEventTap,
-                                kCGHeadInsertEventTap,
-                                kCGEventTapOptionDefault,
-                                mask,
-                                eventtap_callback,
-                                thisInfo);
-                        if (!thisInfo->tap) {
-                            std::cout << "Could not create event tap.";
-                        } else {
-                            CGEventTapEnable(thisInfo->tap, true);
-                            thisInfo->runloopsrc = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, thisInfo->tap, 0);
-                            CFRunLoopAddSource(runLoop, thisInfo->runloopsrc, kCFRunLoopCommonModes);
+                            thisInfo->tap = CGEventTapCreate(
+                                    kCGSessionEventTap,
+                                    kCGHeadInsertEventTap,
+                                    kCGEventTapOptionDefault,
+                                    mask,
+                                    eventtap_callback,
+                                    thisInfo);
+                            if (!thisInfo->tap) {
+                                std::cout << "Could not create event tap.";
+                            } else {
+                                // std::cout << "Added new src to run loop" << std::endl;
+                                CGEventTapEnable(thisInfo->tap, true);
+                                thisInfo->runloopsrc = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, thisInfo->tap, 0);
+                                CFRunLoopAddSource(runLoop, thisInfo->runloopsrc, kCFRunLoopCommonModes);
+                            }
                         }
                     }
+                    waitingCbInfo.clear();
+                    cbsWaiting.store(false);
+                    m.unlock();
                 }
-                waitingCbInfo.clear();
-                m.unlock();
             }
-        }, std::move(futureObj));
+        });
     }
 
     m.lock();
@@ -295,6 +290,7 @@ CallbackInfo* addEventListener(EventListenerSpec spec) {
     waitingCbInfo.push_back(WaitingLoopSrc{
         .callbackInfo = ourInfo
     });
+    cbsWaiting.store(true);
     m.unlock();
     if (runLoop != nullptr) {
         CFRunLoopStop(runLoop);
