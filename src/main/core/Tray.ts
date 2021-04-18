@@ -69,7 +69,7 @@ export class TrayService extends BESService {
             defaultSetting: {
                 keys: ["Meta", "Shift", ","]
             }
-        }, {keys: []})
+        }, {keys: [], special: "null"})
         
         const updateMenu = async () => {
             const modItems: Electron.MenuItemConstructorOptions[] = (await this.modsService.getModsWithInfo({inMenu: true})).map(modSetting => {

@@ -230,6 +230,7 @@ export class UIService extends BESService {
                 ...makeEmitterEvents({
                     activeToolChanged: this.events.toolChanged
                 }),
+                screenshotsEnabled: process.env.SCREENSHOTS === 'true',
                 scaleXY: (args) => this.scaleXY(args),
                 scale: (point) => this.scaleXY({x: point, y: 0}).x,
                 unScaleXY: (args) => this.unScaleXY(args),

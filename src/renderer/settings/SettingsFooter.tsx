@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { styled } from 'linaria/react'
-import { send, sendPromise } from '../bitwig-api/Bitwig'
-import { Select, Footer, VersionInfoWrap, SettingsIcon } from './SettingsFooterStyles'
+import { sendPromise } from '../bitwig-api/Bitwig'
+import { Footer, VersionInfoWrap, SettingsIcon } from './SettingsFooterStyles'
 import { Button } from '../core/Button'
 import { withRouter } from 'react-router-dom'
 import { APP_VERSION } from '../../connector/shared/Constants'
 import { Flex } from '../core/Flex'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCogs, faTools } from '@fortawesome/free-solid-svg-icons'
+import { faCogs } from '@fortawesome/free-solid-svg-icons'
+import { Select } from '../core/Select'
 
 const LabelledSelect = ({label, options, value, onChange, ...rest}) => {
     return <div {...rest}>

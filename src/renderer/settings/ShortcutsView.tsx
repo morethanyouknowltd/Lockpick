@@ -25,6 +25,13 @@ const TableWrap = styled.div`
                 background: #181818;
             }
         }
+        #quickset {
+            color: #999;
+            opacity: 0;
+            &:hover {
+                opacity: 1;
+            }
+        }
     }
     th, td {
         padding: 0.3em 2rem;
@@ -108,7 +115,7 @@ const ShortcutTableCell = styled.div`
     color: #8c8c8c;
     align-items: center;
     justify-content: center;
-
+    
 `
 const InfoPanelWrap = styled.div`
     position: absolute;
@@ -211,7 +218,15 @@ export const ShortcutsView = ({ settings, selectedMod }) => {
                                 {settingTitle(sett)}
                             </ActionTd>
                             {selectedMod ? null : <td>{sett.modName}</td>}
-                            <td onClick={onShortcutClick}><ShortcutTableCell>{shortcutToTextDescription(sett)} {shouldShortcutWarn(sett) ? <Warning title={`Please note it's currently not possible to prevent single character shortcuts from triggering in text fields`} /> : null}</ShortcutTableCell></td>
+                            <td onClick={onShortcutClick}>
+                                {(sett.value?.keys?.length ?? 0) === 0 ? <span id="quickset">Click to set...</span> : null}
+                                <ShortcutTableCell>
+                                    {shortcutToTextDescription(sett)} 
+                                    {shouldShortcutWarn(sett) 
+                                        ? <Warning title={`Please note it's currently not possible to prevent single character shortcuts from triggering in text fields`} /> 
+                                        : null}
+                                </ShortcutTableCell>
+                            </td>
                             {/* <td></td> */}
                         </tr>
                     })

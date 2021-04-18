@@ -10,7 +10,6 @@ import { TabbedView } from '../core/TabbedView'
 import { ModDebug } from './ModDebug'
 import { AbsoluteFill } from '../core/AbsoluteFill'
 import { ModError } from './ModError'
-import { setContextMenuContent } from '../context-menu/ContextMenu'
 
 const ModSettingItem = ({ setting }) => {
     const onChange = async enabled => {
@@ -58,12 +57,6 @@ export const ModView = observer(({ modId } : any) => {
         })
     }
 
-    const onTitleClick = () => {
-        setContextMenuContent({
-            type: 'mod',
-            data: mod
-        })
-    }
     // console.log(mod)
     return <Wrap>
         <div style={{left: 0, width: mod.actions.length ? '30%' : '100%', borderRight: mod.actions.length ? '1px solid #191919' : ''}}>
@@ -72,7 +65,7 @@ export const ModView = observer(({ modId } : any) => {
                     <ModContent>
                         <div>
                             <Flex alignItems="center" justifyContent="space-between">
-                                <SettingTitle onClick={onTitleClick} style={{fontSize: '1em'}}>{mod.name} {mod.isDefault ? null : <Badge>User</Badge>}</SettingTitle>
+                                <SettingTitle style={{fontSize: '1em'}}>{mod.name} {mod.isDefault ? null : <Badge>User</Badge>}</SettingTitle>
                                 <Toggle onChange={onToggleChange} value={mod.value.enabled} />
                             </Flex>
                             {/* <SettingPath>{mod.path} <SearchIconWrap onClick={() => require('electron').remote.shell.showItemInFolder(mod.path)} /></SettingPath> */}

@@ -617,6 +617,18 @@ export class ModsService extends BESService {
                     mod.actions = mod.actions || {}
                     mod.actions[action.id] = action
                     action.category = action.category ? mod.actionCategories[action.category] : null
+                    // Some of the functions below are async, and we'd rather not restrict mod
+                    // authors to have to await registerAction() each time. So, we keep track of
+                    // how many are waiting to fulfil and then update the shortcut cache when
+                    // we know everything is done.
+                    this.shortcutsService.pauseCacheUpdate()
+
+                    const existingSetting = await this.settingsService.getSetting(action.id)
+                    if (existingSetting.mod !== mod.id) {
+                        this.error(colors.red(`Action with id ${action.id} already exists for mod ${mod.id}. Overwriting`))
+                        await this.settingsService.deleteSetting(action.id)
+                    }
+                    
                     await this.settingsService.insertSettingIfNotExist({
                         key: action.id,
                         mod: mod.id,
@@ -627,11 +639,6 @@ export class ModsService extends BESService {
                     })
                     this.log(`Registering action for ${colors.green(mod.id)}: `, colors.yellow(action.id))
 
-                    // Some of the functions below are async, and we'd rather not restrict mod
-                    // authors to have to await registerAction() each time. So, we keep track of
-                    // how many are waiting to fulfil and then update the shortcut cache when
-                    // we know everything is done.
-                    this.shortcutsService.pauseCacheUpdate()
                     try {
                         const settingValue = await this.settingsService.getSettingValue(action.id)
                         if (mod.enabled) {
@@ -681,7 +688,8 @@ export class ModsService extends BESService {
                         },
                         title: `${mod.title} Shortcut`
                     }, {
-                        keys
+                        keys,
+                        special: "null"
                     })
                     this.onReloadMods.push(() => {
                         this.shortcutsService.removeActionFromShortcutRegistry(actionId)

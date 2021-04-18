@@ -6,9 +6,9 @@ import { sendPromise } from '../../bitwig-api/Bitwig'
 import { shortcutToTextDescription, shouldShortcutWarn } from '../helpers/settingTitle'
 import { Checkbox } from '../../core/Checkbox'
 import { state } from '../../core/State'
+import { Select } from '../../core/Select'
 
 const ShortcutInput = styled.input`
-    width: 7rem;
     padding: 1rem .5rem;
     background: transparent;
     &, &:focus {
@@ -33,7 +33,7 @@ const InputWrap = styled.div`
     align-items: center;
     justify-content: center;
     input {
-        color: ${(props: any) => props.noShortcut ? `#555` : `#a6a6a6`};
+        color: #a6a6a6;
     }
     font-size: ${(props: any) => props.noShortcut ? `.8em` : `1em`};
     div {
@@ -157,6 +157,13 @@ export const SettingShortcut = ({setting}) => {
         }
     }
 
+    const onSpecialChange = special => {
+        updateValue({
+            ...value,
+            special: special.target.value
+        })
+    }
+
     const onKeyDown = event => {
         // debugger
         event.preventDefault()
@@ -207,7 +214,7 @@ export const SettingShortcut = ({setting}) => {
 
     const getValue = () => {
         if (value.keys?.length === 0 ?? true) {
-            return focused ? 'Listening...' : 'Click to set...'
+            return focused ? 'Listening...' : 'Click to set shortcut...'
         } else {
             return shortcutToTextDescription({value})
         }
@@ -242,11 +249,29 @@ export const SettingShortcut = ({setting}) => {
         optionProps('doubleTap', 'Double-tap')
     ]
 
+    const opts = [
+        {key: 'mouse-button-0', label: "Left Click"}, 
+        {key: 'mouse-button-1', label: "Middle Click"}, 
+        {key: 'mouse-button-2', label: "Right Click"}, 
+        {key: 'mouse-button-3', label: "Mouse Button 4"}, 
+        {key: 'mouse-button-4', label: "Mouse Button 5"}
+    ]
+
+
     return <ShortcutWrap >
         <InputWrap {...wrapProps}>
             <ShortcutInput id={`SettingShortcut${setting.id}`} {...props} />
             <div className="setdefault"><FontAwesomeIcon onClick={() => updateValue({...value, keys: []})} icon={faTimesCircle} /></div>
         </InputWrap>
+        <Select style={{width: '100%', marginTop: '.4em'}} onChange={onSpecialChange} value={value?.special ?? "null"}>
+            <option value="null">Add extra trigger...</option>
+            <hr />
+            {opts.map(size => {
+                return <option key={size.key} value={size.key}>
+                    {size.label}
+                </option>
+            })}
+        </Select>
         {shouldShortcutWarn(setting) ? <WarningText>Please note it's currently not possible to prevent single character shortcuts from triggering in text fields</WarningText> : null}
         {/* <OptionsWrap>
             {options.map(option => {

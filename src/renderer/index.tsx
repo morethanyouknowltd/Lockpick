@@ -85,7 +85,7 @@ const GlobalStyle = css`
             border: 1px solid rgba(0,0,0,.15);
             border-radius: .25rem;
             color: white;
-            font-size: .7rem;
+            font-size: .9rem;
             margin: 2px 0 0;
             min-width: 160px;
             outline: none;

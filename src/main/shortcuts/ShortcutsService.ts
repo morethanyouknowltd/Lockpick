@@ -12,7 +12,8 @@ let lastKey = ''
 
 
 type ShortcutInfo = {
-    keys: string[]
+    keys: string[],
+    special: string
 }
 
 export interface BaseActionSpec {
@@ -115,7 +116,7 @@ export class ShortcutsService extends BESService {
     }
 
     makeShortcutValueCode = (value: ShortcutInfo) => {
-        return value.keys.sort().join('')
+        return `${value.special}${value.keys.sort().join('')}`
     }
 
     setupPacketListeners() {
@@ -170,7 +171,7 @@ export class ShortcutsService extends BESService {
 
     addActionToShortcutRegistry(action: ActionSpec, shortcutInfo: ShortcutInfo) {
         this.newShortcutRegistry[action.id] = { action, shortcutInfo }
-        this.log(`Added ${action.id} to registry`)
+        // this.log(`Added ${action.id} to registry`)
     }
 
     replaceActionIfExists(actionId: string, shortcutInfo: ShortcutInfo) {
@@ -227,6 +228,9 @@ export class ShortcutsService extends BESService {
         }
     }
 
+    shortcutCodeWhileMouseDown = ''
+    previousEvent
+
     activate() {
         // this.searchWindow = new BrowserWindow({ 
         //     width: 370, 
@@ -243,6 +247,17 @@ export class ShortcutsService extends BESService {
 
         this.setupPacketListeners()
 
+        Keyboard.on('keyup', event => {
+            if (this.previousEvent && event.lowerKey === this.previousEvent.lowerKey) {
+                this.previousEvent = null
+            }
+        })
+        Keyboard.on('keydown', event => {
+            this.runShortcutsForEvents(event)
+        })
+    }
+
+    runShortcutsForEvents(event, mouseEvent?) {
         const getEventKeysArray = event => {
             const { lowerKey, Meta, Shift, Control, Alt } = event
             const keys = [lowerKey.length === 1 ? lowerKey.toUpperCase() : lowerKey]
@@ -258,138 +273,132 @@ export class ShortcutsService extends BESService {
             if (Alt) {
                 keys.push('Alt')
             }
-            return keys.reverse()
+            // Null is a key that we put in for keyboard/mouse combos that don't have keys down
+            return keys.reverse().filter(k => k !== 'null')
         }   
 
-        let shortcutCodeWhileMouseDown = ''
-        let previousEvent
-
-        Keyboard.on('keyup', event => {
-            if (previousEvent && event.lowerKey === previousEvent.lowerKey) {
-                previousEvent = null
+        try {
+            if (this.pausedHolders > 0) {
+                return
             }
-        })
-        Keyboard.on('keydown', event => {
-            try {
-                if (this.pausedHolders > 0) {
+
+            if (isPreferencesActive()) {
+                return
+            }
+
+            let { lowerKey, nativeKeyCode, Meta, Shift, Control, Alt, Fn } = event
+            if (/F[0-9]+/.test(lowerKey) || lowerKey === 'Clear' || lowerKey.indexOf('Arrow') === 0) {
+                // FN defaults to true when using function keys (makes sense I guess?), but also Clear???
+                Fn = false
+            }
+
+            let keys = getEventKeysArray(event)
+            let partialState: any = {
+                keys,
+                fn: Fn
+            }
+            if (mouseEvent) {
+                partialState.special = `mouse-button-${mouseEvent.button}`
+            }
+
+            if (this.previousEvent 
+                && this.previousEvent.lowerKey === lowerKey 
+                && (Meta || Shift || Alt || Control) 
+                && (!this.previousEvent.Meta && !this.previousEvent.Shift && !this.previousEvent.Control && !this.previousEvent.Alt)) {
+                    // Don't process events that are J+Cmd rather than Cmd+J. Wait for lowerKey to change first
                     return
-                }
+            }
+            this.previousEvent = event
 
-                if (isPreferencesActive()) {
-                    return
-                }
+            // Don't process shortcuts when dragging (this was to stop shift + 2 being picked up as a shortcut when dragging to make
+            // an off-grid time selection)
+            if (this.mouseIsDownMightBeDragging && !isNaN(parseInt(event.lowerKey, 10)) && !(Meta || Shift || Alt || Control)) {
+                // Also store code pressed while dragging so that upon release the shortcut doesn't get triggered until next keypress
+                // (as keydown events will continue to come in as key repeats)
+                this.shortcutCodeWhileMouseDown = this.makeShortcutValueCode(partialState)
+                return
+            }
 
-                let { lowerKey, nativeKeyCode, Meta, Shift, Control, Alt, Fn } = event
-                if (/F[0-9]+/.test(lowerKey) || lowerKey === 'Clear' || lowerKey.indexOf('Arrow') === 0) {
-                    // FN defaults to true when using function keys (makes sense I guess?), but also Clear???
-                    Fn = false
-                }
+            if (this.makeShortcutValueCode(partialState) === this.shortcutCodeWhileMouseDown){
+                return
+            } else {
+                // It's ok, dragging has stopped and we can process other keyboard shortcuts
+                this.shortcutCodeWhileMouseDown = ''
+            }
 
-                let keys = getEventKeysArray(event)
-                let partialState = {
-                    keys,
-                    fn: Fn
-                }
-
-                if (previousEvent 
-                    && previousEvent.lowerKey === lowerKey 
-                    && (Meta || Shift || Alt || Control) 
-                    && (!previousEvent.Meta && !previousEvent.Shift && !previousEvent.Control && !previousEvent.Alt)) {
-                        // Don't process events that are J+Cmd rather than Cmd+J. Wait for lowerKey to change first
-                        return
-                }
-                previousEvent = event
-
-                // Don't process shortcuts when dragging (this was to stop shift + 2 being picked up as a shortcut when dragging to make
-                // an off-grid time selection)
-                if (this.mouseIsDownMightBeDragging && !isNaN(parseInt(event.lowerKey, 10)) && !(Meta || Shift || Alt || Control)) {
-                    // Also store code pressed while dragging so that upon release the shortcut doesn't get triggered until next keypress
-                    // (as keydown events will continue to come in as key repeats)
-                    shortcutCodeWhileMouseDown = this.makeShortcutValueCode(partialState)
-                    return
-                }
-
-                if (this.makeShortcutValueCode(partialState) === shortcutCodeWhileMouseDown){
-                    return
+            if (this.commanderOpen) {
+                if (lowerKey === 'Escape' || lowerKey.indexOf('Enter') >= 0) {
+                    this.log('Commander is closed')
+                    this.commanderOpen = false
+                    return // Don't process the enter/escape event internally
                 } else {
-                    // It's ok, dragging has stopped and we can process other keyboard shortcuts
-                    shortcutCodeWhileMouseDown = ''
-                }
-
-                if (this.commanderOpen) {
-                    if (lowerKey === 'Escape' || lowerKey.indexOf('Enter') >= 0) {
-                        this.log('Commander is closed')
-                        this.commanderOpen = false
-                        return // Don't process the enter/escape event internally
-                    } else {
-                        return
-                    }
-                }
-
-                if (this.spotlightOpen) {
-                    if (lowerKey === 'Escape' || lowerKey.indexOf('Enter') >= 0) {
-                        this.log('Spotlight is closed')
-                        this.spotlightOpen = false
-                        return // Don't process the enter/escape event internally
-                    } else {
-                        return
-                    }
-                }
-
-                // this.log(event, Bitwig.isActiveApplication())
-
-                // Keep track of whether an action itself declares that we are entering a value (e.g entering automation)
-                let enteringBefore = this.enteringValue
-
-                if (lowerKey === 'Space' && Meta && !Shift && !Control && !Alt) {
-                    this.log('Spotlight is open')
-                    this.spotlightOpen = true
                     return
                 }
-                if (lowerKey === 'Enter' && Control && !Shift && !Meta && !Alt) {
-                    this.log('Commander is open')
-                    this.commanderOpen = true
-                    return
-                }
-
-                if ((Bitwig.isActiveApplication() || (!this.popupService.isQuitting && this.popupService.clickableCanvas.window.isFocused())) && !this.enteringValue) {
-                    const asJSON = JSON.stringify(keys)
-                    this.log(asJSON)
-
-                    let ranDouble = false
-                    if (asJSON === lastKey && new Date().getTime() - lastKeyPressed.getTime() < 250) {
-                        // Double-tapped, check for shortcut
-                        lastKey = ''
-                        lastKeyPressed = new Date(0)
-                        ranDouble = this.maybeRunActionForState({
-                            ...partialState,
-                            doubleTap: true
-                        })
-                    } 
-                    if (!ranDouble) {
-                        // Single tap
-                        lastKey = asJSON
-                        lastKeyPressed = new Date()
-                        // Uncomment to debug error messages that crash NAPI
-                        // setTimeout(() => {
-                            this.maybeRunActionForState({
-                                ...partialState,
-                                doubleTap: false
-                            })
-                        // }, 100)
-                    }
-                }
-
-                // Prevent shortcuts from triggering when renaming something
-                if (Bitwig.isActiveApplication() && lowerKey === 'r' && Meta && !Shift && !Alt) {
-                    this.setEnteringValue(true)
-                } else if ((enteringBefore === this.enteringValue) && (lowerKey === 'Enter' || lowerKey === 'Escape' || lowerKey === "NumpadEnter")) {
-                    this.setEnteringValue(false)
-                }
-            } catch (e) {
-                console.error(e)
             }
-        })
+
+            if (this.spotlightOpen) {
+                if (lowerKey === 'Escape' || lowerKey.indexOf('Enter') >= 0) {
+                    this.log('Spotlight is closed')
+                    this.spotlightOpen = false
+                    return // Don't process the enter/escape event internally
+                } else {
+                    return
+                }
+            }
+
+            // this.log(event, Bitwig.isActiveApplication())
+
+            // Keep track of whether an action itself declares that we are entering a value (e.g entering automation)
+            let enteringBefore = this.enteringValue
+
+            if (lowerKey === 'Space' && Meta && !Shift && !Control && !Alt) {
+                this.log('Spotlight is open')
+                this.spotlightOpen = true
+                return
+            }
+            if (lowerKey === 'Enter' && Control && !Shift && !Meta && !Alt) {
+                this.log('Commander is open')
+                this.commanderOpen = true
+                return
+            }
+
+            if ((Bitwig.isActiveApplication() || (!this.popupService.isQuitting && this.popupService.clickableCanvas.window.isFocused())) && !this.enteringValue) {
+                const asJSON = JSON.stringify(keys)
+                // this.log(asJSON)
+
+                let ranDouble = false
+                if (asJSON === lastKey && new Date().getTime() - lastKeyPressed.getTime() < 250) {
+                    // Double-tapped, check for shortcut
+                    lastKey = ''
+                    lastKeyPressed = new Date(0)
+                    ranDouble = this.maybeRunActionForState({
+                        ...partialState,
+                        doubleTap: true
+                    })
+                } 
+                if (!ranDouble) {
+                    // Single tap
+                    lastKey = asJSON
+                    lastKeyPressed = new Date()
+                    // Uncomment to debug error messages that crash NAPI
+                    // setTimeout(() => {
+                        this.maybeRunActionForState({
+                            ...partialState,
+                            doubleTap: false
+                        })
+                    // }, 100)
+                }
+            }
+
+            // Prevent shortcuts from triggering when renaming something
+            if (Bitwig.isActiveApplication() && lowerKey === 'r' && Meta && !Shift && !Alt) {
+                this.setEnteringValue(true)
+            } else if ((enteringBefore === this.enteringValue) && (lowerKey === 'Enter' || lowerKey === 'Escape' || lowerKey === "NumpadEnter")) {
+                this.setEnteringValue(false)
+            }
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     postActivate() {
@@ -397,6 +406,15 @@ export class ShortcutsService extends BESService {
         uiService.Mouse.on('mouseup', event => {
             this.setEnteringValue(false)
             this.mouseIsDownMightBeDragging = false
+
+            this.runShortcutsForEvents(this.previousEvent || {
+                lowerKey: "null",
+                Meta: false,
+                Control: false,
+                Alt: false,
+                Shift: false,
+                Fn: false
+            }, event)
         })
         uiService.Mouse.on('mousedown', event => {
             this.mouseIsDownMightBeDragging = true
