@@ -28,6 +28,7 @@ const TableWrap = styled.div`
         #quickset {
             color: #999;
             opacity: 0;
+            white-space: nowrap;
             &:hover {
                 opacity: 1;
             }
