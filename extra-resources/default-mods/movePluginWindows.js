@@ -74,6 +74,7 @@ Mod.registerAction({
 
 Mod.registerAction({
     id: 'close-plugin-windows',
+    title: "Close Plugin Windows",
     description: "Closes all currently open plugin windows",
     category: categories.openingClosing,
     defaultSetting: {

@@ -116,7 +116,7 @@ export class ShortcutsService extends BESService {
     }
 
     makeShortcutValueCode = (value: ShortcutInfo) => {
-        return `${value.special}${value.keys.sort().join('')}`
+        return `${value.special || 'null'}${value.keys.sort().join('')}`
     }
 
     setupPacketListeners() {
@@ -127,7 +127,7 @@ export class ShortcutsService extends BESService {
                 this.setEnteringValue(false)
             }
         })
-        this.settingsService.events.settingsUpdated.listen(() => this.updateCache())
+        // this.settingsService.events.settingsUpdated.listen(() => this.updateCache())
     }
 
     isCurrentContextRunnable(contexts) {
@@ -176,8 +176,10 @@ export class ShortcutsService extends BESService {
 
     replaceActionIfExists(actionId: string, shortcutInfo: ShortcutInfo) {
         if (actionId in this.newShortcutRegistry) {
-            this.newShortcutRegistry[actionId].shortcutInfo = shortcutInfo
-            this.log(`Replaced action ${actionId}`)
+            const deets = this.newShortcutRegistry[actionId]
+            delete this.newShortcutRegistry[actionId]
+            this.log(`Replacing action ${actionId}`)
+            this.addActionToShortcutRegistry(deets.action, shortcutInfo)
         }
         this.updateCache()
     }
@@ -204,6 +206,12 @@ export class ShortcutsService extends BESService {
         }
         this.newCache = {}
         for (const {action, shortcutInfo} of Object.values(this.newShortcutRegistry)) {
+            if ((!shortcutInfo.keys || shortcutInfo.keys.length === 0) && (!shortcutInfo.special || shortcutInfo.special === 'null')) {
+                // Don't add actions that don't have any shortcut assigned, because we could trigger them
+                // by accident
+                this.log(`Not adding ${action.id} to cache because keys/special do not exist`)
+                continue
+            }
             const code = this.makeShortcutValueCode(shortcutInfo)
             this.newCache[code] = (this.newCache[code] || []).concat(async (...args) => {
                 if (action.contexts && !this.isCurrentContextRunnable(action.contexts)) {
@@ -299,6 +307,8 @@ export class ShortcutsService extends BESService {
             }
             if (mouseEvent) {
                 partialState.special = `mouse-button-${mouseEvent.button}`
+            } else {
+                partialState.special = `null`
             }
 
             if (this.previousEvent 

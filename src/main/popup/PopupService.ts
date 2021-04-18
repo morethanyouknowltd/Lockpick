@@ -103,7 +103,7 @@ export class PopupService extends BESService {
         
         return {
             sendProps: props => {
-                this.log(`Sending props to ${focusable ? 'clickable canvas' : 'canvas'}:`, props)
+                // this.log(`Sending props to ${focusable ? 'clickable canvas' : 'canvas'}:`, props)
                 window.webContents.executeJavaScript(`
                     window.tryLoadURL = (tries = 0) => {
                         const path = \`${path}\`
@@ -123,7 +123,7 @@ export class PopupService extends BESService {
                     }
                     tryLoadURL()
                 `).then((propExecuteResult) => {
-                    this.log(propExecuteResult)
+                    // this.log(propExecuteResult)
                 }).catch(e => {
                     logger.info(colors.red(e))
                 })

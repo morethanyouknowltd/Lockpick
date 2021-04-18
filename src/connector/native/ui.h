@@ -110,6 +110,7 @@ class BitwigWindow: public Napi::ObjectWrap<BitwigWindow> {
     Napi::Value PixelColorAt(const Napi::CallbackInfo &info);
     Napi::Value GetTrackInsetAtPoint(const Napi::CallbackInfo &info);
     Napi::Value GetFrame(const Napi::CallbackInfo &info);
+    Napi::Value UpdateFrame(const Napi::CallbackInfo &info);
     Napi::Value GetLayoutState(const Napi::CallbackInfo &info);
     Napi::Value GetArrangerTracks(const Napi::CallbackInfo &info);
 };

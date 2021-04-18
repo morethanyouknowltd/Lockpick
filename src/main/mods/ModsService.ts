@@ -1015,7 +1015,15 @@ export class ModsService extends BESService {
                 }      
             } else if (setting.type === 'shortcut') {
                 const actionId = key
-                this.shortcutsService.replaceActionIfExists(actionId, this.settingsService.postload(setting).value)
+                for (const modKey in this.latestFoundModsMap) {
+                    const mod = this.latestFoundModsMap[modKey]
+                    const action = (mod.actions || {})[actionId]
+                    if (action) {
+                        this.shortcutsService.addActionToShortcutRegistry(action, this.settingsService.postload(setting).value)
+                        this.shortcutsService.updateCache()
+                        return
+                    }
+                }
             }
         })
 

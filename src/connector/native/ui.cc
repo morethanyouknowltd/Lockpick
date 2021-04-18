@@ -603,7 +603,8 @@ Napi::Object BitwigWindow::Init(Napi::Env env, Napi::Object exports) {
         InstanceMethod<&BitwigWindow::GetLayoutState>("getLayoutState"),
         InstanceMethod<&BitwigWindow::GetTrackInsetAtPoint>("getTrackInsetAtPoint"),
         InstanceMethod<&BitwigWindow::PixelColorAt>("pixelColorAt"),
-        InstanceMethod<&BitwigWindow::GetFrame>("getFrame")
+        InstanceMethod<&BitwigWindow::GetFrame>("getFrame"),
+        InstanceMethod<&BitwigWindow::UpdateFrame>("updateFrame"),
     });
     exports.Set("BitwigWindow", func);
     BitwigWindow::constructor = Napi::Persistent(func);

@@ -246,11 +246,13 @@ export class UIService extends BESService {
     }
 
     checkIfModalOpen = _.debounce(() => {
+        UI.invalidateLayout()
+        this.uiMainWindow.updateFrame()
+
         if (process.env.SCREENSHOTS !== 'true') {
             return
         }
 
-        UI.invalidateLayout()
         const layout = this.uiMainWindow.getLayoutState()
 
         // FIXME because of lack of explicit ordering of event listeners between services,
