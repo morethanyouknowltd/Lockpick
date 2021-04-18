@@ -624,7 +624,7 @@ export class ModsService extends BESService {
                     this.shortcutsService.pauseCacheUpdate()
 
                     const existingSetting = await this.settingsService.getSetting(action.id)
-                    if (existingSetting.mod !== mod.id) {
+                    if (existingSetting && existingSetting.mod !== mod.id) {
                         this.error(colors.red(`Action with id ${action.id} already exists for mod ${mod.id}. Overwriting`))
                         await this.settingsService.deleteSetting(action.id)
                     }
