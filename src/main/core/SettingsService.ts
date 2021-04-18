@@ -107,6 +107,10 @@ export class SettingsService extends BESService {
         }
     }
 
+    async removeAllForMod(modId: string) {
+        await this.Settings.delete({mod: modId})
+    }
+
     async getSetting(key: string) {
         const setting = await this.Settings.findOne({where: {key}})
         return setting ? this.postload(setting) : null

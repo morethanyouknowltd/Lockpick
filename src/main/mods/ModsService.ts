@@ -894,6 +894,15 @@ export class ModsService extends BESService {
         addAPIMethod('api/mods', async () => {
             return await this.getModsWithInfo()
         })
+        addAPIMethod('api/mod/action', async ({ action, id }) => {
+            if (action === 'resetToDefault') {
+                await this.settingsService.removeAllForMod(id)
+                // Settings can only affect local mods, no need to refresh Bitwig ones
+                this.refreshMods(true)
+                return true
+            }
+            return false
+        })
         addAPIMethod('api/actions/run', async ({ id }) => {
             this.log('Got packet with id ' + id)
             return await this.shortcutsService.runAction(id)

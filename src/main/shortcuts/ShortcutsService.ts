@@ -1,4 +1,4 @@
-import { interceptPacket } from "../core/WebsocketToSocket"
+import { interceptPacket, SocketMiddlemanService } from "../core/WebsocketToSocket"
 import { BESService, getService, makeEvent } from "../core/Service"
 import { SettingsService } from "../core/SettingsService"
 import { PopupService } from "../popup/PopupService"
@@ -68,6 +68,7 @@ export class ShortcutsService extends BESService {
     newCache: {[shortcutCode: string]: Function[]} = {}
     pauseCacheUpdateVar = 0
 
+    socketService = getService<SocketMiddlemanService>('SocketMiddlemanService')
     settingsService = getService<SettingsService>('SettingsService')
     // searchWindow: BrowserWindow
     extraShortcuts: any[]
@@ -205,6 +206,10 @@ export class ShortcutsService extends BESService {
             const code = this.makeShortcutValueCode(shortcutInfo)
             this.newCache[code] = (this.newCache[code] || []).concat(async (...args) => {
                 if (action.contexts && !this.isCurrentContextRunnable(action.contexts)) {
+                    return
+                }
+                if (!this.socketService.bitwigConnected) {
+                    this.log('Not running action because Bitwig disconnected')
                     return
                 }
                 try {

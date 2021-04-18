@@ -6,6 +6,7 @@ import { SidebarItemWrap, SidebarSectionWrap, TopHalf } from './ModsSidebarStyle
 import { Flex } from '../core/Flex'
 import { Input } from '../core/Input'
 import { Warning } from '../core/Warning'
+import { setContextMenuContent } from '../context-menu/ContextMenu'
 
 const ModSidebarWrap = styled.div`
     position: absolute;
@@ -44,10 +45,14 @@ const SidebarSection = ({title, children}) => {
 }
 
 const SidebarModList = ({ mods, currentMod, setCurrentMod }) => {
+    const onContextMenu = (event, mod) => {
+        console.log('setting!!!!')
+        setContextMenuContent({type: 'mod', data: mod})
+    }
     return <div>
         {mods.map(mod => {          
             const enabled = mod.value.enabled
-            return <SidebarItem key={mod.key} focused={(currentMod?.id ?? null) === mod.id} onClick={() => setCurrentMod(mod)} filterId={mod.key} title={mod.name || mod.key}>
+            return <SidebarItem key={mod.key} onMouseDown={e => onContextMenu(e, mod)} focused={(currentMod?.id ?? null) === mod.id} onClick={() => setCurrentMod(mod)} filterId={mod.key} title={mod.name || mod.key}>
                 <Flex justifyContent={'space-between'}>
                     <div style={{
                         overflow: 'hidden',
