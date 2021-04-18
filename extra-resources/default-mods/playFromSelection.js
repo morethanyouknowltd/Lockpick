@@ -36,33 +36,8 @@ Mod.registerAction({
     action: () => Bitwig.sendPacket({type: 'jump-to-playback-start-time-pre-roll'})
 })
 
-let numDownBefore = null
-const normalClickToo = false
-
-Keyboard.on('keydown', event => {
-    const { lowerKey } = event
-    // restore tools after middle click + 1 timeline
-    let num = parseInt(lowerKey, 10)
-    if (num > 1 && num <= 5) {
-        numDownBefore = num
-    }
-})
-
-Keyboard.on('keyup', event => {
-    const { lowerKey } = event
-    let num = parseInt(lowerKey, 10)
-    if (num === numDownBefore) {
-        numDownBefore = null
-    }
-})
-
 function playWithEvent(event) {
-    // log(uiLayout)
     const mousePosBefore = Mouse.getPosition()
-    if (numDownBefore) {
-        Keyboard.keyUp(String(numDownBefore))
-    }
-    
     const getClickPos = () => {
         if (UI.screenshotsEnabled) {
             const uiLayout = UI.MainWindow.getLayoutState()
@@ -96,21 +71,8 @@ function playWithEvent(event) {
     }
 
     const doTheClick = () => {
-        if (normalClickToo) {
-            Keyboard.keyDown('2')
-            Mouse.click(0, {
-                ...event,
-                lockpickListeners: true // Means we can still run our track selection logic
-            })
-            Keyboard.keyUp('2')
-        }
-        Keyboard.keyDown('1')
         Mouse.doubleClick(0, {...event, ...timelineClickPosition})
         Mouse.setPosition(mousePosBefore.x, mousePosBefore.y)
-        Keyboard.keyUp('1')
-        if (numDownBefore) {
-            Keyboard.keyDown(String(numDownBefore))
-        }
     }
 
     if (!Bitwig.intersectsPluginWindows(timelineClickPosition)) {
