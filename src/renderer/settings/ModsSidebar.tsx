@@ -6,7 +6,8 @@ import { SidebarItemWrap, SidebarSectionWrap, TopHalf } from './ModsSidebarStyle
 import { Flex } from '../core/Flex'
 import { Input } from '../core/Input'
 import { Warning } from '../core/Warning'
-import { setContextMenuContent } from '../context-menu/ContextMenu'
+import { HasContextMenu } from '../context-menu/ContextMenu'
+import { sendPromise } from '../bitwig-api/Bitwig'
 
 const ModSidebarWrap = styled.div`
     position: absolute;
@@ -45,25 +46,37 @@ const SidebarSection = ({title, children}) => {
 }
 
 const SidebarModList = ({ mods, currentMod, setCurrentMod }) => {
-    const onContextMenu = (event, mod) => {
-        console.log('setting!!!!')
-        setContextMenuContent({type: 'mod', data: mod})
-    }
+
     return <div>
         {mods.map(mod => {          
             const enabled = mod.value.enabled
-            return <SidebarItem key={mod.key} onMouseDown={e => onContextMenu(e, mod)} focused={(currentMod?.id ?? null) === mod.id} onClick={() => setCurrentMod(mod)} filterId={mod.key} title={mod.name || mod.key}>
-                <Flex justifyContent={'space-between'}>
-                    <div style={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                    }}>
-                        <span style={{marginRight: '.8em', width: '.6em'}}><Indicator on={enabled ? "true" : ''} /></span>
-                        <span>{mod.name || mod.key}{mod.error ? <Warning title={`There was an error loading this mod (click for details)`} /> : null}</span>
-                    </div>
-                    {/* <span>{mod.actions.length}</span> */}
-                </Flex>
-            </SidebarItem>
+            return  <HasContextMenu key={mod.key} id={mod.id} menuItems={[
+                {
+                    label: "Reset to default settings",
+                    click: async () => {
+                        await sendPromise({
+                            type: 'api/mod/action',
+                            data: {
+                                action: 'resetToDefault',
+                                id: mod.id
+                            }
+                        })
+                    }
+                }
+            ]}>
+                <SidebarItem key={mod.key} focused={(currentMod?.id ?? null) === mod.id} onClick={() => setCurrentMod(mod)} filterId={mod.key} title={mod.name || mod.key}>
+                    <Flex justifyContent={'space-between'}>
+                        <div style={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                        }}>
+                            <span style={{marginRight: '.8em', width: '.6em'}}><Indicator on={enabled ? "true" : ''} /></span>
+                            <span>{mod.name || mod.key}{mod.error ? <Warning title={`There was an error loading this mod (click for details)`} /> : null}</span>
+                        </div>
+                        {/* <span>{mod.actions.length}</span> */}
+                    </Flex>
+                </SidebarItem>
+            </HasContextMenu>
         })}
     </div>
 }
