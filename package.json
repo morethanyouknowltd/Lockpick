@@ -3,7 +3,7 @@
   "description": "Productivity enhancer for music producers",
   "main": "./dist/main/main.js",
   "scripts": {
-    "electron": "electron ./dist/main/main.js --inspect",
+    "electron": "electron ./dist/main/main.js",
     "watch": "tsc -w --p tsconfig.server.json",
     "start": "cross-env NODE_ENV=dev node ./scripts/start.js",
     "start:quiet": "cross-env QUIET_START=true NODE_ENV=dev nodemon -V --watch ./dist . --exec 'yarn electron'",

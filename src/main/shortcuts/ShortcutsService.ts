@@ -265,7 +265,8 @@ export class ShortcutsService extends BESService {
         })
     }
 
-    runShortcutsForEvents(event, mouseEvent?) {
+    runShortcutsForEvents(event, mouseEvent?) : boolean | undefined {
+        let didRun = false
         const getEventKeysArray = event => {
             const { lowerKey, Meta, Shift, Control, Alt } = event
             const keys = [lowerKey.length === 1 ? lowerKey.toUpperCase() : lowerKey]
@@ -287,10 +288,6 @@ export class ShortcutsService extends BESService {
 
         try {
             if (this.pausedHolders > 0) {
-                return
-            }
-
-            if (isPreferencesActive()) {
                 return
             }
 
@@ -392,7 +389,7 @@ export class ShortcutsService extends BESService {
                     lastKeyPressed = new Date()
                     // Uncomment to debug error messages that crash NAPI
                     // setTimeout(() => {
-                        this.maybeRunActionForState({
+                        didRun = this.maybeRunActionForState({
                             ...partialState,
                             doubleTap: false
                         })
@@ -409,6 +406,8 @@ export class ShortcutsService extends BESService {
         } catch (e) {
             console.error(e)
         }
+
+        return didRun
     }
 
     postActivate() {
@@ -417,14 +416,23 @@ export class ShortcutsService extends BESService {
             this.setEnteringValue(false)
             this.mouseIsDownMightBeDragging = false
 
-            this.runShortcutsForEvents(this.previousEvent || {
-                lowerKey: "null",
-                Meta: false,
-                Control: false,
-                Alt: false,
-                Shift: false,
-                Fn: false
-            }, event)
+            let ran: any = false
+            if (this.previousEvent) {
+                ran = this.runShortcutsForEvents(this.previousEvent, event)
+            } 
+
+            if (!ran) {
+                // Also run shortcuts as if no keys are down, as shortcuts with
+                // just an extra trigger should fire regardless of what keys are down
+                this.runShortcutsForEvents({
+                    lowerKey: "null",
+                    Meta: false,
+                    Control: false,
+                    Alt: false,
+                    Shift: false,
+                    Fn: false
+                }, event)
+            }
         })
         uiService.Mouse.on('mousedown', event => {
             this.mouseIsDownMightBeDragging = true

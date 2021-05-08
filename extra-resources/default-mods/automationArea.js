@@ -345,6 +345,24 @@ Mod.registerAction({
     }
 })
 
+async function openAutomationForTrack(targetT) {
+    const clickAt = targetT.isLargeTrackHeight ? {
+        x: targetT.rect.x + targetT.rect.w - UI.scale(26),
+        y: targetT.rect.y + UI.scale(36),
+    } : {
+        x: targetT.rect.x + targetT.rect.w - UI.scale(44),
+        y: targetT.rect.y + UI.scale(7),
+    }
+    await Mouse.click(0, {
+        ...clickAt,
+        avoidPluginWindows: true,
+        returnAfter: true
+    })
+    Db.setCurrentTrackData({
+        automationShown: true
+    })
+}
+
 /**
  * Volume automation
  */
@@ -394,15 +412,12 @@ async function showTrackVolumeAutomation(currentTrack) {
         returnAfter: true
     })
     if (!targetT.automationOpen) {
-        showAutomationImpl(false)
-        Db.setCurrentTrackData({
-            automationShown: true
-        })
+        openAutomationForTrack(targetT)
     }
 }
 
 Mod.registerAction({
-    title: `Show track volume automation`,
+    title: `Show hovered track volume automation`,
     id: `show-track-volume-automation`,
     description: `Selects the track volume and opens automation if it isn't open already`,
     category: volumeAutomationCategory,
@@ -453,18 +468,7 @@ Mod.registerAction({
             return showMessage(`Couldn't find track`)
         }
 
-        const clickAt = targetT.isLargeTrackHeight ? {
-            x: targetT.rect.x + targetT.rect.w - UI.scale(26),
-            y: targetT.rect.y + UI.scale(36),
-        } : {
-            x: targetT.rect.x + targetT.rect.w - UI.scale(44),
-            y: targetT.rect.y + UI.scale(7),
-        }
-        await Mouse.click(0, {
-            ...clickAt,
-            avoidPluginWindows: true,
-            returnAfter: true
-        })
+        openAutomationForTrack(targetT)
     }
 })
 

@@ -40,7 +40,7 @@ const SidebarItem = ({ children, filterId, onClick, ...rest }) => {
 
 const SidebarSection = ({title, children}) => {
     return <SidebarSectionWrap>
-        {title ? <div style={{color: '#666', marginBottom: '.8em'}}>{title}</div> : null}
+        {title ? <div style={{color: 'rgb(131 131 131)', marginBottom: '.8em'}}>{title}</div> : null}
         {children}
     </SidebarSectionWrap>
 }

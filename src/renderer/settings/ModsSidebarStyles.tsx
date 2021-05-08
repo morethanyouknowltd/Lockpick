@@ -24,5 +24,5 @@ export const SidebarItemWrap = styled.div`
         cursor: pointer;
         color: ${(props: any) => props.focused ? '#CCC' : '#AAA'};
     }
-    color: ${(props: any) => ((props.valid === false || props.error) ? 'red' : (props.focused ? '#CCC' : '#717171'))};
+    color: ${(props: any) => ((props.valid === false || props.error) ? 'red' : (props.focused ? '#CCC' : '#959595'))};
 `
