@@ -289,34 +289,6 @@ export class ModsService extends BESService {
                 return cb(...args)
             }
         }
-        const makeSettingWrapper = settingKey => {
-            const settingApi = {
-                value: false,
-                getValue: async () => {
-                    if (!(await that.settingsService.settingExists(settingKey))) {
-                        settingApi.value = false
-                        return false
-                    } 
-                    const val = (await that.settingsService.getSettingValue(settingKey))
-                    settingApi.value = val
-                    return val
-                },
-                setValue: async (value) => {
-                    if (!mod.enabled) {
-                        return
-                    }
-                    that.settingsService.setSettingValue(settingKey, value)
-                    settingApi.value = value
-                }
-            }
-            const listenId = this.settingsService.events.settingUpdated.listen(setting => {
-                settingApi.value = this.settingsService.postload(setting).value.enabled
-            })
-            this.onReloadMods.push(() => {
-                this.settingsService.events.settingUpdated.stopListening(listenId)
-            })
-            return settingApi
-        }
 
         const api = {
             _,
@@ -600,7 +572,9 @@ export class ModsService extends BESService {
                     }
 
                     const listenId = this.settingsService.events.settingUpdated.listen(setting => {
-                        settingApi.value = this.settingsService.postload(setting).value.enabled
+                        if (setting.key === actualKey) {
+                            settingApi.value = this.settingsService.postload(setting).value.enabled
+                        }
                     })
                     this.onReloadMods.push(() => {
                         this.settingsService.events.settingUpdated.stopListening(listenId)
