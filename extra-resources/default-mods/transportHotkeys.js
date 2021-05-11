@@ -43,7 +43,7 @@ const maybeOpenPopup = async position => {
     if (showPopup.value) {
         const dimensions = MainDisplay.getDimensions()
         const width = dimensions.w * .6
-        log('Opening popup')
+        console.log('Opening popup')
         Popup.openPopup({
             id: 'transport-nav-popup',
             component: 'TransportNavPopup',
@@ -161,7 +161,7 @@ Mod.registerActionsWithRange('launch-arranger-cue-marker', 1, launchMarkerCount 
             let actualI = i - 1
             let enabledI = -1
             for (let j = 0; j < launchMarkerCount; j++) {
-                // log(launchMarkerDisabledSettings[j], actualI, enabledI)
+                log(launchMarkerDisabledSettings[j], actualI, enabledI)
                 if (!launchMarkerDisabledSettings[j].value) {
                     enabledI++
                 }

@@ -21,6 +21,33 @@ const showHideAutomationCategory = Mod.registerActionCategory({
     title: "Show/Hide Automation",
     description: "Automation shortcuts that behave"
 })
+
+function findSelectedTrack() {
+    const tracks = UI.MainWindow.getArrangerTracks()
+    if (tracks === null || tracks.length === 0) {
+        return null
+    }
+    return tracks.find(t => t.selected)
+}
+
+async function openAutomationForTrack(targetT) {
+    const clickAt = targetT.isLargeTrackHeight ? {
+        x: targetT.rect.x + targetT.rect.w - UI.scale(26),
+        y: targetT.rect.y + UI.scale(36),
+    } : {
+        x: targetT.rect.x + targetT.rect.w - UI.scale(44),
+        y: targetT.rect.y + UI.scale(7),
+    }
+    await Mouse.click(0, {
+        ...clickAt,
+        avoidPluginWindows: true,
+        returnAfter: true
+    })
+    Db.setCurrentTrackData({
+        automationShown: true
+    })
+}
+
 async function showAutomationImpl(all, { onlyShow } = { onlyShow: false }) {
     const track = Bitwig.currentTrack.name
     let { automationShown } = await Db.getTrackData(track)
@@ -33,10 +60,18 @@ async function showAutomationImpl(all, { onlyShow } = { onlyShow: false }) {
             automationShown: false
         }, [track])
     }
-    await Bitwig.sendPacketPromise({
-        type: 'show-automation.automation-area.lockpick',
-        data: { all, automationShown, exclusiveAutomation }
-    })
+
+    const t = findSelectedTrack()
+    if (t) {
+        // If its onscreen, we can click it
+        automationShown = t.automationOpen
+        openAutomationForTrack(t)
+    } else {
+        await Bitwig.sendPacketPromise({
+            type: 'show-automation.automation-area.lockpick',
+            data: { all, automationShown, exclusiveAutomation }
+        })
+    }
     await Db.setTrackData(track, {
         automationShown: !automationShown
     })
@@ -345,23 +380,7 @@ Mod.registerAction({
     }
 })
 
-async function openAutomationForTrack(targetT) {
-    const clickAt = targetT.isLargeTrackHeight ? {
-        x: targetT.rect.x + targetT.rect.w - UI.scale(26),
-        y: targetT.rect.y + UI.scale(36),
-    } : {
-        x: targetT.rect.x + targetT.rect.w - UI.scale(44),
-        y: targetT.rect.y + UI.scale(7),
-    }
-    await Mouse.click(0, {
-        ...clickAt,
-        avoidPluginWindows: true,
-        returnAfter: true
-    })
-    Db.setCurrentTrackData({
-        automationShown: true
-    })
-}
+
 
 /**
  * Volume automation
