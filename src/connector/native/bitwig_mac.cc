@@ -93,8 +93,23 @@ Napi::Value AccessibilityEnabled(const Napi::CallbackInfo &info) {
 }
 
 AXUIElementRef GetPluginAXUIElement() {
-    auto separateProcess = findAXUIElementByName("Bitwig Plug-in Host 64");
-    return separateProcess != NULL ? separateProcess : findAXUIElementByName("Bitwig Studio Engine");
+    AXUIElementRef elementRef;
+    if ((elementRef = findAXUIElementByName("Bitwig Plug-in Host 64"))) {
+        return elementRef;
+    } else if ((elementRef = findAXUIElementByName("Bitwig Plug-in Host X64")) ) {
+        return elementRef;
+    } else if ((elementRef = findAXUIElementByName("Bitwig Plug-in Host ARM64"))) {
+        return elementRef;
+    } else if ((elementRef = findAXUIElementByName("Bitwig Studio Engine"))) {
+        return elementRef;
+    } else if ((elementRef = findAXUIElementByName("Bitwig Audio Engine"))) {
+        return elementRef;
+    } else if ((elementRef = findAXUIElementByName("Bitwig Audio Engine X64")) ) {
+        return elementRef;
+    } else if ((elementRef = findAXUIElementByName("Bitwig Audio Engine ARM64"))) {
+        return elementRef;
+    }
+    return NULL;
 }
 
 Napi::Value GetPluginWindowsPosition(const Napi::CallbackInfo &info) {
@@ -340,10 +355,11 @@ Napi::Value CloseFloatingWindows(const Napi::CallbackInfo &info) {
 
 Napi::Value GetAudioEnginePid(const Napi::CallbackInfo &info) {
     Napi::Env env = info.Env();
-    if (appDataByProcessName.count("Bitwig Plug-in Host 64") == 1) {
-        return Napi::Number::New(env, appDataByProcessName["Bitwig Plug-in Host 64"].pid);
-    } else if (appDataByProcessName.count("Bitwig Studio Engine") == 1) {
-        return Napi::Number::New(env, appDataByProcessName["Bitwig Studio Engine"].pid);
+    auto pluginHostRef = GetPluginAXUIElement();
+    if (pluginHostRef) {
+        pid_t pid;
+        AXUIElementGetPid(pluginHostRef, &pid);
+        return Napi::Number::New(env, pid);
     }
     return Napi::Number::New(env, -1);
 }
