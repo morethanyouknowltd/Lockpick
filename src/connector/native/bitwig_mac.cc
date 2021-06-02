@@ -304,11 +304,11 @@ bool isAppActive(std::string app) {
 }
 
 bool isBitwigActive() {
-    return isAppActive("Bitwig Studio");
+    return isAXUIElementActiveApp(GetBitwigAXUIElement());
 }
 
 bool isPluginWindowActive() {
-    return isAppActive("Bitwig Plug-in Host 64") || isAppActive("Bitwig Studio Engine");
+    return isAXUIElementActiveApp(GetPluginAXUIElement()) || isAXUIElementActiveApp(GetBitwigAXUIElement());
 }
 
 Napi::Value IsActiveApplication(const Napi::CallbackInfo &info) {
