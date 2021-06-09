@@ -308,7 +308,7 @@ bool isBitwigActive() {
 }
 
 bool isPluginWindowActive() {
-    return isAXUIElementActiveApp(GetPluginAXUIElement()) || isAXUIElementActiveApp(GetBitwigAXUIElement());
+    return isAXUIElementActiveApp(GetPluginAXUIElement());
 }
 
 Napi::Value IsActiveApplication(const Napi::CallbackInfo &info) {
