@@ -4,8 +4,7 @@ import { TrackSearchView } from './TrackSearchView'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFont, faMapPin, faInfo, faLock } from '@fortawesome/free-solid-svg-icons'
 import { send, getTrackById, getTransportPosition, getCueMarkerAtPosition, getCueMarkersAtPosition } from '../bitwig-api/Bitwig'
-const { Bitwig } = require('bindings')('bes')
-const { app, BrowserWindow } = require('electron').remote
+// const { app, BrowserWindow } = require('electron').remote
 const w = window as any
 w.runAction = function(action) {
     send({type: 'action', data: action})
@@ -113,18 +112,17 @@ export class SearchPanel extends React.Component {
         
         // The component is kept around so we need a way
         // to detect when to clear the search field
-        app.on('browser-window-focus', () => {
-            const input = document.getElementById('theinput') as HTMLInputElement
-            if (input) {
-                input.focus()
-            }
-        })
+        // app.on('browser-window-focus', () => {
+        //     const input = document.getElementById('theinput') as HTMLInputElement
+        //     if (input) {
+        //         input.focus()
+        //     }
+        // })
     }
     onConfirmedOrCancelled = () => {
         this.reset()
-        BrowserWindow.getFocusedWindow().hide()
-        app.hide()
-        Bitwig.makeMainWindowActive()
+        // BrowserWindow.getFocusedWindow().hide()
+        // app.hide()
     }
     onInputChange = event => {
         this.setState({query: event.target.value})

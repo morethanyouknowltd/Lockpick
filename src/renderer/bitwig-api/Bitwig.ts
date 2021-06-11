@@ -68,6 +68,11 @@ export function sendPromise(newPacket) : Promise<any> {
   })
 }
 
+export async function callAPI(endpoint, data = null) : Promise<any> {
+  const result = await sendPromise({type: endpoint, data})
+  return result.data
+}
+
 ws.onmessage = (event) => {
   const packet = JSON.parse(event.data)
   if (logInOut) {

@@ -31,3 +31,5 @@ ipch/
 
 # Visual Studio build files
 **/HookDll/x64
+
+!/dist/preload.js

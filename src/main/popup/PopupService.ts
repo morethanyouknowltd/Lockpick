@@ -10,8 +10,9 @@ import { url } from "../core/Url"
 import { UIService } from "../ui/UIService"
 import { logger } from "../core/Log"
 import { APP_NAME } from "../../connector/shared/Constants"
+import { getAppPath, getResourcePath } from "../../connector/shared/ResourcePath"
 const colors = require('colors');
-const { app } = require('electron')
+const { app, screen } = require('electron')
 const { Keyboard, Bitwig, UI, Mouse, MainWindow } = require('bindings')('bes')
 let nextId = 0
 
@@ -75,24 +76,31 @@ export class PopupService extends BESService {
     }
     
     openWindow({focusable, path}) {
+        const display = screen.getPrimaryDisplay()
+        const { width, height } = display.workAreaSize
+
+        // For windows, width and height must be scaled by DPI scaling
+        // Also, width/height must be reduced slightly for transparency to work correctly
+        // Don't ask me why...
         const window = new BrowserWindow({ 
-            width:  MainWindow.getMainScreen().w, 
-            height: MainWindow.getMainScreen().h, 
-            frame: false,
-            hasShadow: false,
-            show: !focusable,
-            alwaysOnTop: true,
-            focusable: focusable,
-            closable: false,
             x: 0,
             y: 0,
+            width: width - 4, 
+            height: height - 4,
+            resizable: false,
+            
+            show: !focusable,
+
+            frame: false,
+            alwaysOnTop: true,
+            hasShadow: false,
             transparent: true,
+            focusable,
+            closable: false,
+            
             fullscreenable: false,
             webPreferences: {
-                enableRemoteModule: true,
-                webSecurity: false,
-                nodeIntegration: true,
-                contextIsolation: false
+                preload: getAppPath('/dist/preload.js')
             }
         })
         if (!focusable) {

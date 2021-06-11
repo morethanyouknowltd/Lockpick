@@ -1,10 +1,15 @@
 import React from 'react'
-import { getResourcePath } from '../../connector/shared/ResourcePath'
-const { app, dialog} = require('electron').remote
-const path = require('path')
-import { promises as fs} from 'fs'
+const { 
+    os: {
+        isWindows,
+        isMac
+    },
+    setup: {
+        isDirectoryValid
+    } 
+} = (window as any).preload
 import { styled } from 'linaria/react'
-import { send, sendPromise } from '../bitwig-api/Bitwig'
+import { callAPI, send, sendPromise } from '../bitwig-api/Bitwig'
 import { Button } from '../core/Button'
 import { Spinner } from '../core/Spinner'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -121,31 +126,23 @@ export class Setup extends React.Component {
     componentDidMount() {
         clearInterval(interval)
         interval = setInterval(this.refreshStatus, 1000)
-        app.on('browser-window-focus', this.onFocus)
+        // window.preload.app.on('browser-window-focus', this.onFocus)
         this.refreshStatus()
 
-        // TODO Linux support
-        const getDefaultLibraryLocation = () => {
-            // Should work on mac/windows
-            return path.join(app.getPath('home'), 'Documents', 'Bitwig Studio')
-        }
-        this.setState({
-            userLibraryPath: getDefaultLibraryLocation()
-        })
+        ;(async () => {
+            const userLibraryPath = await callAPI('api/setup/library-default')
+            this.setState({
+                userLibraryPath
+            })
+        })()
     }
     componentWillUnmount() {
         clearInterval(interval)
-        app.removeListener('browser-window-focus', this.onFocus)
+        // window.preload.app.removeListener('browser-window-focus', this.onFocus)
     }
     onChooseLocation = async () => {
         try {
-            const { filePaths } = await dialog.showOpenDialog({
-                properties: ['openDirectory', 'multiSelections']
-            }, function (files) {
-                if (files !== undefined) {
-                    // handle files
-                }
-            });
+            const { filePaths } = await callAPI('api/setup/browse')
             if (filePaths.length) {
                 this.setState({userLibraryPath: filePaths[0]})
             }
@@ -158,18 +155,10 @@ export class Setup extends React.Component {
         this.setState({
             checkingLocation: true
         })
-        const dir = this.state.userLibraryPath
-        const subDirs = ['Auto Mappings', 'Controller Scripts', 'Extensions', 'Library', 'Projects']
-        let oneExists = false
-        for (const subDir of subDirs) {
-            try {
-                oneExists = oneExists || (await fs.stat(path.join(dir, subDir))).isDirectory()
-            } catch (e) {
-                console.error(e)
-            }
-        }
+        const path = this.state.userLibraryPath
+        const isValid = await isDirectoryValid(path)
         this.setState({
-            invalidLocation: !oneExists ? dir : false,
+            invalidLocation: !isValid ? path : false,
             checkingLocation: false
         })
     }
@@ -205,7 +194,7 @@ export class Setup extends React.Component {
                 <StatusMessage>{bitwigConnected ? <><FontAwesomeIcon icon={faCheck} /> Connected to Bitwig!</> : <><Spinner style={{marginRight: '.3em'}} /> Waiting for connection...</>}</StatusMessage>
             </div>,
             content: <Video loop autoPlay>
-                <source src={getResourcePath('/videos/setup-0.mp4')} type="video/mp4" />
+                <source src={'setup-0.mp4'} type="video/mp4" />
             </Video>
         }
     }
@@ -216,13 +205,6 @@ export class Setup extends React.Component {
                 this.onNextStep()
             } else {
                 send({type: 'api/setup/accessibility'})
-            }
-        }
-        if (require('os').platform() === 'win32') {
-            this.onNextStep()
-            return {
-                description: null,
-                content: null
             }
         }
         return {
@@ -238,16 +220,23 @@ export class Setup extends React.Component {
     }
     step3() {
         const relaunch = () => {
-            app.relaunch()
-            app.exit(0)
+            // window.preload.app.relaunch()
+            // window.preload.app.exit(0)
+        }
+        const openPreferences = () => {
+
         }
         return {
             description: <CenterText>
                 All done! If you ever need to see these steps again, click the icon in the menu bar and choose "Setup..."<br /><br />
 
-                Restart {APP_NAME} to ensure accessibility access has taken effect.
-
-                <EndButton onClick={relaunch}>Restart</EndButton>
+                {isMac() ? <>
+                    Restart {APP_NAME} to ensure accessibility access has taken effect.
+                    
+                    <EndButton onClick={relaunch}>Restart</EndButton>
+                </> : <>
+                    <EndButton onClick={openPreferences}>Open Preferences...</EndButton>
+                </>}
             </CenterText>,
             content: null
         }
@@ -278,7 +267,10 @@ export class Setup extends React.Component {
                 }
             })
         }
-        const nextI = this.state.step + 1
+        let nextI = this.state.step + 1
+        if (isWindows() && nextI === 2) {
+            nextI++
+        }
         if (nextI < this.getStepCount()) {
             this.setState({
                 step: nextI,

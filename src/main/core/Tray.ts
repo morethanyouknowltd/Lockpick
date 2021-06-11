@@ -1,6 +1,6 @@
 import { BESService, getService } from "./Service";
 import { Tray, Menu, app, BrowserWindow } from 'electron'
-import { getResourcePath } from "../../connector/shared/ResourcePath";
+import { getAppPath, getResourcePath } from "../../connector/shared/ResourcePath";
 import { url } from "./Url";
 import { addAPIMethod, interceptPacket, SocketMiddlemanService } from "./WebsocketToSocket";
 import { SettingsService } from "./SettingsService";
@@ -8,6 +8,7 @@ import { ModsService } from "../mods/ModsService";
 import { ShortcutsService } from "../shortcuts/ShortcutsService";
 import { APP_NAME, APP_VERSION } from "../../connector/shared/Constants";
 import { isWindows } from "./Os";
+const path = require('path')
 const { Bitwig } = require('bindings')('bes')
 
 export class TrayService extends BESService {
@@ -44,10 +45,7 @@ export class TrayService extends BESService {
                 titleBarStyle: 'hiddenInset',
                 frame: isWindows(),
                 webPreferences: {
-                    enableRemoteModule: true,
-                    webSecurity: false,
-                    contextIsolation: false,
-                    nodeIntegration: true,
+                    preload: getAppPath('/dist/preload.js')
                 }
             })
             this.settingsWindow.loadURL(loadUrl)
@@ -137,6 +135,31 @@ export class TrayService extends BESService {
         onNotConnected()
         updateMenu()
 
+        interceptPacket('api/setup/finish', async () => {
+            await this.settingsService.setSettingValue('setupComplete', true)
+        })
+        interceptPacket('api/setup/accessibility', async () => {
+            Bitwig.isAccessibilityEnabled(true)
+        })
+        addAPIMethod('api/settings/reload', async () => {
+            openWindow({type: 'settings'})
+        })
+
+        addAPIMethod('api/setup/browse', async () => {
+            const { dialog } = require('electron')
+            const { filePaths } = await dialog.showOpenDialog({
+                properties: ['openDirectory', 'multiSelections']
+            })
+            return filePaths
+        })
+
+        addAPIMethod('api/setup/library-default', async () => {
+            return path.join(app.getPath('home'), 'Documents', 'Bitwig Studio')
+        })
+
+        this.settingsService.events.settingsUpdated.listen(() => updateMenu())
+        this.modsService.events.modsReloaded.listen(() => updateMenu())
+
         const setupComplete = await isSetupComplete()
         const isDev = process.env.NODE_ENV === 'dev'
         if (!setupComplete) {
@@ -150,18 +173,6 @@ export class TrayService extends BESService {
             } else {
                 app.dock.hide()
             }
-        }        
-
-        interceptPacket('api/setup/finish', async () => {
-            await this.settingsService.setSettingValue('setupComplete', true)
-        })
-        interceptPacket('api/setup/accessibility', async () => {
-            Bitwig.isAccessibilityEnabled(true)
-        })
-        addAPIMethod('api/settings/reload', async () => {
-            openWindow({type: 'settings'})
-        })
-        this.settingsService.events.settingsUpdated.listen(() => updateMenu())
-        this.modsService.events.modsReloaded.listen(() => updateMenu())
+        }    
     }
 }
