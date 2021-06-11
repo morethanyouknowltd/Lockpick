@@ -3,7 +3,6 @@ import { addPacketListener, send } from '../bitwig-api/Bitwig'
 import moment from 'moment'
 import { styled } from 'linaria/react'
 import _ from 'underscore'
-import { parse } from 'ansicolor'
 import util from 'util'
 import {
     default as AnsiUp

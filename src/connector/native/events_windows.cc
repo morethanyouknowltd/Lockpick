@@ -215,7 +215,7 @@ Napi::Value InitKeyboardOS(Napi::Env env, Napi::Object exports) {
             std::cout << "Failed to create message-only window" << std::endl;
             return 1;
         }
-        auto hinstDLL = LoadLibrary(TEXT("C:\\Users\\andrewshand\\Github\\Lockpick\\src\\connector\\native\\HookDll\\x64\\Debug\\HookDll.dll")); 
+        auto hinstDLL = LoadLibrary(TEXT("C:\\Users\\Andy\\Documents\\Github\\Lockpick\\src\\connector\\native\\HookDll\\x64\\Debug\\HookDll.dll")); 
         MYPROC setMyHook = (MYPROC)GetProcAddress(hinstDLL, "setMyHook"); 
         setMyHook(messageWindow);
 

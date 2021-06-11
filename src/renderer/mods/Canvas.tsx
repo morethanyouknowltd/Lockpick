@@ -8,7 +8,7 @@ import { Spinner } from '../core/Spinner'
 import { TrackVolumePopup } from './canvas/TrackVolumePopup'
 import { AutomationPopover } from './canvas/AutomationPopover'
 import { PopupRenderer } from './PopupRenderer'
-const { clipboard } = require('electron')
+const { clipboard } = (window as any).preload
 
 const Wrap = styled.div`
     position: fixed;
@@ -70,7 +70,7 @@ const Notification = styled.div`
     text-align: left;
     width: 20em;
     font-size: .9rem;
-    font-family: 'Menlo', 'monospace';
+    // font-family: 'Menlo', 'monospace';
     margin-top: .2em;
     /* border-radius: .3em; */
     /* justify-content: center; */
@@ -248,11 +248,6 @@ export class Canvas extends LockpickComponent<any> {
                 <canvas ref={this.canvasRef} />
                 {this.renderNotifications()}
                 <Static>
-                    {/* {this.state.browserIsOpen ? <div>Browser Open</div> : null}
-                    {this.state.enteringValue ? <div>Entering Value</div> : null}
-                    <div><div style={{
-                        marginRight: '.4rem', marginTop: '.3rem', width: '.5rem', height: '.5rem', borderRadius: '1000px', background: 'rgb(230,89,13)'
-                    }}/> modwig active</div> */}
                     {this.state.volume && this.state.volume.track ? <TrackVolumePopup {...this.state.volume} /> : null}
                     {this.state.automationLevel && this.state.automationLevel.track ? <AutomationPopover {...this.state.automationLevel} /> : null}
                 </Static>
