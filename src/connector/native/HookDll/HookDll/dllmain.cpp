@@ -171,7 +171,7 @@ static LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam
 
     // Must use SendMessage vs PostMessage here because copy data
         // needs to know when to free the copied memory
-    SendMessage(hWndServer,
+    SendNotifyMessages(hWndServer,
         WM_COPYDATA,
         0,
         (LPARAM)(LPVOID)&MyCDS);

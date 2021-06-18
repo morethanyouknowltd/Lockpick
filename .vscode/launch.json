@@ -24,7 +24,20 @@
       "MIMode": "lldb"
     },
     {
-      "name": "(Windows) Launch",
+      "name": "Launch (macOS)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/electron/dist/Electron.app",
+      "env": {
+        "ELECTRON_RUN_AS_NODE": "",
+        "NODE_ENV": "dev",
+        "DEBUG": "true"
+      },
+
+      "args": ["${workspaceFolder}/dist/main/main.js", "--inspect=9229"]
+    },
+    {
+      "name": "Launch (Windows)",
       "type": "cppvsdbg",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/electron/dist/electron.exe",
@@ -35,27 +48,16 @@
       "environment": [
         { "name": "ELECTRON_RUN_AS_NODE", "value": "" },
         { "name": "NODE_ENV", "value": "dev" },
-        { "name": "DEBUG", "value": "true" }
+        { "name": "DEBUG", "value": "true" },
+        { "name": "DEV_SERVER", "value": "true" }
       ],
       "console": "externalTerminal"
-    },
-    {
-      "name": "Launch (macOS)",
-      "type": "lldb",
-      "request": "launch",
-      "program": "${workspaceFolder}/node_modules/electron/dist/Electron.app",
-      "env": {
-        "ELECTRON_RUN_AS_NODE": "",
-        "NODE_ENV": "dev",
-        "DEBUG": "true"
-      },
-      "args": ["${workspaceFolder}/dist/main/main.js", "--inspect=9229"]
     }
   ],
   "compounds": [
     {
       "name": "C++/node (Windows)",
-      "configurations": ["(Windows) Launch", "Attach"],
+      "configurations": ["Launch (Windows)", "Attach"],
       "preLaunchTask": "npm: buildc:dev"
     },
     {

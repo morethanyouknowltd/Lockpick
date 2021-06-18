@@ -16,7 +16,7 @@ using namespace std::string_literals;
 std::string activeApplication = "";
 std::map<std::string, HANDLE> appDataByProcessName = {};
 
-HANDLE GetProcessByNameImpl(const TCHAR *szProcessName)
+HANDLE GetProcessByNameImpl(const TCHAR* szProcessName, bool allowPartialMatch = true)
 {
     DWORD aProcesses[1024], cbNeeded, cProcesses;
     if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
@@ -45,8 +45,13 @@ HANDLE GetProcessByNameImpl(const TCHAR *szProcessName)
             }
         }
 
-        if (strcmp(szProcessName, szEachProcessName) == 0)
-            return hProcess;
+        if (allowPartialMatch) {
+            if (strncmp(szProcessName, szEachProcessName, strlen(szProcessName)) == 0)
+                return hProcess;
+        } else {
+            if(strcmp(szProcessName, szEachProcessName) == 0)
+                return hProcess;
+        }
 
         CloseHandle(hProcess);
     }

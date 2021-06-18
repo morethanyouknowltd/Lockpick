@@ -20,7 +20,7 @@ Napi::Value InitKeyboard(Napi::Env env, Napi::Object exports)
     obj.Set(Napi::String::New(env, "keyUp"), Napi::Function::New(env, keyUp));
     obj.Set(Napi::String::New(env, "keyPress"), Napi::Function::New(env, keyPress));
     obj.Set(Napi::String::New(env, "beforeQuit"), Napi::Function::New(env, beforeQuitOS));
-    InitKeyboardOS(env, exports);
+    InitKeyboardOS(env, obj);
     exports.Set("Keyboard", obj);
     return exports;
 }

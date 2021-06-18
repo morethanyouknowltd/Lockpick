@@ -2,8 +2,6 @@ const isRenderer = require('is-electron-renderer')
 const path = require("path")
 
 export function getAppPath(thePath = '') {
-
-    
     let out = ''
     const isDev = (isRenderer ? require('electron').remote.process : process).env.NODE_ENV === 'dev'
     if (isDev) {
