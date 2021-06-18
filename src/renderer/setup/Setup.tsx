@@ -126,7 +126,6 @@ export class Setup extends React.Component {
     componentDidMount() {
         clearInterval(interval)
         interval = setInterval(this.refreshStatus, 1000)
-        // window.preload.app.on('browser-window-focus', this.onFocus)
         this.refreshStatus()
 
         ;(async () => {
@@ -219,13 +218,8 @@ export class Setup extends React.Component {
         }
     }
     step3() {
-        const relaunch = () => {
-            // window.preload.app.relaunch()
-            // window.preload.app.exit(0)
-        }
-        const openPreferences = () => {
-
-        }
+        const relaunch = () => callAPI('api/setup/relaunch')
+        const openPreferences = () => callAPI('api/settings/reload')
         return {
             description: <CenterText>
                 All done! If you ever need to see these steps again, click the icon in the menu bar and choose "Setup..."<br /><br />

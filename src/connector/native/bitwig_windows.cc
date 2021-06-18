@@ -16,7 +16,7 @@ using namespace std::string_literals;
 std::string activeApplication = "";
 std::map<std::string,HANDLE> appDataByProcessName = {};
 
-HANDLE GetProcessByNameImpl(const TCHAR* szProcessName)
+HANDLE GetProcessByNameImpl(const TCHAR* szProcessName, bool allowPartialMatch = true)
 {
     DWORD aProcesses[1024], cbNeeded, cProcesses;
     if ( !EnumProcesses( aProcesses, sizeof(aProcesses), &cbNeeded ) )
@@ -45,8 +45,13 @@ HANDLE GetProcessByNameImpl(const TCHAR* szProcessName)
             }
         }
 
-        if(strcmp(szProcessName, szEachProcessName) == 0)
+        if (allowPartialMatch) {
+            if (strncmp(szProcessName, szEachProcessName, strlen(szProcessName)) == 0)
                 return hProcess;
+        } else {
+            if(strcmp(szProcessName, szEachProcessName) == 0)
+                return hProcess;
+        }
 
         CloseHandle( hProcess );
     }
@@ -91,13 +96,9 @@ Napi::Value AccessibilityEnabled(const Napi::CallbackInfo &info) {
 
 HANDLE getAudioEngineHandle() {
     HANDLE h = NULL;
-    if ((h = GetProcessByName("BitwigPluginHost64.exe")) != NULL) {
+    if ((h = GetProcessByName("BitwigPluginHost")) != NULL) {
         return h;
-    } else if ((h = GetProcessByName("BitwigPluginHost32.exe")) != NULL) {
-        return h;
-    } else if ((h = GetProcessByName("BitwigAudioEngineAVX2.exe")) != NULL) {
-        return h;
-    } else if ((h = GetProcessByName("BitwigAudioEngine.exe")) != NULL) {
+    } else if ((h = GetProcessByName("BitwigAudioEngine")) != NULL) {
         return h;
     }
     return NULL;
@@ -252,10 +253,7 @@ bool isBitwigActive() {
 }
 
 bool isPluginWindowActive() {
-    return isAppActive("BitwigPluginHost64.exe") 
-    || isAppActive("BitwigPluginHost32.exe") 
-    || isAppActive("BitwigAudioEngineAVX2.exe") 
-    || isAppActive("BitwigAudioEngine.exe");
+    return isAppActive("BitwigPluginHost") || isAppActive("BitwigAudioEngine");
 }
 
 Napi::Value IsActiveApplication(const Napi::CallbackInfo &info) {

@@ -152,7 +152,10 @@ export class TrayService extends BESService {
             })
             return filePaths
         })
-
+        addAPIMethod('api/setup/relaunch', async () => {
+            app.relaunch()
+            app.exit(0)
+        })
         addAPIMethod('api/setup/library-default', async () => {
             return path.join(app.getPath('home'), 'Documents', 'Bitwig Studio')
         })

@@ -7,11 +7,15 @@
 #include <thread>
 #include "events.h"
 #include "keycodes.h"
+#include "string.h"
 
 int nextId = 0;
 bool threadSetup = false;
 std::thread nativeThread;
 std::mutex m;
+HWND messageWindow;
+
+std::atomic<bool> quitting(false);
 
 std::map<std::string,std::vector<CallbackInfo*>> callbacksByEventType = {};
 
@@ -116,7 +120,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     MYREC* e;
     KEY* b;
 
-    if (uMsg == WM_COPYDATA) {
+    if (uMsg == WM_DESTROY) {
+        PostQuitMessage(0);
+    } else if (uMsg == WM_COPYDATA) {
       std::cout << "Got a message!" << std::endl;
       auto pMyCDS = (PCOPYDATASTRUCT) lParam;
       switch( pMyCDS->dwData )
@@ -195,12 +201,25 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 }
 
 Napi::Value beforeQuitOS(const Napi::CallbackInfo &info) {
+    quitting.store(true);
+    std::cout << "Waiting for thread to join" << std::endl;
+    if (threadSetup) {
+        SendNotifyMessage(
+            messageWindow,
+            WM_DESTROY,
+            0,
+            0);
+        nativeThread.join();
+    }
+    std::cout << "Thread joined" << std::endl;
     return Napi::Value();
 }
 
 typedef int (__cdecl *MYPROC)(HWND); 
 
-Napi::Value InitKeyboardOS(Napi::Env env, Napi::Object exports) {
+Napi::Value setupThread(const Napi::CallbackInfo &info) {
+    Napi::Env env = info.Env();
+    std::string dllPath = info[0].As<Napi::String>();
     nativeThread = std::thread( [=] {
         HINSTANCE hInstance = GetModuleHandle(0);
         WNDCLASS windowClass = {};
@@ -210,22 +229,33 @@ Napi::Value InitKeyboardOS(Napi::Env env, Napi::Object exports) {
             std::cout << "Failed to register window class" << std::endl;
             return 1;
         }
-        HWND messageWindow = CreateWindowA("FoobarMessageOnlyWindow", 0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, 0);
+        messageWindow = CreateWindowA("FoobarMessageOnlyWindow", 0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, 0);
         if (!messageWindow) {
             std::cout << "Failed to create message-only window" << std::endl;
             return 1;
         }
-        auto hinstDLL = LoadLibrary(TEXT("C:\\Users\\Andy\\Documents\\Github\\Lockpick\\src\\connector\\native\\HookDll\\x64\\Debug\\HookDll.dll")); 
-        MYPROC setMyHook = (MYPROC)GetProcAddress(hinstDLL, "setMyHook"); 
+
+        auto hinstDLL = LoadLibrary(dllPath.c_str());
+        auto setMyHook = (MYPROC)GetProcAddress(hinstDLL, "setMyHook");
         setMyHook(messageWindow);
 
         MSG msg;
-        while (GetMessage(&msg, NULL, 0, 0) > 0) {
+        std::cout << "Entering while loop" << std::endl;
+
+        while (!quitting.load() && GetMessage(&msg, NULL, 0, 0) > 0) {
+            std::cout << "While looping" << std::endl << std::flush;
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
 
         std::cout << "Exiting Windows message thread" << std::endl;
     } );
+    threadSetup = true;
+    return Napi::Value();
+}
+
+
+Napi::Value InitKeyboardOS(Napi::Env env, Napi::Object exports) {
+    exports.Set(Napi::String::New(env, "setupThread"), Napi::Function::New(env, setupThread));
     return exports;
 }

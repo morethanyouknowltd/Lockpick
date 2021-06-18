@@ -19,6 +19,7 @@ module.exports = {
         "{package.json,node_modules,dist,extra-resources}/**/*",
         `!extra-resources/default-mods/{${disabledMods.join(',')}}`,
         "build/Release/bes.node",
+        "src/connector/native/HookDll/x64/Release/HookDll.dll",
         "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
         "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
         "!**/node_modules/*.d.ts",
