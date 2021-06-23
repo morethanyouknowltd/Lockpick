@@ -37,6 +37,9 @@ for (const action of actions) {
         description: action.description,
         category: categoryIfNotExist(action.category),
         action: () => {
+            if(action.name === 'Restore Automation Control') {
+                Bitwig.makeMainWindowActive()
+            }
             Bitwig.runAction(action.id)
         }
     })

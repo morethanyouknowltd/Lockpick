@@ -23,7 +23,10 @@ Mod.registerAction({
     defaultSetting: {
         keys: ["Alt", "Space"]
     },
-    action: () => Bitwig.sendPacket({type: 'jump-to-playback-start-time'})
+    action: () => {
+        Bitwig.makeMainWindowActive()
+        Bitwig.sendPacket({type: 'jump-to-playback-start-time'})
+    }
 })
 
 Mod.registerAction({

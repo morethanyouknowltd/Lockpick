@@ -19,10 +19,12 @@ const Wrap = styled.div`
 `
 const NotificatinosWrap = styled.div`
     position: absolute;
-    bottom: 27rem;
-    right: 3rem;
+    left: 0;
+    bottom: 27em;
+    right: 0;
     display: flex;
     flex-direction: column;
+    align-items: center;
 `
 const Static = styled.div`
 @keyframes fadeIn {
@@ -69,12 +71,12 @@ const Notification = styled.div`
     align-items: center; */
     text-align: left;
     width: 20em;
-    font-size: .9rem;
-    font-family: 'Menlo', 'monospace';
+    font-size: .85rem;
+    border-radius: .3em;
     margin-top: .2em;
     /* border-radius: .3em; */
     /* justify-content: center; */
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.5);
     color: white;
 `
 const notifTimeoutCheckFreqMS = 500
