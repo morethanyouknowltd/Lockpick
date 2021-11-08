@@ -1,3 +1,3 @@
 exports.default = async function afterPack(context) {
-//   console.log(context)
-};
+  //   console.log(context)
+}
