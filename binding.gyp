@@ -69,7 +69,7 @@
           "src/connector/native/ui_mac.cc"
         ]
       }],
-      ['HOSTNAME=="Andrews-MBP"', {
+      ['HOSTNAME=="Andrews-MacBook-Air.local"', {
         'defines': [
           'BIG_SUR'
         ],

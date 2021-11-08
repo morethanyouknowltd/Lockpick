@@ -1,74 +1,66 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-       {
-          "type": "lldb",
-          "request": "attach",
-          "name": "Attach",
-          "pid": "${command:pickMyProcess}" // use ${command:pickProcess} to pick other users' processes
-       },
-       {
-          "name": "Attach (node)",
-          "port": 9229,
-          "request": "attach",
-          "skipFiles": [
-             "<node_internals>/**"
-          ],
-          "type": "pwa-node",
-          "restart": true
-       },
-       {
-          "name": "(lldb) Attach",
-          "type": "cppdbg",
-          "request": "attach",
-          "program": "/Users/andrewshand/.nvm/versions/node/v12.9.1/bin/node",
-          "processId": "${command:pickProcess}",
-          "MIMode": "lldb"
-       },
-      {
-         "name": "(Windows) Launch",
-         "type": "cppvsdbg",
-         "request": "launch",
-         "program": "${workspaceFolder}/node_modules/electron/dist/electron.exe",
-         "args": [
-            "${workspaceFolder}/dist/main/main.js",
-            "--inspect=9229"
-         ],
-         "preLaunchTask": "npm: buildc:dev",
-         "stopAtEntry": false,
-         "cwd": "${workspaceFolder}",
-         "environment": [
-            {"name": "ELECTRON_RUN_AS_NODE", "value": ""},
-            {"name": "NODE_ENV", "value": "dev"},
-            {"name": "DEBUG", "value": "true"}
-         ],
-         "console": "externalTerminal"
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "attach",
+      "name": "Attach",
+      "pid": "${command:pickMyProcess}" // use ${command:pickProcess} to pick other users' processes
+    },
+    {
+      "name": "Attach (node)",
+      "port": 9229,
+      "request": "attach",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "pwa-node",
+      "restart": true
+    },
+    {
+      "name": "(lldb) Attach",
+      "type": "cppdbg",
+      "request": "attach",
+      "program": "/Users/andrewshand/.nvm/versions/node/v16.11.1/bin/node",
+      "processId": "${command:pickProcess}",
+      "MIMode": "lldb"
+    },
+    {
+      "name": "(Windows) Launch",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/electron/dist/electron.exe",
+      "args": ["${workspaceFolder}/dist/main/main.js", "--inspect=9229"],
+      "preLaunchTask": "npm: buildc:dev",
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [
+        { "name": "ELECTRON_RUN_AS_NODE", "value": "" },
+        { "name": "NODE_ENV", "value": "dev" },
+        { "name": "DEBUG", "value": "true" }
+      ],
+      "console": "externalTerminal"
+    },
+    {
+      "name": "Launch (macOS)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/electron/dist/Electron.app",
+      "env": {
+        "ELECTRON_RUN_AS_NODE": "",
+        "NODE_ENV": "dev",
+        "DEBUG": "true"
       },
-      {
-         "name": "Launch (macOS)",
-         "type": "lldb",
-         "request": "launch",
-         "program": "${workspaceFolder}/node_modules/electron/dist/Electron.app",
-         "env": {
-            "ELECTRON_RUN_AS_NODE": "",
-            "NODE_ENV": "dev",
-            "DEBUG": "true"
-         },
-         "args": [
-            "${workspaceFolder}/dist/main/main.js",
-            "--inspect=9229"
-         ]
-      }
-   ],
-   "compounds": [
-      {
-        "name": "C++/node (Windows)",
-        "configurations": ["(Windows) Launch", "Attach"],
-        "preLaunchTask": "npm: buildc:dev"
-      },
-      {
-        "name": "C++/node (macOS)",
-        "configurations": ["Launch (macOS)", "Attach"]
-      },
-    ]
+      "args": ["${workspaceFolder}/dist/main/main.js", "--inspect=9229"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "C++/node (Windows)",
+      "configurations": ["(Windows) Launch", "Attach"],
+      "preLaunchTask": "npm: buildc:dev"
+    },
+    {
+      "name": "C++/node (macOS)",
+      "configurations": ["Launch (macOS)", "Attach"]
+    }
+  ]
 }

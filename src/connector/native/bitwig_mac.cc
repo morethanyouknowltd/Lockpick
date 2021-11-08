@@ -5,34 +5,40 @@
 #include <cstddef>
 #include <atomic>
 #include <map>
+#include <set>
 #include <vector>
 #include <CoreGraphics/CoreGraphics.h>
 #include <ApplicationServices/ApplicationServices.h>
 #include "string.h"
 using namespace std::string_literals;
 
-struct AppData {
+struct AppData
+{
     AXUIElementRef ref;
     pid_t pid;
 };
-std::map<std::string,AppData> appDataByProcessName = {};
+std::map<std::string, AppData> appDataByProcessName = {};
 
 std::string activeApp;
 static std::atomic<bool> activeAppDirty(true);
 
-bool pidIsAlive(pid_t pid)  {
+bool pidIsAlive(pid_t pid)
+{
     return 0 == kill(pid, 0);
 }
 
-pid_t GetPID(std::string name) {
+pid_t GetPID(std::string name)
+{
     // Go through all on screen windows, find BW
     CFArrayRef array = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements, kCGNullWindowID);
     CFIndex count = CFArrayGetCount(array);
-    for (CFIndex i = 0; i < count; i++) {
+    for (CFIndex i = 0; i < count; i++)
+    {
         CFDictionaryRef dict = (CFDictionaryRef)CFArrayGetValueAtIndex(array, i);
         auto str = CFStringToString((CFStringRef)CFDictionaryGetValue(dict, kCGWindowOwnerName));
-        if (str == name) {
-            CFNumberRef ownerPidRef = (CFNumberRef) CFDictionaryGetValue(dict, kCGWindowOwnerPID);
+        if (str == name)
+        {
+            CFNumberRef ownerPidRef = (CFNumberRef)CFDictionaryGetValue(dict, kCGWindowOwnerPID);
             pid_t ownerPid;
             CFNumberGetValue(ownerPidRef, kCFNumberSInt32Type, &ownerPid);
             CFRelease(array);
@@ -43,23 +49,28 @@ pid_t GetPID(std::string name) {
     return -1;
 }
 
-AXUIElementRef findAXUIElementByName(std::string name) {
-    if (!appDataByProcessName.count(name)) {
+AXUIElementRef findAXUIElementByName(std::string name)
+{
+    if (!appDataByProcessName.count(name))
+    {
         auto pid = GetPID(name);
-        if (pid == -1) {
+        if (pid == -1)
+        {
             return NULL;
         }
         auto ref = AXUIElementCreateApplication(pid);
-        if (ref != NULL) {
-            appDataByProcessName[name] = AppData({
-                ref,
-                pid
-            });
+        if (ref != NULL)
+        {
+            appDataByProcessName[name] = AppData({ref,
+                                                  pid});
         }
         return ref;
-    } else {
+    }
+    else
+    {
         auto data = appDataByProcessName[name];
-        if (!pidIsAlive(data.pid)) {
+        if (!pidIsAlive(data.pid))
+        {
             CFRelease(data.ref);
             appDataByProcessName.erase(name);
             // Try again
@@ -69,60 +80,69 @@ AXUIElementRef findAXUIElementByName(std::string name) {
     }
 }
 
-AXUIElementRef GetBitwigAXUIElement() {
+AXUIElementRef GetBitwigAXUIElement()
+{
     return findAXUIElementByName("Bitwig Studio");
 }
 
-Napi::Value AccessibilityEnabled(const Napi::CallbackInfo &info) {
+Napi::Value AccessibilityEnabled(const Napi::CallbackInfo &info)
+{
     Napi::Env env = info.Env();
     bool notify = info[0].As<Napi::Boolean>();
-    auto dict = CFDictionaryCreate(NULL, 
-        (const void **)&kAXTrustedCheckOptionPrompt, 
-        (const void **)(notify ? &kCFBooleanTrue : &kCFBooleanFalse), 
-        1, 
-        &kCFTypeDictionaryKeyCallBacks, 
-        &kCFTypeDictionaryValueCallBacks
-    );
+    auto dict = CFDictionaryCreate(NULL,
+                                   (const void **)&kAXTrustedCheckOptionPrompt,
+                                   (const void **)(notify ? &kCFBooleanTrue : &kCFBooleanFalse),
+                                   1,
+                                   &kCFTypeDictionaryKeyCallBacks,
+                                   &kCFTypeDictionaryValueCallBacks);
     bool trusted = AXIsProcessTrustedWithOptions(dict);
     CFRelease(dict);
 
     return Napi::Boolean::New(
-        env, 
-        trusted
-    );
+        env,
+        trusted);
 }
 
-AXUIElementRef GetPluginAXUIElement() {
-    AXUIElementRef elementRef;
-    if ((elementRef = findAXUIElementByName("Bitwig Plug-in Host 64"))) {
-        return elementRef;
-    } else if ((elementRef = findAXUIElementByName("Bitwig Plug-in Host X64")) ) {
-        return elementRef;
-    } else if ((elementRef = findAXUIElementByName("Bitwig Plug-in Host ARM64"))) {
-        return elementRef;
-    } else if ((elementRef = findAXUIElementByName("Bitwig Studio Engine"))) {
-        return elementRef;
-    } else if ((elementRef = findAXUIElementByName("Bitwig Audio Engine"))) {
-        return elementRef;
-    } else if ((elementRef = findAXUIElementByName("Bitwig Audio Engine X64")) ) {
-        return elementRef;
-    } else if ((elementRef = findAXUIElementByName("Bitwig Audio Engine ARM64"))) {
-        return elementRef;
+std::vector<AXUIElementRef> GetPluginAXUIElements()
+{
+    // Create a vector of AXUIElementRef objects
+    std::vector<AXUIElementRef> elementRefs;
+
+    // Iterate over array of strings
+    for (auto &name : {"Bitwig Plug-in Host 64", "Bitwig Plug-in Host X64", "Bitwig Plug-in Host ARM64", "Bitwig Studio Engine", "Bitwig Audio Engine", "Bitwig Audio Engine X64", "Bitwig Audio Engine ARM64"})
+    {
+        // Get AXUIElementRef for name
+        auto elementRef = findAXUIElementByName(name);
+        if (elementRef != NULL)
+        {
+            // std::cout << "Found " << name << std::endl;
+            elementRefs.push_back(elementRef);
+        }
     }
-    return NULL;
+
+    // std::cout << "Found " << elementRefs.size() << " plugin processes" << std::endl;
+    return elementRefs;
 }
 
-Napi::Value GetPluginWindowsPosition(const Napi::CallbackInfo &info) {
+Napi::Value GetPluginWindowsPosition(const Napi::CallbackInfo &info)
+{
     Napi::Env env = info.Env();
-    auto elementRef = GetPluginAXUIElement();
     Napi::Object outObj = Napi::Object::New(env);
-    if (elementRef != NULL) {
+    int elementI = 0;
+
+    for (auto &elementRef : GetPluginAXUIElements())
+    {
+
         CFArrayRef windowArray = nil;
-        AXUIElementCopyAttributeValue(elementRef, kAXWindowsAttribute, (CFTypeRef*)&windowArray);
-        if (windowArray != nil) { 
+        // std::cout << "getpluginwindows ref i" << elementI << std::endl;
+        AXUIElementCopyAttributeValue(elementRef, kAXWindowsAttribute, (CFTypeRef *)&windowArray);
+        if (windowArray != nil)
+        {
             CFIndex nItems = CFArrayGetCount(windowArray);
-            for (int i = 0; i < nItems; i++) {
-                AXUIElementRef itemRef = (AXUIElementRef) CFArrayGetValueAtIndex(windowArray, i);
+            for (int i = 0; i < nItems; i++)
+            {
+                // std::cout << "getpluginwindows window" << i << std::endl;
+                AXUIElementRef itemRef = (AXUIElementRef)CFArrayGetValueAtIndex(windowArray, i);
                 CFTypeRef position = nullptr;
                 CFTypeRef size = nullptr;
                 CGPoint positionPoint;
@@ -132,34 +152,47 @@ Napi::Value GetPluginWindowsPosition(const Napi::CallbackInfo &info) {
                 bool focused = false;
                 std::string windowTitle = "";
 
-                if (AXUIElementCopyAttributeValue(itemRef, kAXPositionAttribute, (CFTypeRef *)&position) == kAXErrorSuccess) {
+                if (AXUIElementCopyAttributeValue(itemRef, kAXPositionAttribute, (CFTypeRef *)&position) == kAXErrorSuccess)
+                {
                     AXValueGetValue((AXValueRef)position, (AXValueType)kAXValueCGPointType, &positionPoint);
                     CFRelease(position);
-                } else {
+                }
+                else
+                {
                     continue;
                 }
 
-                if (AXUIElementCopyAttributeValue(itemRef, kAXSizeAttribute, (CFTypeRef *)&size) == kAXErrorSuccess) {
+                if (AXUIElementCopyAttributeValue(itemRef, kAXSizeAttribute, (CFTypeRef *)&size) == kAXErrorSuccess)
+                {
                     AXValueGetValue((AXValueRef)size, (AXValueType)kAXValueCGSizeType, &sizePoint);
                     CFRelease(size);
-                } else {
+                }
+                else
+                {
                     continue;
                 }
 
-                if (AXUIElementCopyAttributeValue(itemRef, kAXTitleAttribute, (CFTypeRef *) &titleRef) == kAXErrorSuccess) {
+                if (AXUIElementCopyAttributeValue(itemRef, kAXTitleAttribute, (CFTypeRef *)&titleRef) == kAXErrorSuccess)
+                {
                     windowTitle = CFStringToString((CFStringRef)titleRef);
                     CFRelease(titleRef);
-                } else {
+                }
+                else
+                {
                     continue;
                 }
 
-                if (AXUIElementCopyAttributeValue(itemRef, kAXFocusedAttribute, (CFTypeRef*) &isFocused) == kAXErrorSuccess) {
+                if (AXUIElementCopyAttributeValue(itemRef, kAXFocusedAttribute, (CFTypeRef *)&isFocused) == kAXErrorSuccess)
+                {
                     focused = isFocused == kCFBooleanTrue;
-                } else {
+                }
+                else
+                {
                     continue;
                 }
 
-                while (outObj.Has(windowTitle)) {
+                while (outObj.Has(windowTitle))
+                {
                     windowTitle = windowTitle + " (duplicate)";
                 }
 
@@ -173,48 +206,87 @@ Napi::Value GetPluginWindowsPosition(const Napi::CallbackInfo &info) {
                 outObj.Set(Napi::String::New(env, windowTitle), obj);
             }
             CFRelease(windowArray);
-            return outObj;
         }
     }
+
     return outObj;
 }
 
-Napi::Value GetPluginWindowsCount(const Napi::CallbackInfo &info) {
+Napi::Value GetPluginWindowsCount(const Napi::CallbackInfo &info)
+{
     Napi::Env env = info.Env();
-    auto elementRef = GetPluginAXUIElement();
-    if (elementRef != NULL) {
+    int count = 0;
+
+    for (auto &elementRef : GetPluginAXUIElements())
+    {
+
         CFArrayRef windowArray = nil;
-        AXUIElementCopyAttributeValue(elementRef, kAXWindowsAttribute, (CFTypeRef*)&windowArray);
-        if (windowArray != nil) { 
-            CFIndex nItems = CFArrayGetCount(windowArray);
+        AXUIElementCopyAttributeValue(elementRef, kAXWindowsAttribute, (CFTypeRef *)&windowArray);
+        if (windowArray != nil)
+        {
+            count += CFArrayGetCount(windowArray);
             CFRelease(windowArray);
-            return Napi::Number::New(env, nItems);
         }
     }
     return Napi::Number::New(env, 0);
 }
 
-Napi::Value SetPluginWindowsPosition(const Napi::CallbackInfo &info) {
+Napi::Value SetPluginWindowsPosition(const Napi::CallbackInfo &info)
+{
     auto inObject = info[0].As<Napi::Object>();
-    auto elementRef = GetPluginAXUIElement();
+    int j = 0;
+    std::set<std::string> windowTitles;
 
-    if (elementRef != NULL) {
+    for (auto &elementRef : GetPluginAXUIElements())
+    {
+        j++;
         CFArrayRef windowArray = nil;
-        AXUIElementCopyAttributeValue(elementRef, kAXWindowsAttribute, (CFTypeRef*)&windowArray);
-        if (windowArray != nil) { 
+        AXUIElementCopyAttributeValue(elementRef, kAXWindowsAttribute, (CFTypeRef *)&windowArray);
+        // std::cout << "Element ref for " << j << std::endl;
+        if (windowArray != nil)
+        {
+            // std::cout << "Window array is not nil" << std::endl;
             CFIndex nItems = CFArrayGetCount(windowArray);
-            for (int i = 0; i < nItems; i++) {
-                AXUIElementRef itemRef = (AXUIElementRef) CFArrayGetValueAtIndex(windowArray, i);
+            for (int i = 0; i < nItems; i++)
+            {
+                // std::cout << "Item " << i << std::endl;
+                AXUIElementRef itemRef = (AXUIElementRef)CFArrayGetValueAtIndex(windowArray, i);
                 std::string windowTitle = "";
                 CFStringRef titleRef = nullptr;
 
-                // AXUIElementCopyAttributeValue(itemRef, kAXTitleAttribute, (CFTypeRef *) &titleRef);
-                if (AXUIElementCopyAttributeValue(itemRef, kAXTitleAttribute, (CFTypeRef *) &titleRef) == kAXErrorSuccess) {
+                // Try to get the window title
+                if (AXUIElementCopyAttributeValue(itemRef, kAXTitleAttribute, (CFTypeRef *)&titleRef) == kAXErrorSuccess)
+                {
                     windowTitle = CFStringToString((CFStringRef)titleRef);
                     CFRelease(titleRef);
-                } else {
+
+                    if (windowTitles.find(windowTitle) == windowTitles.end())
+                    {
+                        // Add to set if doesn't exist
+                        windowTitles.insert(windowTitle);
+                    }
+                    else
+                    {
+                        // Otherwise if the window title has already come up, add (duplicate) to match the `getPluginWindowsPosition` API
+                        do
+                        {
+                            windowTitle = windowTitle + " (duplicate)";
+                        } while (windowTitles.find(windowTitle) != windowTitles.end());
+                    }
+                }
+                // If we can't, we don't know which window it is so we have to skip
+                else
+                {
                     continue;
                 }
+
+                // If this plugin window wasn't specified, warn the user, may not be intended
+                if (!inObject.Has(windowTitle))
+                {
+                    std::cerr << "Window title " << windowTitle << " not found in object" << std::endl;
+                    continue;
+                }
+
                 auto posForWindow = inObject.Get(windowTitle).As<Napi::Object>();
                 CGPoint newPoint;
                 newPoint.x = posForWindow.Get("x").As<Napi::Number>();
@@ -230,26 +302,50 @@ Napi::Value SetPluginWindowsPosition(const Napi::CallbackInfo &info) {
     return Napi::Value();
 }
 
-Napi::Value FocusPluginWindow(const Napi::CallbackInfo &info) {
+std::vector<pid_t> getAllPidsFromProcesses()
+{
+    // Populate app process data/pid for bitwig/plugins
+    GetPluginAXUIElements();
+    GetBitwigAXUIElement();
+
+    // iterate over map entries
+    std::vector<pid_t> pids;
+
+    for (const auto &[key, value] : appDataByProcessName)
+    {
+        pids.push_back(value.pid);
+    }
+
+    return pids;
+}
+
+Napi::Value FocusPluginWindow(const Napi::CallbackInfo &info)
+{
     std::string id = info[0].As<Napi::String>();
-    auto elementRef = GetPluginAXUIElement();
-    if (elementRef != NULL) {
+    for (auto &elementRef : GetPluginAXUIElements())
+    {
         CFArrayRef windowArray = nil;
-        AXUIElementCopyAttributeValue(elementRef, kAXWindowsAttribute, (CFTypeRef*)&windowArray);
-        if (windowArray != nil) { 
+        AXUIElementCopyAttributeValue(elementRef, kAXWindowsAttribute, (CFTypeRef *)&windowArray);
+        if (windowArray != nil)
+        {
             CFIndex nItems = CFArrayGetCount(windowArray);
-            for (int i = 0; i < nItems; i++) {
-                AXUIElementRef itemRef = (AXUIElementRef) CFArrayGetValueAtIndex(windowArray, i);
+            for (int i = 0; i < nItems; i++)
+            {
+                AXUIElementRef itemRef = (AXUIElementRef)CFArrayGetValueAtIndex(windowArray, i);
                 CFStringRef titleRef;
                 std::string windowTitle = "";
-                if (AXUIElementCopyAttributeValue(itemRef, kAXTitleAttribute, (CFTypeRef *) &titleRef) == kAXErrorSuccess) {
+                if (AXUIElementCopyAttributeValue(itemRef, kAXTitleAttribute, (CFTypeRef *)&titleRef) == kAXErrorSuccess)
+                {
                     windowTitle = CFStringToString((CFStringRef)titleRef);
                     CFRelease(titleRef);
-                } else {
+                }
+                else
+                {
                     continue;
                 }
-                
-                if (id == windowTitle) {
+
+                if (id == windowTitle)
+                {
                     AXUIElementSetAttributeValue(elementRef, kAXFrontmostAttribute, kCFBooleanTrue);
                     AXUIElementSetAttributeValue(itemRef, kAXMainAttribute, kCFBooleanTrue);
                     break;
@@ -258,20 +354,25 @@ Napi::Value FocusPluginWindow(const Napi::CallbackInfo &info) {
             CFRelease(windowArray);
         }
     }
+
     return Napi::Value();
 }
 
-void closeWindowsForAXUIElement(AXUIElementRef elementRef) {
-    if (elementRef != NULL) {
+void closeWindowsForAXUIElement(AXUIElementRef elementRef)
+{
+    if (elementRef != NULL)
+    {
         CFArrayRef windowArray = nil;
-        AXUIElementCopyAttributeValue(elementRef, kAXWindowsAttribute, (CFTypeRef*)&windowArray);
-        if (windowArray != nil) { 
+        AXUIElementCopyAttributeValue(elementRef, kAXWindowsAttribute, (CFTypeRef *)&windowArray);
+        if (windowArray != nil)
+        {
             CFIndex nItems = CFArrayGetCount(windowArray);
-            for (int i = 0; i < nItems; i++) {
-                AXUIElementRef itemRef = (AXUIElementRef) CFArrayGetValueAtIndex(windowArray, i);
+            for (int i = 0; i < nItems; i++)
+            {
+                AXUIElementRef itemRef = (AXUIElementRef)CFArrayGetValueAtIndex(windowArray, i);
                 AXUIElementRef buttonRef = nil;
 
-                AXUIElementCopyAttributeValue(itemRef, kAXCloseButtonAttribute, (CFTypeRef*)&buttonRef);
+                AXUIElementCopyAttributeValue(itemRef, kAXCloseButtonAttribute, (CFTypeRef *)&buttonRef);
                 AXUIElementPerformAction(buttonRef, kAXPressAction);
                 CFRelease(buttonRef);
             }
@@ -281,97 +382,107 @@ void closeWindowsForAXUIElement(AXUIElementRef elementRef) {
     }
 }
 
-bool isAXUIElementActiveApp(AXUIElementRef element) {
-    if (!element) {
+bool isAXUIElementActiveApp(AXUIElementRef element)
+{
+    if (!element)
+    {
         return false;
     }
     CFBooleanRef isFrontmost;
-    AXUIElementCopyAttributeValue(element, kAXFrontmostAttribute, (CFTypeRef*) &isFrontmost);
+    AXUIElementCopyAttributeValue(element, kAXFrontmostAttribute, (CFTypeRef *)&isFrontmost);
     bool is = isFrontmost == kCFBooleanTrue;
     return is;
 }
 
-bool isAppActive(std::string app) {
-    if (!activeAppDirty) {
+bool isAppActive(std::string app)
+{
+    if (!activeAppDirty)
+    {
         return activeApp == app;
     }
     auto axUIEl = findAXUIElementByName(app);
     auto active = isAXUIElementActiveApp(axUIEl);
-    if (active) {
+    if (active)
+    {
         activeApp = app;
     }
     return active;
 }
 
-bool isBitwigActive() {
+bool isBitwigActive()
+{
     return isAXUIElementActiveApp(GetBitwigAXUIElement());
 }
 
-bool isPluginWindowActive() {
-    return isAXUIElementActiveApp(GetPluginAXUIElement());
+bool isPluginWindowActive()
+{
+    for (auto &elementRef : GetPluginAXUIElements())
+    {
+        if (isAXUIElementActiveApp(elementRef))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
-Napi::Value IsActiveApplication(const Napi::CallbackInfo &info) {
+Napi::Value IsActiveApplication(const Napi::CallbackInfo &info)
+{
     Napi::Env env = info.Env();
-    if (info[0].IsString()) {
+    if (info[0].IsString())
+    {
         return Napi::Boolean::New(
-            env, 
-            isAppActive(info[0].As<Napi::String>())
-        );
+            env,
+            isAppActive(info[0].As<Napi::String>()));
     }
     return Napi::Boolean::New(
-        env, 
-        isBitwigActive() || isPluginWindowActive()
-    );
+        env,
+        isBitwigActive() || isPluginWindowActive());
 }
 
-Napi::Value MakeMainWindowActive(const Napi::CallbackInfo &info) {
+Napi::Value MakeMainWindowActive(const Napi::CallbackInfo &info)
+{
     Napi::Env env = info.Env();
     auto uiEl = GetBitwigAXUIElement();
     auto success = false;
-    if (uiEl != NULL) {
+    if (uiEl != NULL)
+    {
         AXUIElementSetAttributeValue(uiEl, kAXFrontmostAttribute, kCFBooleanTrue);
         success = true;
     }
     return Napi::Boolean::New(
-        env, 
-        success
-    );
+        env,
+        success);
 }
 
-Napi::Value IsPluginWindowActive(const Napi::CallbackInfo &info) {
+Napi::Value IsPluginWindowActive(const Napi::CallbackInfo &info)
+{
     Napi::Env env = info.Env();
     return Napi::Boolean::New(
-        env, 
-        isPluginWindowActive()
-    );
+        env,
+        isPluginWindowActive());
 }
 
-Napi::Value CloseFloatingWindows(const Napi::CallbackInfo &info) {
+Napi::Value CloseFloatingWindows(const Napi::CallbackInfo &info)
+{
     Napi::Env env = info.Env();
-    closeWindowsForAXUIElement(GetPluginAXUIElement());
+    for (auto &elementRef : GetPluginAXUIElements())
+    {
+        closeWindowsForAXUIElement(elementRef);
+    }
     return Napi::Boolean::New(env, true);
 }
 
-Napi::Value GetAudioEnginePid(const Napi::CallbackInfo &info) {
+Napi::Value GetPid(const Napi::CallbackInfo &info)
+{
     Napi::Env env = info.Env();
-    auto pluginHostRef = GetPluginAXUIElement();
-    if (pluginHostRef) {
-        pid_t pid;
-        AXUIElementGetPid(pluginHostRef, &pid);
-        return Napi::Number::New(env, pid);
-    }
-    return Napi::Number::New(env, -1);
-}
-
-Napi::Value GetPid(const Napi::CallbackInfo &info) {
-    Napi::Env env = info.Env();
-    if (appDataByProcessName.count("Bitwig Studio") == 1) {
+    if (appDataByProcessName.count("Bitwig Studio") == 1)
+    {
         return Napi::Number::New(env, appDataByProcessName["Bitwig Studio"].pid);
     }
     return Napi::Number::New(env, -1);
 }
 
-void InitBitwigOS(Napi::Env env, Napi::Object exports) {
-    
+void InitBitwigOS(Napi::Env env, Napi::Object exports)
+{
 }
