@@ -94,7 +94,9 @@
     "__tuple": "cpp",
     "bitset": "cpp",
     "locale": "cpp",
-    "queue": "cpp"
+    "queue": "cpp",
+    "__bits": "cpp",
+    "shared_mutex": "cpp"
   },
   "search.exclude": {
     "**/node_modules": true,

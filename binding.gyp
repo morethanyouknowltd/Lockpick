@@ -21,25 +21,25 @@
       'variables': {
         'HOSTNAME': '<!(node -e "console.log(require(\'os\').hostname())")'
       },
-      'cflags!': [ 
-        '-fno-exceptions', 
+      'cflags!': [
+        '-fno-exceptions',
         '-Wno-unused-variable',
         "-std=c++17"
       ],
-      'cflags_cc!': [ 
-        '-fno-exceptions', 
-        '-Wno-unused-variable' 
+      'cflags_cc!': [
+        '-fno-exceptions',
+        '-Wno-unused-variable'
       ],
       'xcode_settings': {
         'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
         'CLANG_CXX_LIBRARY': 'libc++',
-        'MACOSX_DEPLOYMENT_TARGET': '10.7',
+        'MACOSX_DEPLOYMENT_TARGET': '10.13',
         'OTHER_CFLAGS': [ "-std=c++17" ]
       },
       'msvs_settings': {
-        'VCCLCompilerTool': { 
+        'VCCLCompilerTool': {
           'ExceptionHandling': 1,
-          'AdditionalOptions': [ '-std:c++latest' ] 
+          'AdditionalOptions': [ '-std:c++latest' ]
         }
       },
       'conditions': [

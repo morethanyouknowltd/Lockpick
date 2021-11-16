@@ -2,4 +2,4 @@
 #pragma once
 #include <vector>
 
-std::vector<pid_t> getAllPidsFromProcesses();
+bool shouldProcessEventForProcessId(pid_t pid);
