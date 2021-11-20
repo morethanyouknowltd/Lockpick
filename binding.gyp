@@ -18,9 +18,6 @@
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")"
       ],
-      'variables': {
-        'HOSTNAME': '<!(node -e "console.log(require(\'os\').hostname())")'
-      },
       'cflags!': [
         '-fno-exceptions',
         '-Wno-unused-variable',
@@ -68,11 +65,6 @@
           "src/connector/native/bitwig_mac.cc",
           "src/connector/native/ui_mac.cc"
         ]
-      }],
-      ['HOSTNAME=="Andrews-MacBook-Air.local"', {
-        'defines': [
-          'BIG_SUR'
-        ],
       }],
       ['OS=="win"', {
         'defines': [
