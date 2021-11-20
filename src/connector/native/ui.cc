@@ -30,7 +30,7 @@ int DIRECTION_RIGHT = 1;
 int AXIS_X = 0;
 int AXIS_Y = 1;
 
-optional<BitwigLayout> prevLayout;
+std::optional<BitwigLayout> prevLayout;
 
 // These are colors for midtones 28, black level 36
 // BenQ screen
@@ -248,7 +248,7 @@ bool ImageDeets::isWithinBounds(XYPoint point)
   return point.x >= 0 && point.y >= 0 && getPixelOffset(point) <= maxInclOffset;
 };
 
-optional<XYPoint> ImageDeets::seekUntilColor(
+std::optional<XYPoint> ImageDeets::seekUntilColor(
     XYPoint startPoint,
     std::function<bool(MWColor)> tester,
     int changeAxis,

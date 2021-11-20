@@ -10,6 +10,7 @@
     "start:new_user": "cross-env NODE_ENV=dev nodemon -V --watch ./dist . --exec 'yarn electron'",
     "start:eco": "cross-env QUIET_START=true NODE_ENV=dev yarn electron",
     "dev": "webpack-dev-server",
+    "build": "yarn build:renderer && yarn build:main && yarn buildc && yarn build:controller",
     "build:renderer": "webpack",
     "build:main": "npm run buildc && tsc --p tsconfig.server.json",
     "buildc:dev": "node-gyp -j 16 build --debug",

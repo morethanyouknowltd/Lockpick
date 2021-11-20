@@ -57,9 +57,9 @@ struct Arranger
 };
 struct BitwigLayout
 {
-  optional<EditorPanel> editor;
-  optional<Inspector> inspector;
-  optional<Arranger> arranger;
+  std::optional<EditorPanel> editor;
+  std::optional<Inspector> inspector;
+  std::optional<Arranger> arranger;
   bool modalOpen;
   Napi::Object toJSObject(Napi::Env env);
 };
@@ -89,7 +89,7 @@ struct ImageDeets
   bool isWithinBounds(XYPoint point);
   MWColor colorAt(XYPoint point);
 
-  optional<XYPoint> seekUntilColor(
+  std::optional<XYPoint> seekUntilColor(
       XYPoint startPoint,
       std::function<bool(MWColor)> tester,
       int changeAxis,
