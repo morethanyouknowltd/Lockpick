@@ -41,6 +41,10 @@ Mod.registerAction({
 
 function playWithEvent(event) {
     const mousePosBefore = Mouse.getPosition()
+
+    console.log(mousePosBefore.x, mousePosBefore.y)
+    console.log(UI.MainWindow.getFrame().x, UI.MainWindow.getFrame().y)
+
     const getClickPos = () => {
         if (UI.screenshotsEnabled) {
             const uiLayout = UI.MainWindow.getLayoutState()

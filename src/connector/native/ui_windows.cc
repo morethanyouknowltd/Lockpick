@@ -55,6 +55,6 @@ WindowInfo BitwigWindow::getFrame() {
 
 Napi::Value BitwigWindow::UpdateFrame(const Napi::CallbackInfo &info) {
     auto env = info.Env();
-    // this->lastBWFrame = getFrame();
+    this->lastBWFrame = getFrame();
     return Napi::Value();
 }
