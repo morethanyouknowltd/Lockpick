@@ -96,7 +96,13 @@
     "locale": "cpp",
     "queue": "cpp",
     "__bits": "cpp",
-    "shared_mutex": "cpp"
+    "shared_mutex": "cpp",
+    "charconv": "cpp",
+    "format": "cpp",
+    "xlocbuf": "cpp",
+    "xlocmes": "cpp",
+    "xlocmon": "cpp",
+    "xloctime": "cpp"
   },
   "search.exclude": {
     "**/node_modules": true,
