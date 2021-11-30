@@ -7,7 +7,6 @@ exports.default = async function notarizing(context) {
     return
   }
 
-  console.log('we are here')
   const env = process.env
   const appName = context.packager.appInfo.productFilename
 
@@ -26,6 +25,7 @@ exports.default = async function notarizing(context) {
       }
 
   return await notarize({
+    tool: 'notarytool',
     appBundleId: 'co.uk.morethanyouknow.lockpick',
     appPath: `${appOutDir}/${appName}.app`,
     ...opts,
