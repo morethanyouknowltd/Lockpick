@@ -21,6 +21,7 @@ exports.default = async function notarizing(context) {
       }
     : {
         appleId: env.APPLEID,
+        teamId: env.TEAMID,
         appleIdPassword: env.APPLEIDPASS,
       }
 

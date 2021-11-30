@@ -31,6 +31,7 @@ module.exports = {
     '!**/{appveyor.yml,.travis.yml,circle.yml}',
     '!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}',
   ],
+  npmRebuild: process.env.SKIP_REBUILD !== 'true',
   dmg: {
     background: null,
     backgroundColor: '#ffffff',
