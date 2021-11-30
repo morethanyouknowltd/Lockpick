@@ -76,12 +76,12 @@ CGEventRef eventtap_callback(CGEventTapProxy proxy, CGEventType type, CGEventRef
     return event;
   }
 
-  // auto targetPID = CGEventGetIntegerValueField(event, kCGEventTargetUnixProcessID);
-  // // If the target application is not bitwig, don't process the event at all
-  // if (!shouldProcessEventForProcessId(targetPID))
-  // {
-  //   return event;
-  // }
+  auto targetPID = CGEventGetIntegerValueField(event, kCGEventTargetUnixProcessID);
+  // If the target application is not bitwig, don't process the event at all
+  if (!shouldProcessEventForProcessId(targetPID))
+  {
+    return event;
+  }
 
   CallbackInfo *e = (CallbackInfo *)refcon;
 
