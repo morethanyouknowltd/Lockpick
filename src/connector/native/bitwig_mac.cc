@@ -33,13 +33,13 @@ void addProcessId(pid_t pid)
 {
   std::lock_guard<std::shared_mutex> g(processIdsMutex);
   processIds.insert(pid);
-  std::cout << "added" << pid << std::endl;
+  // std::cout << "added" << pid << std::endl;
 }
 void removeProcessId(pid_t pid)
 {
   std::lock_guard<std::shared_mutex> g(processIdsMutex);
   processIds.erase(pid);
-  std::cout << "removed" << pid << std::endl;
+  // std::cout << "removed" << pid << std::endl;
 }
 
 bool pidIsAlive(pid_t pid)

@@ -1,16 +1,14 @@
 .env
 *.icloud
 
-app/dist
-/build
-/dist
-/out
+/build/**
+/dist/**
+/out/**
 /extra-resources/controller-script/bes.control.js
 /extra-resources/controller-script/mods.js
 /extra-resources/built-mods
 /scripts/install
-
-producer-tools-src
+!/dist/preload.js
 
 node_modules
 .linaria-cache
@@ -32,4 +30,3 @@ ipch/
 # Visual Studio build files
 **/HookDll/x64
 
-!/dist/preload.js

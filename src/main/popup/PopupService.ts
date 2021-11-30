@@ -1,118 +1,111 @@
-import { addAPIMethod } from "../core/WebsocketToSocket"
-import { BESService, getService } from "../core/Service"
-import { SettingsService } from "../core/SettingsService"
-import { ShortcutsService } from "../shortcuts/ShortcutsService"
-import _ from 'underscore'
+import { BrowserWindow } from 'electron'
+import { APP_NAME } from '../../connector/shared/Constants'
 import { containsPoint } from '../../connector/shared/Rect'
-import { BitwigService } from "../bitwig/BitwigService"
-import { BrowserWindow } from "electron"
-import { url } from "../core/Url"
-import { UIService } from "../ui/UIService"
-import { logger } from "../core/Log"
-import { APP_NAME } from "../../connector/shared/Constants"
-import { getAppPath, getResourcePath } from "../../connector/shared/ResourcePath"
-const colors = require('colors');
+import { getAppPath } from '../../connector/shared/ResourcePath'
+import { logger } from '../core/Log'
+import { BESService, getService } from '../core/Service'
+import { SettingsService } from '../core/SettingsService'
+import { url } from '../core/Url'
+import { addAPIMethod } from '../core/WebsocketToSocket'
+import { UIService } from '../ui/UIService'
+const colors = require('colors')
 const { app, screen } = require('electron')
 const { Keyboard, Bitwig, UI, Mouse, MainWindow } = require('bindings')('bes')
 let nextId = 0
 
 interface PopupSpec {
+  /**
+   * Unique id for this popup. When opening a popup with the same id as one already existing,
+   * it will be replaced. Otherwise, a new popup will be created
+   */
+  id: string
+  component: String
+  props: any
+  rect: { x: number; y: number; w: number; h: number }
+  onReceivedData?: Function
 
-    /**
-     * Unique id for this popup. When opening a popup with the same id as one already existing, 
-     * it will be replaced. Otherwise, a new popup will be created
-     */
-    id: string,
-    component: String,
-    props: any
-    rect: {x: number, y: number, w: number, h: number}
-    onReceivedData?: Function
+  /**
+   * Defaults to false, whether the popup should stay onscreen
+   * even when "closeAll" methods are called
+   */
+  persistent?: boolean
 
-    /**
-     * Defaults to false, whether the popup should stay onscreen 
-     * even when "closeAll" methods are called
-     */
-    persistent?: boolean
+  /**
+   * Defaults to false, whether the popup should be clickable
+   */
+  clickable?: boolean
 
-    /**
-     * Defaults to false, whether the popup should be clickable
-     */
-    clickable?: boolean
-
-    /**
-     * Defaults to 3000, only releveant for non-clickable popups
-     */
-    timeout?: number
+  /**
+   * Defaults to 3000, only releveant for non-clickable popups
+   */
+  timeout?: number
 }
 
 interface OpenPopup {
-    popup: PopupSpec,
-    openedAt: Date,
-    closeTimeout?: any
-    clickedAt?: Date
+  popup: PopupSpec
+  openedAt: Date
+  closeTimeout?: any
+  clickedAt?: Date
 }
 
 // Popup opened for a specific period of time
 // While open, we can hover over to keep it open
 // Clicking opens a static, interactable version on the ClickableCanvas rather than standard canvas
 export class PopupService extends BESService {
+  // Other services
+  settingsService = getService<SettingsService>('SettingsService')
 
-    // Other services
-    settingsService = getService<SettingsService>('SettingsService')
+  // Internal state
+  currentPopups: { [id: string]: OpenPopup } = {}
+  mouseListenerRemoveCbs: Function[] = []
+  canvas = this.openWindow({ focusable: false, path: '/canvas' })
+  clickableCanvas = this.openWindow({ focusable: true, path: '/clickable-canvas' })
 
-    // Internal state
-    currentPopups: {[id: string] : OpenPopup} = {
+  isQuitting = false
 
+  // Events
+  events = {}
+
+  openWindow({ focusable, path }) {
+    const display = screen.getPrimaryDisplay()
+    const { width, height } = display.workAreaSize
+
+    // For windows, width and height must be scaled by DPI scaling
+    // Also, width/height must be reduced slightly for transparency to work correctly
+    // Don't ask me why...
+    const window = new BrowserWindow({
+      x: 0,
+      y: 0,
+      width: width - 4,
+      height: height - 4,
+      resizable: false,
+
+      show: !focusable,
+
+      frame: false,
+      alwaysOnTop: true,
+      hasShadow: false,
+      transparent: true,
+      focusable,
+      closable: false,
+
+      fullscreenable: false,
+      webPreferences: {
+        preload: getAppPath('/dist/preload.js'),
+      },
+    })
+    if (!focusable) {
+      window.setIgnoreMouseEvents(true)
     }
-    mouseListenerRemoveCbs: Function[] = []
-    canvas = this.openWindow({focusable: false, path: '/canvas'})
-    clickableCanvas = this.openWindow({focusable: true, path: '/clickable-canvas'})
+    window.loadURL(url(`/#/loading`))
+    // ;(floatingWindowInfo!.window as any).toggleDevTools()
 
-    isQuitting = false
-
-    // Events
-    events = {       
-        
-    }
-    
-    openWindow({focusable, path}) {
-        const display = screen.getPrimaryDisplay()
-        const { width, height } = display.workAreaSize
-
-        // For windows, width and height must be scaled by DPI scaling
-        // Also, width/height must be reduced slightly for transparency to work correctly
-        // Don't ask me why...
-        const window = new BrowserWindow({ 
-            x: 0,
-            y: 0,
-            width: width - 4, 
-            height: height - 4,
-            resizable: false,
-            
-            show: !focusable,
-
-            frame: false,
-            alwaysOnTop: true,
-            hasShadow: false,
-            transparent: true,
-            focusable,
-            closable: false,
-            
-            fullscreenable: false,
-            webPreferences: {
-                preload: getAppPath('/dist/preload.js')
-            }
-        })
-        if (!focusable) {
-            window.setIgnoreMouseEvents(true);
-        }
-        window.loadURL(url(`/#/loading`))
-        // ;(floatingWindowInfo!.window as any).toggleDevTools()    
-        
-        return {
-            sendProps: props => {
-                // this.log(`Sending props to ${focusable ? 'clickable canvas' : 'canvas'}:`, props)
-                window.webContents.executeJavaScript(`
+    return {
+      sendProps: props => {
+        // this.log(`Sending props to ${focusable ? 'clickable canvas' : 'canvas'}:`, props)
+        window.webContents
+          .executeJavaScript(
+            `
                     window.tryLoadURL = (tries = 0) => {
                         const path = \`${path}\`
                         window.data = ${JSON.stringify(props)}
@@ -130,291 +123,299 @@ export class PopupService extends BESService {
                         }
                     }
                     tryLoadURL()
-                `).then((propExecuteResult) => {
-                    // this.log(propExecuteResult)
-                }).catch(e => {
-                    logger.info(colors.red(e))
-                })
-            },
-            window
-        }
+                `
+          )
+          .then(propExecuteResult => {
+            // this.log(propExecuteResult)
+          })
+          .catch(e => {
+            logger.info(colors.red(e))
+          })
+      },
+      window,
+    }
+  }
+
+  refreshPopups() {
+    const mapPopupToRenderer = p => {
+      return p.popup
     }
 
-    refreshPopups() {
-        const mapPopupToRenderer = p => {
-            return p.popup
-        }
+    // Inert popups
+    const inert = Object.values(this.currentPopups)
+      .filter(p => {
+        return !p.clickedAt
+      })
+      .map(mapPopupToRenderer)
+    this.canvas.sendProps({
+      popups: inert,
+    })
+    // We always want to show the inert canvas because its used for other stuff than just popups e.g. notifications
+    this.canvas.window.showInactive()
 
-        // Inert popups
-        const inert = Object.values(this.currentPopups).filter(p => {
-            return !p.clickedAt
-        }).map(mapPopupToRenderer)
-        this.canvas.sendProps({
-            popups: inert
-        })
-        // We always want to show the inert canvas because its used for other stuff than just popups e.g. notifications
-        this.canvas.window.showInactive()
-        
-        // Clickable popups
-        const clickable = Object.values(this.currentPopups).filter(p => {
-            return p.clickedAt
-        }).map(mapPopupToRenderer)
-        this.clickableCanvas.sendProps({
-            popups: clickable
-        })
-        if (clickable.length === 0) {
-            this.clickableCanvas.window.hide()
-        } else {
-            this.clickableCanvas.window.show()
-        }
+    // Clickable popups
+    const clickable = Object.values(this.currentPopups)
+      .filter(p => {
+        return p.clickedAt
+      })
+      .map(mapPopupToRenderer)
+    this.clickableCanvas.sendProps({
+      popups: clickable,
+    })
+    if (clickable.length === 0) {
+      this.clickableCanvas.window.hide()
+    } else {
+      this.clickableCanvas.window.show()
     }
+  }
 
-    showMessage = (msg, { timeout } = { timeout: 5000 }) => {
-        this.canvas.sendProps({
-            notifications: [
-                {
-                    content: msg,
-                    id: nextId++,
-                    timeout,
-                    date: new Date().getTime()
-                }   
-            ]
-        })
-    }
+  showMessage = (msg, { timeout } = { timeout: 5000 }) => {
+    this.canvas.sendProps({
+      notifications: [
+        {
+          content: msg,
+          id: nextId++,
+          timeout,
+          date: new Date().getTime(),
+        },
+      ],
+    })
+  }
 
-    showNotification = (notification) => {
-        this.canvas.sendProps({
-            notifications: [
-                {
-                    id: nextId++,
-                    timeout: notification.timeout ?? 3000,
-                    date: new Date().getTime(),
-                    ...notification,
-                }   
-                
-            
-            ]
-        })
-    }
-    
-    updateCanvas = (state) => {
-        this.canvas.sendProps(state)
-    }
+  showNotification = notification => {
+    this.canvas.sendProps({
+      notifications: [
+        {
+          id: nextId++,
+          timeout: notification.timeout ?? 3000,
+          date: new Date().getTime(),
+          ...notification,
+        },
+      ],
+    })
+  }
 
-    /**
-     * Since tracking mouse moves can be quite expensive, we remove our listeners whenever
-     * any popups aren't open
-     */
-    addMouseListeners() {
-        this.log('Adding mouse listeners')
-        const checkIntersection = event => {
-            const { window } = this.clickableCanvas
-            if (!window.isFocused()) {
-                // Check if we intersect any open popups
-                for (const id in this.currentPopups) {
-                    const { clickedAt, popup } = this.currentPopups[id]
-                    if (!clickedAt && popup.clickable) {
-                        this.log(popup.rect, event)
-                        if (containsPoint(popup.rect, event)) {
-                            this.log('Switching popup over to clicked:', popup)
-                            this.currentPopups[id].clickedAt = new Date()
-                            clearTimeout(this.currentPopups[id].closeTimeout)
-                            window.show()
-                            this.refreshPopups()
-                            return
-                        } else {
-                            this.log('Popup did not contain point')
-                        }
-                    }
-                }
-            }
-        }
-        const intersectsAnything = (event) => {
-            for (const id in this.currentPopups) {
-                const { popup } = this.currentPopups[id]
-                if (!popup.clickable && containsPoint(popup.rect, event)) {
-                   return true
-                }
-            }
-            return false
-        }
-        const uiSevice = getService<UIService>("UIService")
-        // this.mouseListenerRemoveCbs.push(uiSevice.Mouse.on('mousemove', (_ as any).throttle(event => {
-        //     // Mouse move
-        //     if (intersectsAnything(event)) {
-        //         this.canvas.window.setOpacity(.5)
-        //     } else {
-        //         this.canvas.window.setOpacity(1)
-        //     }
-        // }, 100)))
-        this.mouseListenerRemoveCbs.push(uiSevice.Mouse.on('mouseup', event => {
-            // Mouse up
-            if (event.button === 0) {
-                checkIntersection(event)
-            }
-        }))
-    }
+  updateCanvas = state => {
+    this.canvas.sendProps(state)
+  }
 
-    removeMouseListeners() {
-        // this.log('Removing mouse listeners')
-        // for (const cb of this.mouseListenerRemoveCbs) {
-        //     cb()
-        // }
-        // this.mouseListenerRemoveCbs = []
-    }
-
-    openPopup = (popup: PopupSpec) => {
-        const wasIn = popup.id in this.currentPopups
-        const prevData = this.currentPopups[popup.id]
-        const data: OpenPopup = prevData || {
-            popup,
-            openedAt: new Date()
-        }
-        data.popup = popup
-        this.currentPopups[popup.id] = data
-        this.refreshPopups()
-        if (!wasIn && this.mouseListenerRemoveCbs.length === 0) {
-            this.addMouseListeners()
-        }
-        if (typeof popup.timeout === 'number' && !data.clickedAt) {
-            if (data.closeTimeout) {
-                this.log('Clearing timeout')
-                clearTimeout(data.closeTimeout)
-            }
-            this.log('Setting timeout')
-            data.closeTimeout = setTimeout(() => {
-                this.closePopup(popup.id)
-            }, popup.timeout)
-        }
-    }
-
-    closePopup = (id: string, noRefresh = false) => {
-        if (!(id in this.currentPopups)) {
-            // this.log(`Tried to close popup that didn't exist (id: ${id})`)
-            return
-        }
-        const data = this.currentPopups[id]
-        if (data.closeTimeout) {
-            clearTimeout(data.closeTimeout)
-        }
-        delete this.currentPopups[id]
-        if (!noRefresh) {
-            this.refreshPopups()
-            if (Object.keys(this.currentPopups).length === 0 && this.mouseListenerRemoveCbs.length > 0) {
-                this.removeMouseListeners()
-            }
-        }
-    }
-
-    closeAllPopups = () => {
+  /**
+   * Since tracking mouse moves can be quite expensive, we remove our listeners whenever
+   * any popups aren't open
+   */
+  addMouseListeners() {
+    this.log('Adding mouse listeners')
+    const checkIntersection = event => {
+      const { window } = this.clickableCanvas
+      if (!window.isFocused()) {
+        // Check if we intersect any open popups
         for (const id in this.currentPopups) {
-            const popupInfo = this.currentPopups[id]
-            if (!popupInfo.popup.persistent) {
-                this.closePopup(id, true)
+          const { clickedAt, popup } = this.currentPopups[id]
+          if (!clickedAt && popup.clickable) {
+            this.log(popup.rect, event)
+            if (containsPoint(popup.rect, event)) {
+              this.log('Switching popup over to clicked:', popup)
+              this.currentPopups[id].clickedAt = new Date()
+              clearTimeout(this.currentPopups[id].closeTimeout)
+              window.show()
+              this.refreshPopups()
+              return
+            } else {
+              this.log('Popup did not contain point')
             }
+          }
         }
-        this.refreshPopups()
-        Bitwig.makeMainWindowActive();
+      }
     }
-
-    getApi({ makeEmitterEvents, onReloadMods, mod }) {
-        const maybeStillOpenForMod: any[] = []
-        const api = {
-            Popup: {
-                openPopup: (popup: PopupSpec) => {
-                    if (!mod.enabled) {
-                        return
-                    }
-                    const id = popup.id
-                    maybeStillOpenForMod.push(id)
-                    this.openPopup(popup)
-                    onReloadMods(() => {
-                        if (id in this.currentPopups) {
-                            this.closePopup(id)
-                        }
-                    })
-                }, 
-                closePopup: (...args) => {
-                    if (!mod.enabled) {
-                        return
-                    }
-                    ;(this.closePopup as any)(...args)
-                },
-                closeAll: () => {
-                    if (!mod.enabled) {
-                        return
-                    }
-                    for (const id of maybeStillOpenForMod) {
-                        this.closePopup(id)
-                    }
-                }
-            }
+    const intersectsAnything = event => {
+      for (const id in this.currentPopups) {
+        const { popup } = this.currentPopups[id]
+        if (!popup.clickable && containsPoint(popup.rect, event)) {
+          return true
         }
-        return api
+      }
+      return false
     }
+    const uiSevice = getService<UIService>('UIService')
+    // this.mouseListenerRemoveCbs.push(uiSevice.Mouse.on('mousemove', (_ as any).throttle(event => {
+    //     // Mouse move
+    //     if (intersectsAnything(event)) {
+    //         this.canvas.window.setOpacity(.5)
+    //     } else {
+    //         this.canvas.window.setOpacity(1)
+    //     }
+    // }, 100)))
+    this.mouseListenerRemoveCbs.push(
+      uiSevice.Mouse.on('mouseup', event => {
+        // Mouse up
+        if (event.button === 0) {
+          checkIntersection(event)
+        }
+      })
+    )
+  }
 
-    ensureCanvasShown() {
+  removeMouseListeners() {
+    // this.log('Removing mouse listeners')
+    // for (const cb of this.mouseListenerRemoveCbs) {
+    //     cb()
+    // }
+    // this.mouseListenerRemoveCbs = []
+  }
 
+  openPopup = (popup: PopupSpec) => {
+    const wasIn = popup.id in this.currentPopups
+    const prevData = this.currentPopups[popup.id]
+    const data: OpenPopup = prevData || {
+      popup,
+      openedAt: new Date(),
     }
-
-    async activate() {
-        addAPIMethod('api/popups/data', async data => {
-            this.log('Got popup data:', data)
-            if (data.popupId in this.currentPopups) {
-                const popup = this.currentPopups[data.popupId]
-                if (typeof popup.popup.onReceivedData === 'function') {
-                    popup.popup.onReceivedData(data)
-                }
-            }
-        })
-        addAPIMethod('api/popups/close-all', async data => {
-            this.closeAllPopups()
-        })
-        app.on('before-quit', event => {
-            this.log('Before quit')
-            
-            if (!this.isQuitting) {
-                this.canvas.window.close()
-                this.clickableCanvas.window.close()
-                
-                this.canvas.window.destroy()
-                this.clickableCanvas.window.destroy()
-
-                ;(this.canvas as any).window = null
-                ;(this.clickableCanvas as any).window = null
-
-                this.isQuitting = true
-            }
-        })
-
-        await this.settingsService.insertSettingIfNotExist({
-            key: 'notifications-actions',
-            value: {enabled: true},
-            type: 'boolean'
-        })
-        await this.settingsService.insertSettingIfNotExist({
-            key: 'notifications-reloading',
-            value: {enabled: true},
-            type: 'boolean'
-        })
+    data.popup = popup
+    this.currentPopups[popup.id] = data
+    this.refreshPopups()
+    if (!wasIn && this.mouseListenerRemoveCbs.length === 0) {
+      this.addMouseListeners()
     }
-
-    async postActivate() {
-        const uiService = getService<UIService>("UIService")
-        uiService.Mouse.on('keyup', event => {
-            if (Bitwig.isActiveApplication() || Bitwig.isActiveApplication("Electron") || Bitwig.isActiveApplication(APP_NAME)) {
-                if (event.lowerKey === 'Escape') {
-                    this.closeAllPopups()
-                }
-                if (!this.isQuitting) {
-                    this.canvas.window.showInactive()
-                }
-            }
-        })
-        uiService.Mouse.on('mouseup', event => {
-            if (Bitwig.isActiveApplication() && !this.isQuitting) {
-                this.canvas.window.showInactive()
-            }
-        })
+    if (typeof popup.timeout === 'number' && !data.clickedAt) {
+      if (data.closeTimeout) {
+        this.log('Clearing timeout')
+        clearTimeout(data.closeTimeout)
+      }
+      this.log('Setting timeout')
+      data.closeTimeout = setTimeout(() => {
+        this.closePopup(popup.id)
+      }, popup.timeout)
     }
+  }
+
+  closePopup = (id: string, noRefresh = false) => {
+    if (!(id in this.currentPopups)) {
+      // this.log(`Tried to close popup that didn't exist (id: ${id})`)
+      return
+    }
+    const data = this.currentPopups[id]
+    if (data.closeTimeout) {
+      clearTimeout(data.closeTimeout)
+    }
+    delete this.currentPopups[id]
+    if (!noRefresh) {
+      this.refreshPopups()
+      if (Object.keys(this.currentPopups).length === 0 && this.mouseListenerRemoveCbs.length > 0) {
+        this.removeMouseListeners()
+      }
+    }
+  }
+
+  closeAllPopups = () => {
+    for (const id in this.currentPopups) {
+      const popupInfo = this.currentPopups[id]
+      if (!popupInfo.popup.persistent) {
+        this.closePopup(id, true)
+      }
+    }
+    this.refreshPopups()
+    Bitwig.makeMainWindowActive()
+  }
+
+  getApi({ makeEmitterEvents, onReloadMods, mod }) {
+    const maybeStillOpenForMod: any[] = []
+    const api = {
+      Popup: {
+        openPopup: (popup: PopupSpec) => {
+          if (!mod.enabled) {
+            return
+          }
+          const id = popup.id
+          maybeStillOpenForMod.push(id)
+          this.openPopup(popup)
+          onReloadMods(() => {
+            if (id in this.currentPopups) {
+              this.closePopup(id)
+            }
+          })
+        },
+        closePopup: (...args) => {
+          if (!mod.enabled) {
+            return
+          }
+          ;(this.closePopup as any)(...args)
+        },
+        closeAll: () => {
+          if (!mod.enabled) {
+            return
+          }
+          for (const id of maybeStillOpenForMod) {
+            this.closePopup(id)
+          }
+        },
+      },
+    }
+    return api
+  }
+
+  ensureCanvasShown() {}
+
+  async activate() {
+    addAPIMethod('api/popups/data', async data => {
+      this.log('Got popup data:', data)
+      if (data.popupId in this.currentPopups) {
+        const popup = this.currentPopups[data.popupId]
+        if (typeof popup.popup.onReceivedData === 'function') {
+          popup.popup.onReceivedData(data)
+        }
+      }
+    })
+    addAPIMethod('api/popups/close-all', async data => {
+      this.closeAllPopups()
+    })
+    app.on('before-quit', event => {
+      this.log('Before quit')
+
+      if (!this.isQuitting) {
+        this.canvas.window.close()
+        this.clickableCanvas.window.close()
+
+        this.canvas.window.destroy()
+        this.clickableCanvas.window.destroy()
+        ;(this.canvas as any).window = null
+        ;(this.clickableCanvas as any).window = null
+
+        this.isQuitting = true
+      }
+    })
+
+    await this.settingsService.insertSettingIfNotExist({
+      key: 'notifications-actions',
+      value: { enabled: true },
+      type: 'boolean',
+    })
+    await this.settingsService.insertSettingIfNotExist({
+      key: 'notifications-reloading',
+      value: { enabled: true },
+      type: 'boolean',
+    })
+  }
+
+  async postActivate() {
+    const uiService = getService<UIService>('UIService')
+    uiService.Mouse.on('keyup', event => {
+      if (
+        Bitwig.isActiveApplication() ||
+        Bitwig.isActiveApplication('Electron') ||
+        Bitwig.isActiveApplication(APP_NAME)
+      ) {
+        if (event.lowerKey === 'Escape') {
+          this.closeAllPopups()
+        }
+        if (!this.isQuitting) {
+          this.canvas.window.showInactive()
+        }
+      }
+    })
+    uiService.Mouse.on('mouseup', event => {
+      if (Bitwig.isActiveApplication() && !this.isQuitting) {
+        this.canvas.window.showInactive()
+      }
+    })
+  }
 }

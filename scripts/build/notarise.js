@@ -7,6 +7,7 @@ exports.default = async function notarizing(context) {
     return
   }
 
+  console.log('we are here')
   const env = process.env
   const appName = context.packager.appInfo.productFilename
 
