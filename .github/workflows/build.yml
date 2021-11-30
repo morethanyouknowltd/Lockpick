@@ -8,8 +8,8 @@ jobs:
 
     strategy:
       matrix:
-        # change to [macos-latest, ubuntu-latest, windows-latest] when we support other OS ofc
-        os: [macos-latest]
+        # change to include ubuntu-latest, windows-latest when we support other OS ofc
+        os: [macos-11.6]
 
     steps:
       - name: Prepare for app notarization
@@ -25,7 +25,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v1
         with:
-          node-version: 16
+          node-version: 14
 
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
