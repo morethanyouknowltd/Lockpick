@@ -9,7 +9,7 @@ export interface SearchResult {
     isInCue?: boolean
 }
 const ScrollChunk = 20
-const { BrowserWindow, app} = require('electron').remote
+// const { app} = require('electron').remote
 
 function loadRecent10() {
     try {
@@ -235,14 +235,14 @@ export class TrackSearchView extends React.Component<SearchProps> {
         window.addEventListener('keydown', this.onKeyDown)
         window.addEventListener('keyup', this.onKeyUp)
 
-        app.on('browser-window-focus', event => {
-            // if (!this.props.options.lockQuery) {
-            //     this.setState({query: '', selectedId: null})
-            // }
-            send({
-                type: 'tracksearch/start'
-            })
-        })
+        // app.on('browser-window-focus', event => {
+        //     // if (!this.props.options.lockQuery) {
+        //     //     this.setState({query: '', selectedId: null})
+        //     // }
+        //     send({
+        //         type: 'tracksearch/start'
+        //     })
+        // })
     }
 
     componentWillUnmount() {

@@ -10,7 +10,7 @@ const src = path.join(__dirname, 'src', 'renderer')
 
 module.exports = {
     mode,
-    target: 'electron-renderer',
+    target: 'web',
     devServer: {
         historyApiFallback: true,
         contentBase: "./",

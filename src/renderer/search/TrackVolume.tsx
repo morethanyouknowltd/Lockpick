@@ -2,7 +2,6 @@ import React from 'react'
 import { styled } from 'linaria/react'
 import { send, getTrackById } from '../bitwig-api/Bitwig'
 import { clamp } from '../../connector/shared/Math'
-const { app } = require('electron').remote
 
 interface TrackVolumeProps extends React.ComponentProps<any> {
     track: any
