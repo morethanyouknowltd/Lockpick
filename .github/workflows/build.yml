@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         # change to include ubuntu-latest, windows-latest when we support other OS ofc
-        os: [macos-11.6]
+        os: [macos-latest]
 
     steps:
       - name: Prepare for app notarization
