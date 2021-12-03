@@ -18,6 +18,13 @@
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")"
       ],
+      'target_defaults': {
+        'configurations': {
+          'Debug': {
+            'defines': [ 'DEBUG' ],
+          },
+        },
+      },
       'cflags!': [
         '-fno-exceptions',
         '-Wno-unused-variable',

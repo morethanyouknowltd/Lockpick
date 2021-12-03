@@ -1,3 +1,4 @@
+require('@cspotcode/source-map-support').install()
 import { app, shell, BrowserWindow, Tray } from 'electron'
 import { ShortcutsService } from './shortcuts/ShortcutsService'
 import { registerService } from './core/Service'

@@ -77,11 +77,14 @@ CGEventRef eventtap_callback(CGEventTapProxy proxy, CGEventType type, CGEventRef
   }
 
   auto targetPID = CGEventGetIntegerValueField(event, kCGEventTargetUnixProcessID);
+
+#ifndef DEBUG
   // If the target application is not bitwig, don't process the event at all
   if (!shouldProcessEventForProcessId(targetPID))
   {
     return event;
   }
+#endif // DEBUG
 
   CallbackInfo *e = (CallbackInfo *)refcon;
 
