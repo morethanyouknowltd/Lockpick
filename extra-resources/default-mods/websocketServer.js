@@ -1,3 +1,4 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
 /**
  * @name Websocket Server
  * @id websocket-server

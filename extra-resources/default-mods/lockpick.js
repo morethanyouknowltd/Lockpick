@@ -1,3 +1,4 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
 /**
  * @name Lockpick
  * @description Meta actions
@@ -7,12 +8,12 @@
  */
 
 Mod.registerAction({
-    title: `Open Lockpick Preferences`,
-    id: "open-preferences",
-    action: () => {
-        Mod.runAction('open-preferences-internal')
-    },
-    defaultSetting: {
-        keys: ["Meta", "Shift", ","]
-    }
+  title: `Open Lockpick Preferences`,
+  id: 'open-preferences',
+  action: () => {
+    Mod.runAction('open-preferences-internal')
+  },
+  defaultSetting: {
+    keys: ['Meta', 'Shift', ','],
+  },
 })

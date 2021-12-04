@@ -1,24 +1,35 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn, Index, PrimaryColumn } from "typeorm"
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+  PrimaryColumn,
+} from 'typeorm'
 
-@Entity("Setting")
-@Index(["key", "mod"], { unique: true })
+@Entity('Setting')
+@Index(['key', 'mod'], { unique: true })
 export class Setting {
-    @PrimaryColumn()
-    key: string
+  @PrimaryColumn()
+  key: string
 
-    @Column()
-    value: string
-    
-    @Column({nullable: true})
-    mod: string
+  @Column()
+  value: string
 
-    @Index()
-    @Column()
-    type: string
+  @Column({ nullable: true })
+  mod: string
 
-    @CreateDateColumn()
-    created_at: Date;
+  @Index()
+  @Column()
+  type: string
 
-    @UpdateDateColumn()
-    updated_at: Date;
+  @CreateDateColumn()
+  created_at: Date
+
+  @UpdateDateColumn()
+  updated_at: Date
 }

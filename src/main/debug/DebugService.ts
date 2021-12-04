@@ -1,8 +1,5 @@
-import { BESService } from "../core/Service";
+import { BESService } from '../core/Service'
 
 export class DebugService extends BESService {
-
-    activate() {
-        
-    }
+  activate() {}
 }

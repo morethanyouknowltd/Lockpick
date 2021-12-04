@@ -1,3 +1,5 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
+
 /**
  * @name Rename Automation Lanes
  * @id rename-automation-lanes
@@ -28,7 +30,7 @@ function hideOverlay() {
 
 /**
  * Optionally provide selected track to prevent fetching data from
- * screenshot again. 
+ * screenshot again.
  */
 async function repositionAndShowOverlay(selectedTrack = null) {
     if (!selectedTrack) {
@@ -38,7 +40,7 @@ async function repositionAndShowOverlay(selectedTrack = null) {
         return hideOverlay()
     }
 
-    const data 
+    const data
     function draw() {
 
     }
@@ -51,7 +53,7 @@ async function repositionAndShowOverlay(selectedTrack = null) {
             rect: lane.rect,
             name: savedData[lane.id]
         })
-    } 
+    }
 
     UI.Canvas.inject(draw, {
 
@@ -85,9 +87,9 @@ Mouse.on('doubleClick', async event => {
     }
 })
 
-// From the WebKit documentation at: 
+// From the WebKit documentation at:
 // http://www.opensource.apple.com/source/WebKit/WebKit-7533.16/chromium/src/mac/WebInputEventFactory.mm
-    
+
     // Of Mice and Men
     // ---------------
     //

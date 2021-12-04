@@ -1,3 +1,5 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
+
 /**
  * @name Auto-save
  * @id auto-save
@@ -8,8 +10,8 @@
 transport.isPlaying().markInterested()
 
 packetManager.listen('auto-save/save', () => {
-    if (!transport.isPlaying().get()) {
-        showMessage('Autosaving...')
-        runAction('Save')
-    }
+  if (!transport.isPlaying().get()) {
+    showMessage('Autosaving...')
+    runAction('Save')
+  }
 })

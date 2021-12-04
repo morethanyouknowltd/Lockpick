@@ -1,3 +1,5 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
+
 /**
  * @name Ensure Unique Names
  * @id ensure-unique-names.modwig
@@ -7,14 +9,14 @@
  */
 
 Mod.registerAction({
-    title: "Rename All Tracks",
-    id: "rename-all.ensure-unique-names.modwig",
-    description: `Rename all visible tracks ensuring uniqueness.`,
-    defaultSetting: {
-        keys: ["R"],
-        fn: true
-    },
-    action: () => {
-        Bitwig.sendPacket({type: 'rename-all.ensure-unique-names.modwig'})
-    }
+  title: 'Rename All Tracks',
+  id: 'rename-all.ensure-unique-names.modwig',
+  description: `Rename all visible tracks ensuring uniqueness.`,
+  defaultSetting: {
+    keys: ['R'],
+    fn: true,
+  },
+  action: () => {
+    Bitwig.sendPacket({ type: 'rename-all.ensure-unique-names.modwig' })
+  },
 })

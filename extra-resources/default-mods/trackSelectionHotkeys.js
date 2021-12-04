@@ -1,3 +1,4 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
 /**
  * @name Track Selection Hotkeys
  * @id track-selection-hotkeys
@@ -15,8 +16,8 @@ let lastLoadI = -1
 let lastLoaded = new Date(0)
 
 const categories = {
-    numpad: Mod.registerActionCategory({title: "Track Numpad Selection"}),
-    history: Mod.registerActionCategory({title: "Track Back/Forward"}),
+  numpad: Mod.registerActionCategory({ title: 'Track Numpad Selection' }),
+  history: Mod.registerActionCategory({ title: 'Track Back/Forward' }),
 }
 
 // async function highlightNumber(key, context, projectData) {
@@ -104,70 +105,70 @@ trackHistory = []
 historyIndex = -1
 ignoreSelectionChangesCount = 0
 
-Bitwig.on('selectedTrackChanged', (curr) => {
-    // if (Controller.get(TrackSearchController).active) {
-    //     // Don't record track changes whilst highlighting search results
-    //     return
-    // }
-    const name = curr.name
+Bitwig.on('selectedTrackChanged', curr => {
+  // if (Controller.get(TrackSearchController).active) {
+  //     // Don't record track changes whilst highlighting search results
+  //     return
+  // }
+  const name = curr.name
 
-    if (name.trim().length == 0 || ignoreSelectionChangesCount > 0) {
-        ignoreSelectionChangesCount--
-        return
-    }
-    
-    trackHistory = trackHistory.slice(0, historyIndex + 1)
-    trackHistory.push(curr)
-    historyIndex++
+  if (name.trim().length == 0 || ignoreSelectionChangesCount > 0) {
+    ignoreSelectionChangesCount--
+    return
+  }
 
-    // Make sure history doesn't exceed max items
-    while (trackHistory.length > 10) {
-        trackHistory.splice(0, 1)
-        historyIndex--
-    }
+  trackHistory = trackHistory.slice(0, historyIndex + 1)
+  trackHistory.push(curr)
+  historyIndex++
+
+  // Make sure history doesn't exceed max items
+  while (trackHistory.length > 10) {
+    trackHistory.splice(0, 1)
+    historyIndex--
+  }
 })
 
-for (const dir of ["Previous", "Next"]) {
-    Mod.registerAction({
-        title: `Go to ${dir} Track`,
-        id: `go-to-${dir.toLowerCase()}-track`,
-        category: categories.history,
-        description: `Go to the ${dir.toLowerCase()} track in the track history. Currently doesn't support nested return tracks.`,
-        action: async () => {
-            if (dir === 'Previous') {
-                if (historyIndex > 0) {
-                    ignoreSelectionChangesCount++
-                    historyIndex--
-                    const name = trackHistory[historyIndex].name
-                    Bitwig.sendPacket({type: 'track/select', data: { name, allowExitGroup: true }})
-                }
-            } else {
-                if (historyIndex < trackHistory.length - 1) {
-                    ignoreSelectionChangesCount++
-                    historyIndex++
-                    const name = trackHistory[historyIndex].name
-                    Bitwig.sendPacket({type: 'track/select', data: { name, allowExitGroup: true }})
-                }
-            }
-            const dim = MainDisplay.getDimensions()
-            if (trackHistory.length > 1) {
-                Popup.openPopup({
-                    id: 'trackHistory',
-                    component: 'TrackHistoryPopup',
-                    props: {
-                        history: trackHistory,
-                        index: historyIndex
-                    },
-                    rect: {
-                        x: 0,
-                        y: 0,
-                        w: dim.w,
-                        h: dim.h
-                    },
-                    timeout: 800,
-                    clickable: false
-                })
-            }
+for (const dir of ['Previous', 'Next']) {
+  Mod.registerAction({
+    title: `Go to ${dir} Track`,
+    id: `go-to-${dir.toLowerCase()}-track`,
+    category: categories.history,
+    description: `Go to the ${dir.toLowerCase()} track in the track history. Currently doesn't support nested return tracks.`,
+    action: async () => {
+      if (dir === 'Previous') {
+        if (historyIndex > 0) {
+          ignoreSelectionChangesCount++
+          historyIndex--
+          const name = trackHistory[historyIndex].name
+          Bitwig.sendPacket({ type: 'track/select', data: { name, allowExitGroup: true } })
         }
-    })
+      } else {
+        if (historyIndex < trackHistory.length - 1) {
+          ignoreSelectionChangesCount++
+          historyIndex++
+          const name = trackHistory[historyIndex].name
+          Bitwig.sendPacket({ type: 'track/select', data: { name, allowExitGroup: true } })
+        }
+      }
+      const dim = MainDisplay.getDimensions()
+      if (trackHistory.length > 1) {
+        Popup.openPopup({
+          id: 'trackHistory',
+          component: 'TrackHistoryPopup',
+          props: {
+            history: trackHistory,
+            index: historyIndex,
+          },
+          rect: {
+            x: 0,
+            y: 0,
+            w: dim.w,
+            h: dim.h,
+          },
+          timeout: 800,
+          clickable: false,
+        })
+      }
+    },
+  })
 }

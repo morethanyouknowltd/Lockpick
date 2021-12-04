@@ -35,6 +35,7 @@ export interface TempActionSpec extends BaseActionSpec {
 }
 export interface ActionSpec extends BaseActionSpec {
   title: string
+  category?: string
   id: string
 
   /**

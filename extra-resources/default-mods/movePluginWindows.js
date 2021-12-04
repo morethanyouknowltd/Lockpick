@@ -1,3 +1,4 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
 /**
  * @name Manage Plugin Windows
  * @id move-plugin-windows
@@ -7,20 +8,20 @@
 
 const settings = {
   middleClickToDrag: await Mod.registerSetting({
-    id: "middle-click-to-drag",
-    name: "Middle-click drags plugin windows",
+    id: 'middle-click-to-drag',
+    name: 'Middle-click drags plugin windows',
     description: `Hold middle click over any plugin windows to quickly drag it around`,
   }),
   showPluginLabels: await Mod.registerSetting({
-    id: "show-plugin-labels",
+    id: 'show-plugin-labels',
     name: `Show Plugin Labels`,
     description: `Show labels on plugin windows when moving`,
   }),
 }
 
 const categories = {
-  moving: Mod.registerActionCategory({ title: "Moving Windows" }),
-  openingClosing: Mod.registerActionCategory({ title: "Opening/Closing" }),
+  moving: Mod.registerActionCategory({ title: 'Moving Windows' }),
+  openingClosing: Mod.registerActionCategory({ title: 'Opening/Closing' }),
 }
 
 const repositionLabels = () => {
@@ -32,7 +33,7 @@ const repositionLabels = () => {
   if (positions.length === 0) {
     return
   }
-  const sharedStart = (array) => {
+  const sharedStart = array => {
     var A = array.concat().sort(),
       a1 = A[0],
       a2 = A[A.length - 1],
@@ -41,22 +42,21 @@ const repositionLabels = () => {
     while (i < L && a1.charAt(i) === a2.charAt(i)) i++
     return a1.substring(0, i)
   }
-  let inCommon =
-    positions.length === 1 ? "" : sharedStart(positions.map((p) => p.id))
+  let inCommon = positions.length === 1 ? '' : sharedStart(positions.map(p => p.id))
   if (positions.length === 1) {
-    inCommon = positions[0].id.split(" / ").slice(-3).join(" / ")
+    inCommon = positions[0].id.split(' / ').slice(-3).join(' / ')
   }
-  const takeOffLastAndRemoveDuplicates = (str) => {
-    const parts = str.split(" / ")
+  const takeOffLastAndRemoveDuplicates = str => {
+    const parts = str.split(' / ')
     if (parts.length === 1) {
       return str
     }
-    return _.uniq(parts.slice(0, parts.length - 1)).join(" / ")
+    return _.uniq(parts.slice(0, parts.length - 1)).join(' / ')
   }
   for (const window of positions) {
     Popup.openPopup({
       id: window.id,
-      component: "PluginWindowWrap",
+      component: 'PluginWindowWrap',
       props: {
         content: takeOffLastAndRemoveDuplicates(
           positions.length === 1 ? inCommon : window.id.substr(inCommon.length)
@@ -70,8 +70,8 @@ const repositionLabels = () => {
 }
 
 Mod.registerAction({
-  title: "Show Plugin Window Labels",
-  id: "show-plugin-window-labels",
+  title: 'Show Plugin Window Labels',
+  id: 'show-plugin-window-labels',
   description: `Shows labels to easily identify plugin windows`,
   action: () => {
     repositionLabels()
@@ -79,90 +79,86 @@ Mod.registerAction({
 })
 
 Mod.registerAction({
-  id: "close-plugin-windows",
-  title: "Close Plugin Windows",
-  description: "Closes all currently open plugin windows",
+  id: 'close-plugin-windows',
+  title: 'Close Plugin Windows',
+  description: 'Closes all currently open plugin windows',
   category: categories.openingClosing,
   defaultSetting: {
-    keys: ["Escape"],
+    keys: ['Escape'],
     doubleTap: true,
   },
   action: () => Bitwig.closeFloatingWindows(),
 })
 
 Mod.registerAction({
-  title: "Move Plugin Windows To Corner",
-  id: "move-plugin-windows-offscreen",
+  title: 'Move Plugin Windows To Corner',
+  id: 'move-plugin-windows-offscreen',
   category: categories.moving,
   description: `Moves plugin windows out of the way to the corner of the screen, remembering their location for later restoration. Alternates between top right and bottom right corner.`,
-  contexts: ["-browser"],
+  contexts: ['-browser'],
   defaultSetting: {
-    keys: ["Escape"],
+    keys: ['Escape'],
   },
   action: async ({ forceState } = {}) => {
     const { state, positions } = await Db.getCurrentTrackData()
-    let newState = forceState
-      ? forceState
-      : state === "topright"
-      ? "bottomright"
-      : "topright"
+    let newState = forceState ? forceState : state === 'topright' ? 'bottomright' : 'topright'
 
     const pluginWindows = Bitwig.getPluginWindowsPosition()
     Db.setCurrentTrackData({
       // Only save current positions if we went from onscreen to offscreen
-      positions: state === "onscreen" ? pluginWindows : positions,
+      positions: state === 'onscreen' ? pluginWindows : positions,
       state: newState,
     })
 
     const mainWindowFrame = MainDisplay.getDimensions()
-    const offscreenPositions = Object.values(pluginWindows).map((info) => {
+    const offscreenPositions = Object.values(pluginWindows).map(info => {
       return {
         id: info.id,
         x: mainWindowFrame.w - info.w,
-        y: newState === "bottomright" ? mainWindowFrame.h - info.h : 0,
+        y: newState === 'bottomright' ? mainWindowFrame.h - info.h : 0,
       }
     })
 
-    Bitwig.setPluginWindowsPosition(_.indexBy(offscreenPositions, "id"))
+    Bitwig.setPluginWindowsPosition(_.indexBy(offscreenPositions, 'id'))
     Popup.closeAll()
   },
 })
 
 Mod.registerAction({
-  title: "Restore Plugin Windows From Corner",
-  id: "restore-plugin-windows-onscreen",
+  title: 'Restore Plugin Windows From Corner',
+  id: 'restore-plugin-windows-onscreen',
   category: categories.moving,
   description: `Restores the position of plugin windows previously moved to the corner.`,
-  contexts: ["-browser"],
+  contexts: ['-browser'],
   defaultSetting: {
-    keys: ["F1"],
+    keys: ['F1'],
   },
   action: async () => {
     const { positions, state } = await Db.getCurrentTrackData()
     if (!positions) {
-      return Bitwig.showMessage("No position data saved")
+      return Bitwig.showMessage('No position data saved')
     }
     Bitwig.setPluginWindowsPosition(positions)
     Db.setCurrentTrackData({
       positions,
-      state: "onscreen",
+      state: 'onscreen',
     })
     repositionLabels()
   },
 })
 
 Mod.registerAction({
-  title: "Tile Plugin Windows",
-  id: "tile-plugin-windows",
-  contexts: ["-browser"],
+  title: 'Tile Plugin Windows',
+  id: 'tile-plugin-windows',
+  contexts: ['-browser'],
   category: categories.moving,
   description: `Tile plugin windows in the center of the arranger.`,
   defaultSetting: {
-    keys: ["F2"],
+    keys: ['F2'],
   },
   action: () => {
-    const pluginWindows = Object.values(Bitwig.getPluginWindowsPosition()).sort(
-      (a, b) => (a.id < b.id ? -1 : 1)
+    const pluginWindows = Object.values(Bitwig.getPluginWindowsPosition()).sort((a, b) =>
+      a.id < b.id ? -1 : 1
     )
     if (pluginWindows.length === 0) {
       return
@@ -210,11 +206,11 @@ Mod.registerAction({
 
       const maxX = Math.max.apply(
         null,
-        out.map((pos) => pos.x + pos.w)
+        out.map(pos => pos.x + pos.w)
       )
       const maxY = Math.max.apply(
         null,
-        out.map((pos) => pos.y + pos.h)
+        out.map(pos => pos.y + pos.h)
       )
 
       const offsetX = (display.w - maxX) / 2
@@ -232,7 +228,7 @@ Mod.registerAction({
 
     Db.setCurrentTrackData({
       positions: finalPositions,
-      state: "onscreen",
+      state: 'onscreen',
     })
     repositionLabels()
   },
@@ -242,7 +238,7 @@ let downEvent = null
 let draggingWindowId = null
 let initialPositions = {}
 
-Mouse.on("mousedown", (event) => {
+Mouse.on('mousedown', event => {
   if (!settings.middleClickToDrag.value) {
     return
   }
@@ -258,7 +254,7 @@ Mouse.on("mousedown", (event) => {
   }
 })
 
-Mouse.on("mouseup", (event) => {
+Mouse.on('mouseup', event => {
   if (!settings.middleClickToDrag.value) {
     return
   }

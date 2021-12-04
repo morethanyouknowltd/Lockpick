@@ -13,7 +13,7 @@ const { app, screen } = require('electron')
 const { Keyboard, Bitwig, UI, Mouse, MainWindow } = require('bindings')('bes')
 let nextId = 0
 
-interface PopupSpec {
+export interface PopupSpec {
   /**
    * Unique id for this popup. When opening a popup with the same id as one already existing,
    * it will be replaced. Otherwise, a new popup will be created

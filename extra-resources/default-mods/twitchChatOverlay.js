@@ -1,3 +1,4 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
 /**
  * @name Twitch Chat Overlay
  * @id twitch-chat-overlay
@@ -9,16 +10,16 @@
 const chatHeight = 600
 const timerHeight = 115
 
-const { ChatClient } = require("dank-twitch-irc");
+const { ChatClient } = require('dank-twitch-irc')
 const showTwitchChat = await Mod.registerSetting({
   id: 'twitch-chat',
   name: 'Show Twitch Chat',
-  description: `Whether to show twitch chat overlay`
+  description: `Whether to show twitch chat overlay`,
 })
 const showTimer = await Mod.registerSetting({
   id: 'timer',
   name: 'Show Timer',
-  description: `Whether to show timer overlay`
+  description: `Whether to show timer overlay`,
 })
 showTwitchChat.setValue(true)
 showTimer.setValue(true)
@@ -28,17 +29,16 @@ const { w, h } = MainDisplay.getDimensions()
 
 let isFocusMode = false
 let chatMessages = []
-let client = new ChatClient();
-client.on("ready", () => {
-  log("Successfully connected to chat")
-  
-});
+let client = new ChatClient()
+client.on('ready', () => {
+  log('Successfully connected to chat')
+})
 
-client.on("close", (error) => {
+client.on('close', error => {
   if (error != null) {
-    log("Client closed due to error", error);
+    log('Client closed due to error', error)
   }
-});
+})
 
 const openTimerWithProps = props => {
   if (!showTimer.value) {
@@ -53,14 +53,14 @@ const openTimerWithProps = props => {
     persistent: true,
     props,
     rect: {
-        x: w - 800,
-        y: isFocusMode ? 0 : chatHeight,
-        w: 800,
-        h: timerHeight
+      x: w - 800,
+      y: isFocusMode ? 0 : chatHeight,
+      w: 800,
+      h: timerHeight,
     },
-    clickable: false
+    clickable: false,
   })
-  if (isFocusMode){
+  if (isFocusMode) {
     Popup.closePopup('twitch-chat')
   }
   openCueMarkerPopup()
@@ -78,9 +78,9 @@ const openTwitchChat = () => {
   }
   Popup.openPopup({
     id: 'twitch-chat',
-    component: "TwitchChat",
+    component: 'TwitchChat',
     props: {
-      messages: chatMessages
+      messages: chatMessages,
     },
     rect: {
       x: w - 800,
@@ -88,11 +88,11 @@ const openTwitchChat = () => {
       w: 800,
       h: chatHeight,
     },
-    persistent: true
+    persistent: true,
   })
 }
 
-client.on("PRIVMSG", async (msg) => {
+client.on('PRIVMSG', async msg => {
   const { messageText } = msg
   if (messageText.indexOf('!') === 0 && msg.senderUserID === '442061229') {
     if (messageText.indexOf('!timer') === 0) {
@@ -101,14 +101,14 @@ client.on("PRIVMSG", async (msg) => {
       if (parts[1] === 'stop') {
         await Db.setCurrentProjectData({
           ...data,
-          timer: null
+          timer: null,
         })
         isFocusMode = false
         openTwitchChat()
         openCueMarkerPopup()
         return Popup.closePopup('timer')
       }
-      const targetTime = moment(parts[1],'h:mma').toDate()
+      const targetTime = moment(parts[1], 'h:mma').toDate()
       const title = parts.slice(2).join(' ')
       const props = {
         to: targetTime.getTime(),
@@ -118,7 +118,7 @@ client.on("PRIVMSG", async (msg) => {
       openTimerWithProps(props)
       Db.setCurrentProjectData({
         ...data,
-        timer: props
+        timer: props,
       })
     }
   } else {
@@ -126,11 +126,11 @@ client.on("PRIVMSG", async (msg) => {
     chatMessages = chatMessages.slice(-100)
     openTwitchChat()
   }
-});
+})
 
 openTwitchChat()
-client.connect();
-client.join("theandyshand");
+client.connect()
+client.join('theandyshand')
 
 Mod.onExit(() => {
   client.close()
@@ -142,9 +142,7 @@ async function getRunningTimer(savedData) {
   if (!savedData) {
     savedData = await Db.getCurrentProjectData()
   }
-  return savedData.timer && savedData.timer.to > new Date().getTime() 
-    ? savedData.timer 
-    : null
+  return savedData.timer && savedData.timer.to > new Date().getTime() ? savedData.timer : null
 }
 
 async function openCueMarkerPopup(savedData) {
@@ -169,12 +167,12 @@ async function openCueMarkerPopup(savedData) {
       }),
     },
     rect: {
-        x: w - 800,
-        y: (isFocusMode ? 0 : chatHeight) + (runningTimer ? timerHeight : 0),
-        w: 800,
-        h: 300,
+      x: w - 800,
+      y: (isFocusMode ? 0 : chatHeight) + (runningTimer ? timerHeight : 0),
+      w: 800,
+      h: 300,
     },
-    persistent: true
+    persistent: true,
   })
 }
 
@@ -184,7 +182,7 @@ let startedPlaying = null
 
 Mod.interceptPacket('transport/play-start', undefined, ({ position }) => {
   lastPosition = position
-  // find cue marker for position 
+  // find cue marker for position
   lastMarker = Bitwig.cueMarkers.find((c, i, arr) => {
     const next = arr[i + 1]
     // log(c, lastPosition)
@@ -208,7 +206,7 @@ Bitwig.on('transportStateChanged', async state => {
       const cueMarkers = data.cueMarkers
       if (!cueMarkers[lastMarker.name]) {
         // Add data for marker if not exist
-        cueMarkers[lastMarker.name] = {entries: []}
+        cueMarkers[lastMarker.name] = { entries: [] }
       }
 
       const thisMarkerData = cueMarkers[lastMarker.name]
@@ -219,10 +217,10 @@ Bitwig.on('transportStateChanged', async state => {
       if (!findToday()) {
         thisMarkerData.entries.push({
           date: startOfToday,
-          duration: 0
+          duration: 0,
         })
       }
-      
+
       // Add that amount of time onto todays record for the cue marker we're in
       const todaysEntry = findToday()
       thisMarkerData.duration = (thisMarkerData.duration || 0) + timeSpentPlaying

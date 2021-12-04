@@ -1,3 +1,4 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
 /**
  * @name Track Selection Fixes
  * @id track-selection-fixes
@@ -8,9 +9,9 @@
 // Mouse.on('click', whenActiveListener(event => {
 //     if (event.button === 3 && !event.Shift && !event.Meta) {
 //         Mouse.returnAfter(() => {
-//             Mouse.click(0, { 
-//                 x: UI.MainWindow.getFrame().x + 186, 
-//                 y: event.y 
+//             Mouse.click(0, {
+//                 x: UI.MainWindow.getFrame().x + 186,
+//                 y: event.y
 //             })
 //         })
 //     }

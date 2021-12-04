@@ -1,3 +1,4 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
 /**
  * @name Open Plugin Windows
  * @id open-plugin-windows
@@ -6,41 +7,41 @@
  */
 
 const autoOpen = await Mod.registerSetting({
-    id: 'auto-open',
-    name: 'Automatically reopen plugins from last session',
-    description: `When switching tracks, plugin windows that were open last session (or last run of Lockpick) are reopened.`
+  id: 'auto-open',
+  name: 'Automatically reopen plugins from last session',
+  description: `When switching tracks, plugin windows that were open last session (or last run of Lockpick) are reopened.`,
 })
 
 async function hasTrackOpenedPlugins(trackName) {
-    const data = await Db.getCurrentProjectData()
-    return (data?.openedPluginsForTracks?.[trackName] ?? false) && data.pid === Bitwig.getPid()
+  const data = await Db.getCurrentProjectData()
+  return (data?.openedPluginsForTracks?.[trackName] ?? false) && data.pid === Bitwig.getPid()
 }
 
 async function setTrackHasOpenedPlugins(trackName) {
-    let data = await Db.getCurrentProjectData()
-    if (!data) {
-        // Project must not have been loaded
-        return
-    }
-    const pidNow = Bitwig.getPid()
-    if (data.pid !== pidNow) {
-        data.openedPluginsForTracks = {}
-        data.pid = pidNow
-    }
-    data.openedPluginsForTracks[trackName] = true
-    await Db.setCurrentProjectData(data)
+  let data = await Db.getCurrentProjectData()
+  if (!data) {
+    // Project must not have been loaded
+    return
+  }
+  const pidNow = Bitwig.getPid()
+  if (data.pid !== pidNow) {
+    data.openedPluginsForTracks = {}
+    data.pid = pidNow
+  }
+  data.openedPluginsForTracks[trackName] = true
+  await Db.setCurrentProjectData(data)
 }
 
 Mod.registerAction({
-    title: "Restore Open Plugin Windows",
-    id: "restore-open-plugin-windows",
-    description: `Restore all open plugin windows for the current track from the previous session.`,
-    defaultSetting: {
-        keys: ["Meta", "Alt", "O"]
-    },
-    action: async () => {
-        restoreOpenedPluginsForTrack(Bitwig.currentTrack.name)
-    }
+  title: 'Restore Open Plugin Windows',
+  id: 'restore-open-plugin-windows',
+  description: `Restore all open plugin windows for the current track from the previous session.`,
+  defaultSetting: {
+    keys: ['Meta', 'Alt', 'O'],
+  },
+  action: async () => {
+    restoreOpenedPluginsForTrack(Bitwig.currentTrack.name)
+  },
 })
 
 // Mod.registerAction({
@@ -59,8 +60,8 @@ Mod.registerAction({
 // })
 
 const getFocusedPluginWindow = () => {
-    const pluginWindows = Bitwig.getPluginWindowsPosition()
-    return Object.values(pluginWindows).find(w => w.focused)
+  const pluginWindows = Bitwig.getPluginWindowsPosition()
+  return Object.values(pluginWindows).find(w => w.focused)
 }
 // const toggleBypassFocusedPluginWindow = async () => {
 //     const focused = getFocusedPluginWindow()
@@ -159,7 +160,7 @@ const getFocusedPluginWindow = () => {
 //                 await Db.setCurrentProjectData({...rest, tracks: listsByTrackName})
 //             } else {
 //                 await Db.setCurrentProjectData({
-//                     ...rest, 
+//                     ...rest,
 //                     tracks: {
 //                         ...listsByTrackName,
 //                         [track]: list.filter(name => name !== deviceName)
@@ -183,110 +184,113 @@ const getFocusedPluginWindow = () => {
 // })
 
 Mouse.on('mouseup', async event => {
-    if (event.button === 0) {
-        const intersects = event.intersectsPluginWindows()
-        if (intersects) {
-            Db.setCurrentTrackData({
-                focusedPlugin: intersects.id
-            })
-        }
-    } else if (event.button === 3 && event.noModifiers()) { 
-        // const intersection = event.intersectsPluginWindows()
-        // if (intersection) {
-        //     if (!intersection.focused) {
-        //         const position = {
-        //             x: intersection.x + intersection.w - 10,
-        //             y: intersection.y + 5
-        //         }
-        //         Mouse.click(0, position)
-        //         Mouse.setPosition(event.x, event.y)
-        //         toggleBypassFocusedPluginWindow()
-        //     } else {
-        //         toggleBypassFocusedPluginWindow()
-        //     }
-        // }
+  if (event.button === 0) {
+    const intersects = event.intersectsPluginWindows()
+    if (intersects) {
+      Db.setCurrentTrackData({
+        focusedPlugin: intersects.id,
+      })
     }
+  } else if (event.button === 3 && event.noModifiers()) {
+    // const intersection = event.intersectsPluginWindows()
+    // if (intersection) {
+    //     if (!intersection.focused) {
+    //         const position = {
+    //             x: intersection.x + intersection.w - 10,
+    //             y: intersection.y + 5
+    //         }
+    //         Mouse.click(0, position)
+    //         Mouse.setPosition(event.x, event.y)
+    //         toggleBypassFocusedPluginWindow()
+    //     } else {
+    //         toggleBypassFocusedPluginWindow()
+    //     }
+    // }
+  }
 })
 
 async function restoreOpenedPluginsForTrack(track, presetNames) {
-    if (presetNames) {
-        return Bitwig.sendPacket({
-            type: 'open-plugin-windows/open-with-preset-name',
-            data: {
-                presetNames: _.indexBy(presetNames)
-            }
-        })
-    }
-
-    const data = await Db.getTrackData(track, { 
-        modId: 'move-plugin-windows'
+  if (presetNames) {
+    return Bitwig.sendPacket({
+      type: 'open-plugin-windows/open-with-preset-name',
+      data: {
+        presetNames: _.indexBy(presetNames),
+      },
     })
-    if (!data) {
-        // Project must not be loaded
-        return
-    }
-    const { positions } = data
-    const windowIds = Object.keys(positions || {})
-    if (windowIds.length) {
-        presetNames = windowIds.map(id => id.split('/').slice(-1).join('').trim())
-        log(`Reopening preset names: ${presetNames.join(', ')}`)
-        Bitwig.sendPacket({
-            type: 'open-plugin-windows/open-with-preset-name',
-            data: {
-                presetNames: _.indexBy(presetNames)
-            }
-        })
-    }
+  }
+
+  const data = await Db.getTrackData(track, {
+    modId: 'move-plugin-windows',
+  })
+  if (!data) {
+    // Project must not be loaded
+    return
+  }
+  const { positions } = data
+  const windowIds = Object.keys(positions || {})
+  if (windowIds.length) {
+    presetNames = windowIds.map(id => id.split('/').slice(-1).join('').trim())
+    log(`Reopening preset names: ${presetNames.join(', ')}`)
+    Bitwig.sendPacket({
+      type: 'open-plugin-windows/open-with-preset-name',
+      data: {
+        presetNames: _.indexBy(presetNames),
+      },
+    })
+  }
 }
 
 let prevPluginCount = 0
 let sameCount = 0
 
 async function restoreFocusedPluginWindowToTop(newTrack) {
-    const data = await Db.getTrackData(newTrack)
-    if (!data || !data.focusedPlugin) {
-        return
-    }
-    const { focusedPlugin } = data
+  const data = await Db.getTrackData(newTrack)
+  if (!data || !data.focusedPlugin) {
+    return
+  }
+  const { focusedPlugin } = data
 
-    const doIt = () => {
-        if (newTrack !== Bitwig.currentTrack.name) {
-            // Track has changed, abort!
-            return
-        }
-
-        const pluginOpenCount = Bitwig.getPluginWindowsCount()
-        // showMessage(pluginOpenCount)
-        if (pluginOpenCount > 1 && pluginOpenCount > prevPluginCount) {
-            // Every time we have more plugins, the last one could have opened over the the other
-            sameCount = 0
-            Bitwig.focusPluginWindow(focusedPlugin)
-            
-            setTimeout(() => Mod.runAction(`show-plugin-window-labels`), 250)
-            // showMessage(`Restoring focus of ${focusedPlugin}`)
-            prevPluginCount = pluginOpenCount
-            // Check again shortly (probs maximum time it could take to reopen a floating window?)
-            setTimeout(doIt, 250)
-        } else if (sameCount < 3) {
-            sameCount++
-            setTimeout(doIt, 250)
-        }
+  const doIt = () => {
+    if (newTrack !== Bitwig.currentTrack.name) {
+      // Track has changed, abort!
+      return
     }
 
-    doIt()
+    const pluginOpenCount = Bitwig.getPluginWindowsCount()
+    // showMessage(pluginOpenCount)
+    if (pluginOpenCount > 1 && pluginOpenCount > prevPluginCount) {
+      // Every time we have more plugins, the last one could have opened over the the other
+      sameCount = 0
+      Bitwig.focusPluginWindow(focusedPlugin)
+
+      setTimeout(() => Mod.runAction(`show-plugin-window-labels`), 250)
+      // showMessage(`Restoring focus of ${focusedPlugin}`)
+      prevPluginCount = pluginOpenCount
+      // Check again shortly (probs maximum time it could take to reopen a floating window?)
+      setTimeout(doIt, 250)
+    } else if (sameCount < 3) {
+      sameCount++
+      setTimeout(doIt, 250)
+    }
+  }
+
+  doIt()
 }
 
-Bitwig.on('selectedTrackChanged', debounce(async (track, prev) => {
+Bitwig.on(
+  'selectedTrackChanged',
+  debounce(async (track, prev) => {
     prevPluginCount = 0
     sameCount = 0
     restoreFocusedPluginWindowToTop(track.name)
 
     if (autoOpen.value) {
-        if (await hasTrackOpenedPlugins(track.name)) {
-            log('Track already has plugins opened')
-            return
-        }
-        restoreOpenedPluginsForTrack(track.name)
-        setTrackHasOpenedPlugins(track.name)
+      if (await hasTrackOpenedPlugins(track.name)) {
+        log('Track already has plugins opened')
+        return
+      }
+      restoreOpenedPluginsForTrack(track.name)
+      setTrackHasOpenedPlugins(track.name)
     }
-}, 250))
+  }, 250)
+)

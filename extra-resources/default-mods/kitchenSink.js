@@ -1,3 +1,4 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
 /**
  * @name Kitchen Sink
  * @description Actions still waiting to be converted to mods
@@ -7,18 +8,18 @@
 
 getActions() {
     return {
-        // GLOBAL 
+        // GLOBAL
         ...(this.actionsWithCategory('global', {
             openTrackSearch: {
                 action: () => {
                     // this.searchWindow.show()
-                }                
+                }
             },
             restoreAutomationControl: {
                 action: () => {
                     Bitwig.makeMainWindowActive()
                     sendPacketToBitwig({type: 'action', data: 'restore_automation_control'})
-                } 
+                }
             },
             goBack: {
                 description: 'Go back to the previous track in the selection history.',
@@ -95,7 +96,7 @@ getActions() {
 
         // ARRANGER
         ...(this.actionsWithCategory('arranger', {
-            
+
         })),
 
         // MISC

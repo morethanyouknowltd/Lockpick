@@ -1,3 +1,4 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
 /**
  * @name Remember Device View Scroll
  * @id device-view-scroll
@@ -10,31 +11,37 @@ let currTrackScroll = 0
 let middleMouseDown = false
 let lastX = 0
 
-const doScroll = (dX) => {
-    Mouse.returnAfter(() => {
-        const frame = UI.MainWindow.getFrame()
-        const startX = frame.x + frame.w - 50
-        const startY = frame.y + frame.h - 160
-        Mouse.setPosition(startX, startY)
-        Mouse.down(1)
-        Mouse.setPosition(startX - dX, startY)
-        Mouse.up(1)
-        middleMouseDown = false
-    })
+const doScroll = dX => {
+  Mouse.returnAfter(() => {
+    const frame = UI.MainWindow.getFrame()
+    const startX = frame.x + frame.w - 50
+    const startY = frame.y + frame.h - 160
+    Mouse.setPosition(startX, startY)
+    Mouse.down(1)
+    Mouse.setPosition(startX - dX, startY)
+    Mouse.up(1)
+    middleMouseDown = false
+  })
 }
 
-Mouse.on('mousedown', whenActiveListener(event => {
+Mouse.on(
+  'mousedown',
+  whenActiveListener(event => {
     if (event.y >= 1159 && event.x > 170) {
-        if (event.button === 1) {
-            middleMouseDown = true
-            lastX = event.x
-        }
+      if (event.button === 1) {
+        middleMouseDown = true
+        lastX = event.x
+      }
     }
-}))
+  })
+)
 
-Mouse.on('mouseup', whenActiveListener(event => {
+Mouse.on(
+  'mouseup',
+  whenActiveListener(event => {
     middleMouseDown = false
-}))
+  })
+)
 
 // Mouse.on('mousemove', whenActiveListener(event => {
 //     if (middleMouseDown) {
@@ -44,13 +51,13 @@ Mouse.on('mouseup', whenActiveListener(event => {
 //     }
 // }))
 
-Bitwig.on('selectedTrackChanged', async ( curr, prev ) => {
-    if (prev) {
-        Db.setTrackData(prev, {scroll: currTrackScroll})
-    }
+Bitwig.on('selectedTrackChanged', async (curr, prev) => {
+  if (prev) {
+    Db.setTrackData(prev, { scroll: currTrackScroll })
+  }
 
-    currTrackScroll = (await Db.getTrackData(curr.name)).scroll || 0
-    if (currTrackScroll > 0) {
-        doScroll(currTrackScroll)
-    }
+  currTrackScroll = (await Db.getTrackData(curr.name)).scroll || 0
+  if (currTrackScroll > 0) {
+    doScroll(currTrackScroll)
+  }
 })

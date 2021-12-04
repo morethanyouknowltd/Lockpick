@@ -1,4 +1,4 @@
-import { exec, spawn } from 'child_process'
+import { spawn } from 'child_process'
 import { clipboard } from 'electron'
 import { promises as fs } from 'fs'
 import * as path from 'path'
@@ -11,11 +11,10 @@ import { containsPoint, containsX, containsY } from '../../connector/shared/Rect
 import { getResourcePath } from '../../connector/shared/ResourcePath'
 import { BitwigService } from '../bitwig/BitwigService'
 import { buildModsPath } from '../config'
-import { createDirIfNotExist, exists as fileExists, rmRfDir, writeStrFile } from '../core/Files'
-import { lockpickFileLogger, lockpickLogFormatter, logger } from '../core/Log'
-import { BESService, getService, makeEvent } from '../core/Service'
+import { createDirIfNotExist, exists as fileExists, writeStrFile } from '../core/Files'
+import { lockpickFileLogger, logger } from '../core/Log'
+import { BESService, EventEmitter, getService, makeEvent } from '../core/Service'
 import { SettingsService } from '../core/SettingsService'
-import winston = require('winston')
 import {
   addAPIMethod,
   interceptPacket,
@@ -24,15 +23,17 @@ import {
   sendPacketToBrowser,
   SocketMiddlemanService,
 } from '../core/WebsocketToSocket'
-import glob = require('glob')
 import { getDb } from '../db'
 import { Project } from '../db/entities/Project'
 import { ProjectTrack } from '../db/entities/ProjectTrack'
 import { Setting } from '../db/entities/Setting'
 import { PopupService } from '../popup/PopupService'
-import { ShortcutsService } from '../shortcuts/ShortcutsService'
+import { ActionSpec, ShortcutsService } from '../shortcuts/ShortcutsService'
 import { UIService } from '../ui/UIService'
 import { normalizeBitwigAction } from './actionMap'
+
+import winston = require('winston')
+import glob = require('glob')
 import isBuiltInModule = require('is-builtin-module')
 const chokidar = require('chokidar')
 const colors = require('colors')
@@ -241,12 +242,20 @@ export class ModsService extends BESService {
       }
     }
 
-    const makeEmitterEvents = (mapOfKeysAndEmitters: { [key: string]: any }) => {
-      let handlers = {}
+    const makeEmitterEvents = <Keys extends string>(mapOfKeysAndEmitters: {
+      [K in Keys]: EventEmitter<any>
+    }) => {
+      const handlers: {
+        [K in Keys]: {
+          on: (cb: (data: any) => void) => any
+          off: (id: any) => void
+        }
+      } = {} as any
+
       for (const key in mapOfKeysAndEmitters) {
         const emitter = mapOfKeysAndEmitters[key]
         handlers[key] = {
-          on: (cb: Function) => {
+          on: (cb: (data: any) => void) => {
             if (!mod.enabled) {
               return
             }
@@ -266,7 +275,7 @@ export class ModsService extends BESService {
         }
       }
       const out = {
-        on: (eventName: string, cb: Function) => {
+        on: (eventName: Keys, cb: Function) => {
           if (!mod.enabled) {
             return () => {}
           }
@@ -279,7 +288,7 @@ export class ModsService extends BESService {
           }
           return handlers[eventName].on(wrappedCb)
         },
-        once: (eventName: string, cb: Function) => {
+        once: (eventName: Keys, cb: Function) => {
           if (!mod.enabled) {
             return
           }
@@ -288,7 +297,7 @@ export class ModsService extends BESService {
             cb(...args)
           })
         },
-        off: (eventName: string, id: number) => {
+        off: (eventName: Keys, id: number) => {
           if (!mod.enabled) {
             return
           }
@@ -298,13 +307,13 @@ export class ModsService extends BESService {
       return out
     }
 
-    const addNotAlreadyIn = (obj, parent) => {
+    const addNotAlreadyIn = <A, B>(obj: A & Partial<B>, parent: B): A & B => {
       for (const key in parent) {
         if (!(key in obj)) {
-          obj[key] = parent[key]
+          ;(obj as any)[key] = parent[key]
         }
       }
-      return obj
+      return obj as A & B
     }
     const thisApiId = nextId++
     const uiApi = this.uiService.getApi({
@@ -480,7 +489,7 @@ export class ModsService extends BESService {
             },
           })
         },
-        getTrackData: async (name, options: { modId?: string } = {}) => {
+        getTrackData: async (name: string, options: { modId?: string } = {}) => {
           if (!this.simplifiedProjectName) {
             this.logForMod(
               mod.id,
@@ -525,7 +534,7 @@ export class ModsService extends BESService {
           })
           return existingProject?.data[mod.id] ?? {}
         },
-        setTrackData: (name, data) => {
+        setTrackData: (name: string, data) => {
           if (!this.simplifiedProjectName) {
             this.logForMod(
               mod.id,
@@ -574,18 +583,28 @@ export class ModsService extends BESService {
       Mod: {
         hostVersion: APP_VERSION,
         id: mod.id,
-        setEnteringValue: val => {
+        /**
+         * Prevents shortcuts from being triggered if true
+         * @param isEnteringValue whether Lockpick should assume you are currently typing in a value for example
+         */
+        setEnteringValue: (isEnteringValue: boolean) => {
           if (!mod.enabled) {
             return
           }
-          this.shortcutsService.enteringValue = val
+          this.shortcutsService.enteringValue = isEnteringValue
         },
-        runAction: (actionId, ...args) => {
+        /**
+         * Run another Lockpick action by its internal action id
+         */
+        runAction: (actionId: string, ...args: any[]) => {
           if (!mod.enabled) {
             return
           }
           return this.shortcutsService.runAction(actionId, ...args)
         },
+        /**
+         * Run multiple Lockpick actions by their internal action ids
+         */
         runActions: (...actionIds: string[]) => {
           if (!mod.enabled) {
             return
@@ -667,7 +686,7 @@ export class ModsService extends BESService {
           settingApi.value = await settingApi.getValue()
           return settingApi
         },
-        registerAction: async action => {
+        registerAction: async (action: ActionSpec) => {
           if (action.id.indexOf('mod/') === 0) {
             throw new Error(`"mod/" is a reserved prefix`)
           }
@@ -728,7 +747,12 @@ export class ModsService extends BESService {
           }
           this.shortcutsService.unpauseCacheUpdate()
         },
-        registerActionsWithRange: (name, start, end, cb) => {
+        registerActionsWithRange: (
+          name: string,
+          start: number,
+          end: number,
+          cb: (i: number) => ActionSpec
+        ) => {
           for (let i = start; i <= end; i++) {
             const action = cb(i)
             action.id = name + i
@@ -811,7 +835,7 @@ export class ModsService extends BESService {
         this.popupService.showNotification(notif)
       },
     }
-    const wrapFunctionsWithTryCatch = (value, key?: string) => {
+    const wrapFunctionsWithTryCatch = <T>(value: T, key?: string): T => {
       if (typeof value === 'object') {
         for (const k in value) {
           const desc = Object.getOwnPropertyDescriptor(value, k)
@@ -822,7 +846,7 @@ export class ModsService extends BESService {
           }
         }
       } else if (typeof value === 'function') {
-        return (...args) => {
+        const fn: any = (...args) => {
           const called = value.name || key || 'Unknown function'
           try {
             // if (value !== api.log) {
@@ -842,6 +866,7 @@ export class ModsService extends BESService {
             throw e
           }
         }
+        return fn
       }
       return value
     }

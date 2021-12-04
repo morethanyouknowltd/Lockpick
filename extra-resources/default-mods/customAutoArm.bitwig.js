@@ -1,3 +1,5 @@
+/// <reference path="../lockpick-mod-api.d.ts" />
+
 /**
  * @name Custom Auto-Arm
  * @id custom-auto-arm
@@ -8,30 +10,30 @@
  */
 
 const autoArmFor = {
-    Instrument: true,
-    Hybrid: true
+  Instrument: true,
+  Hybrid: true,
 }
-const trackWorker = (t) => {
-    if (t) {
-        t.arm().set(true)
-    } else {
-        tracks.forEach((t) => {
-            t.arm().set(false);
-        })
-    }
+const trackWorker = t => {
+  if (t) {
+    t.arm().set(true)
+  } else {
+    tracks.forEach(t => {
+      t.arm().set(false)
+    })
+  }
 }
 
 tracks.forEach((t, i) => {
-    t.addIsSelectedObserver(selected => {
-        if (!Mod.enabled) {
-            return
-        }
-        if (selected) {
-            if(t.trackType().get() in autoArmFor) {
-                trackWorker(t)
-            } else {
-                trackWorker(null)
-            }
-        }
-    })
+  t.addIsSelectedObserver(selected => {
+    if (!Mod.enabled) {
+      return
+    }
+    if (selected) {
+      if (t.trackType().get() in autoArmFor) {
+        trackWorker(t)
+      } else {
+        trackWorker(null)
+      }
+    }
+  })
 })

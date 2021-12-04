@@ -24,6 +24,21 @@
       "MIMode": "lldb"
     },
     {
+      "name": "Example",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
+      "args": ["src/meta/generateModApi.ts", "--example", "hello"],
+      "restart": true,
+      "env": {
+        "TS_NODE_PROJECT": "./tsconfig.meta.json"
+      },
+      "cwd": "${workspaceRoot}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"]
+    },
+    {
       "name": "(Windows) Launch",
       "type": "cppvsdbg",
       "request": "launch",
