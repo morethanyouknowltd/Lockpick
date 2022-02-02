@@ -5,6 +5,7 @@
  * @description Creates a websocket server that broadcasts keypresses - use with caution! (privacy n stuff)
  * @category global
  * @applications Figma
+ * @disabled
  */
 
 const PORT = 12346

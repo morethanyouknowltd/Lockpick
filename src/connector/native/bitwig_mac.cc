@@ -317,6 +317,18 @@ Napi::Value SetPluginWindowsPosition(const Napi::CallbackInfo &info)
         auto position = (CFTypeRef)(AXValueCreate((AXValueType)kAXValueCGPointType, (const void *)&newPoint));
         AXUIElementSetAttributeValue(itemRef, kAXPositionAttribute, position);
         CFRelease(position);
+
+        // Now set the window size too
+        CGSize newSize;
+        newSize.width = posForWindow.Get("w").As<Napi::Number>();
+        newSize.height = posForWindow.Get("h").As<Napi::Number>();
+
+        if (newSize.width > 0 && newSize.height > 0)
+        {
+          auto size = (CFTypeRef)(AXValueCreate((AXValueType)kAXValueCGSizeType, (const void *)&newSize));
+          AXUIElementSetAttributeValue(itemRef, kAXSizeAttribute, size);
+          CFRelease(size);
+        }
       }
       CFRelease(windowArray);
     }
@@ -387,6 +399,18 @@ void closeWindowsForAXUIElement(AXUIElementRef elementRef)
   }
 }
 
+std::string subroleForWindow(AXUIElementRef windowRef)
+{
+  CFStringRef roleRef;
+  std::string role = "";
+  if (AXUIElementCopyAttributeValue(windowRef, kAXSubroleAttribute, (CFTypeRef *)&roleRef) == kAXErrorSuccess)
+  {
+    role = CFStringToString(roleRef);
+    CFRelease(roleRef);
+  }
+  return role;
+}
+
 bool isAXUIElementActiveApp(AXUIElementRef element)
 {
   if (!element)
@@ -396,17 +420,35 @@ bool isAXUIElementActiveApp(AXUIElementRef element)
   CFBooleanRef isFrontmost;
   AXUIElementCopyAttributeValue(element, kAXFrontmostAttribute, (CFTypeRef *)&isFrontmost);
   bool is = isFrontmost == kCFBooleanTrue;
+
+  // TODO kAXFocusedUIElementAttribute may be of interest here at some stage
+  // Get the focused window
+  AXUIElementRef focusedWindow;
+  AXUIElementCopyAttributeValue(element, kAXFocusedWindowAttribute, (CFTypeRef *)&focusedWindow);
+  if (focusedWindow != NULL)
+  {
+    auto role = subroleForWindow(focusedWindow);
+    // std::cout << "Focused window role: " << role << std::endl;
+    CFRelease(focusedWindow);
+    if (role == "AXDialog")
+    {
+      return false;
+    }
+  }
+
   return is;
 }
 
 bool isAppActive(std::string app)
 {
+  std::cout << "isAppActive " << app << std::endl;
   if (!activeAppDirty)
   {
     return activeApp == app;
   }
   auto axUIEl = findAXUIElementByName(app);
   auto active = isAXUIElementActiveApp(axUIEl);
+
   if (active)
   {
     activeApp = app;
