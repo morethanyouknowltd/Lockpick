@@ -2,6 +2,15 @@
   "folders": [
     {
       "path": "."
+    },
+    {
+      "path": "../lockpick-shared"
+    },
+    {
+      "path": "../lockpick-website"
+    },
+    {
+      "path": "../korus-api"
     }
   ],
   "settings": {
@@ -90,6 +99,7 @@
       "xlocmes": "cpp",
       "xlocmon": "cpp",
       "xloctime": "cpp"
-    }
+    },
+    "typescript.tsdk": "Lockpick/node_modules/typescript/lib"
   }
 }

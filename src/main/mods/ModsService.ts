@@ -31,6 +31,7 @@ import { PopupService } from '../popup/PopupService'
 import { ActionSpec, ShortcutsService } from '../shortcuts/ShortcutsService'
 import { UIService } from '../ui/UIService'
 import { normalizeBitwigAction } from './actionMap'
+const execSync = require('child_process').execSync
 
 import winston = require('winston')
 import glob = require('glob')
@@ -581,6 +582,7 @@ export class ModsService extends BESService {
         },
       },
       Mod: {
+        _execSync: execSync,
         hostVersion: APP_VERSION,
         id: mod.id,
         /**

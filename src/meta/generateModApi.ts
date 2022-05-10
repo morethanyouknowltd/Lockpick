@@ -4,7 +4,6 @@ import path = require('path')
 
 const formatopts = TypeFormatFlags.NoTruncation | TypeFormatFlags.NoTypeReduction
 const project = new Project({
-  tsConfigFilePath: 'tsconfig.server.json',
   skipAddingFilesFromTsConfig: true,
 })
 
