@@ -12,9 +12,8 @@ exports.default = async function notarizing(context) {
 
   // We notarise differently depending on whether running locally or
   // Github actions. Either are fine
-  const opts = env.API_KEY
+  const opts = env.API_KEY_ID
     ? {
-        appleApiKey: env.API_KEY,
         appleApiKeyId: env.API_KEY_ID,
         appleApiIssuer: env.API_KEY_ISSUER_ID,
       }
