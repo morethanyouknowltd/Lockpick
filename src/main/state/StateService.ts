@@ -2,12 +2,19 @@ import { fromSnapshot, ModelData } from 'mobx-keystone'
 import { BitwigState } from '../../connector/shared/state/BitwigState'
 import KorusStateServer from '../../connector/shared/state/KorusStateServer'
 import { RootState } from '../../connector/shared/state/rootStore'
+import { debounce } from 'lodash'
 import { jsonPath } from '../config'
 import { BESService } from '../core/Service'
-import { addAPIMethod, sendPacketToBrowser } from '../core/WebsocketToSocket'
+import {
+  addAPIMethod,
+  interceptPacket,
+  sendPacketToBitwigPromise,
+  sendPacketToBrowser,
+} from '../core/WebsocketToSocket'
 
 export class StateService extends BESService {
   server: KorusStateServer
+  bitwigUpdateInterval: any
   constructor() {
     super('state')
   }
@@ -42,6 +49,13 @@ export class StateService extends BESService {
     })
     addAPIMethod('api/korus/initial-state', () => {
       return this.server.getInitialState()
+    })
+
+    interceptPacket('browser/state', undefined, ({ data }) => {
+      console.log(data)
+    })
+    interceptPacket('transport/state', undefined, ({ data: state }) => {
+      console.log(state)
     })
   }
 

@@ -15,8 +15,7 @@ import { addPacketListener, callAPI } from '../bitwig-api/Bitwig'
 
 let serverAction = false
 function useKorusState() {
-  // we get the snapshot from the server, which is a serializable object
-
+  // Keep this otherwise the import to RootState gets automatically removed
   const testState = new RootState({
     bitwig: new BitwigState({
       activeProject: undefined,
@@ -43,38 +42,36 @@ function useKorusState() {
 
   useEffect(() => {
     const packetListener = addPacketListener(`korus/state-message`, ({ data: action, type }) => {
+      console.log('got packet', action, type)
       runServerActionLocally(action)
     })
     callAPI('api/korus/initial-state').then(data => {
-      alert('here is the state', JSON.stringify(data))
       try {
         const rootStore = fromSnapshot<RootState>(data)
+        setKorusState(rootStore)
+
+        // also listen to local actions, cancel them and send them to the server
+        onActionMiddleware(rootStore, {
+          onStart(actionCall, ctx) {
+            if (!serverAction) {
+              // if the action does not come from the server cancel it silently
+              // and send it to the server
+              // it will then be replicated by the server and properly executed
+              callAPI('/api/korus/message', serializeActionCall(actionCall, rootStore))
+              // "cancel" the action by returning undefined
+              return {
+                result: ActionTrackingResult.Return,
+                value: undefined,
+              }
+            } else {
+              // just run the server action unmodified
+              return undefined
+            }
+          },
+        })
       } catch (e) {
         alert('error' + e)
       }
-
-      setKorusState(rootStore)
-
-      alert('we set the state')
-      // also listen to local actions, cancel them and send them to the server
-      onActionMiddleware(rootStore, {
-        onStart(actionCall, ctx) {
-          if (!serverAction) {
-            // if the action does not come from the server cancel it silently
-            // and send it to the server
-            // it will then be replicated by the server and properly executed
-            callAPI('/api/korus/message', serializeActionCall(actionCall, rootStore))
-            // "cancel" the action by returning undefined
-            return {
-              result: ActionTrackingResult.Return,
-              value: undefined,
-            }
-          } else {
-            // just run the server action unmodified
-            return undefined
-          }
-        },
-      })
     })
 
     return packetListener
@@ -86,7 +83,7 @@ function useKorusState() {
 export const KorusView = observer(() => {
   const state = useKorusState()
   if (state) {
-    return <div>We have state!</div>
+    return <div>{JSON.stringify(state)}</div>
   } else {
     return <div>Loading...</div>
   }

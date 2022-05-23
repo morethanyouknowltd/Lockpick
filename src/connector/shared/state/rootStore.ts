@@ -18,7 +18,6 @@ const modlels = {
   Setting,
   Action,
 }
-console.log(modlels)
 
 // for this example we will enable runtime data checking even in production mode
 setGlobalConfig({

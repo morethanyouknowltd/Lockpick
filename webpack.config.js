@@ -18,6 +18,9 @@ module.exports = {
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
+    client: {
+      logging: 'none',
+    },
     port,
   },
   optimization: {

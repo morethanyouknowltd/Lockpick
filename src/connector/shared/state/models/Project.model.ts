@@ -1,5 +1,5 @@
 import { detach, idProp, model, Model, prop, rootRef, tProp, types } from 'mobx-keystone'
-import { ProjectTrack } from '../../../../main/db/entities/ProjectTrack'
+import { ProjectTrack } from './ProjectTrack.model'
 
 export const projectRef = rootRef<Project>('korus/ProjectRef', {
   onResolvedValueChange(ref, newValue, oldValue) {

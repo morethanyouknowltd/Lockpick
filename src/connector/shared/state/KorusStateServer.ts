@@ -17,6 +17,10 @@ export default class KorusStateServer {
     this.serverRootStore = createRootStore(rootData)
   }
 
+  get store() {
+    return this.serverRootStore
+  }
+
   getInitialState() {
     return getSnapshot(this.serverRootStore)
   }
