@@ -1,0 +1,6 @@
+export { default as omitProps } from './omitProps'
+export { default as omitStyles } from './omitStyles'
+export { default as passInheritedProps } from './passInheritedProps'
+export { default as unifyStyle } from './unifyStyle'
+export { default as mapper, iMap } from './mapper'
+export { default as conditionalProps } from './conditionalProps'

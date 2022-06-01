@@ -11,7 +11,10 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "jsx": "react",
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "mtyk-frontend/*": ["src/renderer/mtyk-frontend/*"]
+    }
   },
   "include": ["src/renderer/**/*"]
 }

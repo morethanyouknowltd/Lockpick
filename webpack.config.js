@@ -6,7 +6,6 @@ const webpack = require('webpack')
 const port = process.env.PORT || 8081
 const { version } = require('./package.json')
 const mode = isWebpackDevServer ? 'development' : 'production'
-const src = path.join(__dirname, 'src', 'renderer')
 
 module.exports = {
   mode,
@@ -19,7 +18,7 @@ module.exports = {
       'Access-Control-Allow-Origin': '*',
     },
     client: {
-      logging: 'none',
+      overlay: { errors: false, warnings: false },
     },
     port,
   },
@@ -57,18 +56,12 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.(woff|woff2|eot|ttf|otf)$/i,
+        type: 'asset/resource',
+      },
+      {
         test: /\.(ts|js)x?$/,
-        use: [
-          {
-            loader: 'babel-loader',
-          },
-          {
-            loader: 'linaria/loader',
-            options: {
-              sourceMap: process.env.NODE_ENV !== 'production',
-            },
-          },
-        ],
+        use: ['babel-loader'],
       },
       {
         test: /\.css$/,
@@ -87,6 +80,9 @@ module.exports = {
     ],
   },
   resolve: {
+    alias: {
+      'mtyk-frontend': path.resolve(__dirname, './src/renderer/mtyk-frontend'),
+    },
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
     modules: ['node_modules'],
     symlinks: false,

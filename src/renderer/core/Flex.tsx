@@ -1,15 +1,13 @@
 import React from 'react'
-import { styled } from 'linaria/react'
+import styled from 'styled-components'
 
 const FlexWrap = styled.div`
-    display: flex;
+  display: flex;
 `
 export const FlexGrow = styled.div`
-    flex-grow: 1;
+  flex-grow: 1;
 `
 
-export const Flex = ({children, ...rest}) => {
-    return <FlexWrap style={rest}>
-        {children}
-    </FlexWrap>
+export const Flex = ({ children, ...rest }) => {
+  return <FlexWrap style={rest}>{children}</FlexWrap>
 }

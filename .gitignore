@@ -20,7 +20,6 @@
 !/dist/preload.js
 
 node_modules
-.linaria-cache
 .vscode/c_cpp_properties.json
 local
 .DS_Store
