@@ -40,7 +40,7 @@ Mod.registerAction({
     keys: ['Meta', 'Alt', 'O'],
   },
   action: async () => {
-    restoreOpenedPluginsForTrack(Bitwig.currentTrack.name)
+    restoreOpenedPluginsForTrack(Bitwig.currentTrack)
   },
 })
 
@@ -49,7 +49,7 @@ Mod.registerAction({
 //     id: "open-specific-plugin-windows",
 //     description: `Open specific plugin windows for the current track.`,
 //     action: async () => {
-//         restoreOpenedPluginsForTrack(Bitwig.currentTrack.name, [
+//         restoreOpenedPluginsForTrack(Bitwig.currentTrack, [
 //             'q',
 //             'qe',
 //             'qw',
@@ -95,7 +95,7 @@ const getFocusedPluginWindow = () => {
 //     },
 //     action: async () => {
 //         let { tracks, lowLatencyMode } = (await Db.getCurrentProjectData() || {})
-//         const initiallySelectedTrack = Bitwig.currentTrack.name
+//         const initiallySelectedTrack = Bitwig.currentTrack
 //         lowLatencyMode = !lowLatencyMode
 //         Bitwig.showMessage(`Low latency mode: ${lowLatencyMode ? 'On' : 'Off'}`)
 
@@ -146,7 +146,7 @@ const getFocusedPluginWindow = () => {
 //         if (!listsByTrackName) {
 //             listsByTrackName = {}
 //         }
-//         const track = Bitwig.currentTrack.name
+//         const track = Bitwig.currentTrack
 //         const device = Bitwig.currentDevice
 //         if (!(track && device)) {
 //             return Bitwig.showMessage('No active device or track')
@@ -251,7 +251,7 @@ async function restoreFocusedPluginWindowToTop(newTrack) {
   const { focusedPlugin } = data
 
   const doIt = () => {
-    if (newTrack !== Bitwig.currentTrack.name) {
+    if (newTrack !== Bitwig.currentTrack) {
       // Track has changed, abort!
       return
     }

@@ -1,16 +1,10 @@
-import { fromSnapshot, ModelData } from 'mobx-keystone'
-import { BitwigState } from '../../connector/shared/state/BitwigState'
+import { fromSnapshot } from 'mobx-keystone'
 import KorusStateServer from '../../connector/shared/state/KorusStateServer'
+import { BitwigState } from '../../connector/shared/state/models/BitwigTrack.model'
 import { RootState } from '../../connector/shared/state/rootStore'
-import { debounce } from 'lodash'
 import { jsonPath } from '../config'
 import { BESService } from '../core/Service'
-import {
-  addAPIMethod,
-  interceptPacket,
-  sendPacketToBitwigPromise,
-  sendPacketToBrowser,
-} from '../core/WebsocketToSocket'
+import { addAPIMethod, interceptPacket, sendPacketToBrowser } from '../core/WebsocketToSocket'
 
 export class StateService extends BESService {
   server: KorusStateServer
@@ -19,16 +13,10 @@ export class StateService extends BESService {
     super('state')
   }
 
-  activate() {
+  postActivate() {
     const dbLocation = jsonPath
     let initialState = new RootState({
-      bitwig: new BitwigState({
-        actions: [],
-        projects: [],
-        projectTracks: [],
-        settings: [],
-        activeProject: undefined,
-      }),
+      bitwig: new BitwigState({}),
     })
     try {
       const data = require(dbLocation)
@@ -44,10 +32,10 @@ export class StateService extends BESService {
         data: message,
       })
     })
-    addAPIMethod('api/korus/message', (message: any) => {
-      this.server.applyAction(message)
+    addAPIMethod('api/korus/message', async (message: any) => {
+      this.server.sendToClient(message)
     })
-    addAPIMethod('api/korus/initial-state', () => {
+    addAPIMethod('api/korus/initial-state', async () => {
       return this.server.getInitialState()
     })
 
@@ -57,9 +45,5 @@ export class StateService extends BESService {
     interceptPacket('transport/state', undefined, ({ data: state }) => {
       console.log(state)
     })
-  }
-
-  postActivate() {
-    super.postActivate()
   }
 }

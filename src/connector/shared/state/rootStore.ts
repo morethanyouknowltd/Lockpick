@@ -7,16 +7,21 @@ import {
   tProp,
   types,
 } from 'mobx-keystone'
-import { BitwigState } from './BitwigState'
 import { Project } from './models/Project.model'
-import { ProjectTrack } from './models/ProjectTrack.model'
+import { BitwigTrack, BitwigState } from './models/BitwigTrack.model'
 import { Setting } from './models/Settings.model'
 import { Action } from './models/Actions.model'
+
 const modlels = {
   Project,
-  ProjectTrack,
+  BitwigTrack,
+  BitwigState,
   Setting,
   Action,
+}
+for (const model in modlels) {
+  // Try to stop webpack from removing unused variables
+  console.log(`Here is model`, model, modlels[model])
 }
 
 // for this example we will enable runtime data checking even in production mode
@@ -29,7 +34,7 @@ export class RootState extends Model({
   bitwig: tProp(types.model(BitwigState)),
 }) {}
 
-export function createRootStore(state): BitwigState {
+export function createRootStore(state): RootState {
   // as such, since this allows the model hook `onAttachedToRootStore` to work and other goodies
   console.log(state)
   registerRootStore(state)

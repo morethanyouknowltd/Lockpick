@@ -58,14 +58,14 @@ const categories = {
 //             keys: ["Alt", "Shift", String(i + 1).slice(-1)]
 //         },
 //         action: async (context) => {
-//             if (!Bitwig.currentTrack.name) {
+//             if (!Bitwig.currentTrack) {
 //                 Bitwig.showMessage(`No track selected.`)
 //                 return
 //             }
 //             const projectData = await Db.getCurrentProjectData()
 //             const newProjectData = {
 //                 ...projectData,
-//                 [i]: Bitwig.currentTrack.name
+//                 [i]: Bitwig.currentTrack
 //             }
 //             await Db.setCurrentProjectData(newProjectData)
 //             highlightNumber(i + 1, context, newProjectData)

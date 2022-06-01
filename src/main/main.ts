@@ -1,18 +1,19 @@
 require('@cspotcode/source-map-support').install()
-import { app, shell, BrowserWindow, Tray } from 'electron'
-import { ShortcutsService } from './shortcuts/ShortcutsService'
-import { registerService } from './core/Service'
-import { SocketMiddlemanService } from './core/WebsocketToSocket'
-import { TrayService } from './core/Tray'
-import { SettingsService } from './core/SettingsService'
-import { protocol } from 'electron'
-import { ModsService } from './mods/ModsService'
+require('app-module-path').addPath(__dirname)
+
+import { app, protocol, shell } from 'electron'
 import { BitwigService } from './bitwig/BitwigService'
-import { UIService } from './ui/UIService'
-import { PopupService } from './popup/PopupService'
-import { StateService } from './state/StateService'
 import { createFolders } from './config'
 import { logger } from './core/Log'
+import { registerService } from './core/Service'
+import { SettingsService } from './core/SettingsService'
+import { TrayService } from './core/Tray'
+import { SocketMiddlemanService } from './core/WebsocketToSocket'
+import { ModsService } from './mods/ModsService'
+import { PopupService } from './popup/PopupService'
+import { ShortcutsService } from './shortcuts/ShortcutsService'
+import { StateService } from './state/StateService'
+import { UIService } from './ui/UIService'
 
 app.whenReady().then(async () => {
   await createFolders()
@@ -36,6 +37,7 @@ app.whenReady().then(async () => {
     })
     const services = {
       socketMiddleMan: await registerService(SocketMiddlemanService),
+      stateService: await registerService(StateService),
       settingsService: await registerService<SettingsService>(SettingsService),
       popupService: await registerService(PopupService),
       shortcutsService: await registerService(ShortcutsService),
@@ -43,7 +45,6 @@ app.whenReady().then(async () => {
       uiService: await registerService(UIService),
       modsService: await registerService(ModsService),
       trayService: await registerService(TrayService),
-      stateService: await registerService(StateService),
     }
 
     // Service creation order is manually controlled atm, but each

@@ -2711,6 +2711,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"app-module-path@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "app-module-path@npm:2.2.0"
+  checksum: b52aa49cfa809efbad41b514222e8ef3f8ee9e147f5eccf79280b45eddcc61f7aeb302b0049474e3f42072dd53a28348c57dd96f36cd461d2e31cc8ab1ef56b5
+  languageName: node
+  linkType: hard
+
 "app-root-path@npm:^3.0.0":
   version: 3.0.0
   resolution: "app-root-path@npm:3.0.0"
@@ -6386,6 +6393,7 @@ __metadata:
     "@types/webpack-env": ^1.13.2
     ansi_up: ^5.0.1
     ansicolor: ^1.1.93
+    app-module-path: ^2.2.0
     async: ^3.2.0
     babel-loader: ^8.2.5
     babel-plugin-transform-typescript-metadata: ^0.3.2

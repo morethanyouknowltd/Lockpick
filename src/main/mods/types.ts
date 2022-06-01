@@ -1,4 +1,5 @@
 import winston = require('winston')
+import type { ModsService } from './ModsService'
 
 export interface ModInfo {
   name: string
@@ -27,4 +28,8 @@ export interface SettingInfo {
   name: string
   description?: string
   hidden: boolean
+}
+
+export interface ModApiCreator {
+  (modCreatorArgs: { modsService: ModsService; makeEmitterEvents: (events: any) => any }): any
 }

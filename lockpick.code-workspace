@@ -127,6 +127,7 @@
           }
         ]
       }
-    ]
+    ],
+    "typescript.tsdk": "Lockpick/node_modules/typescript/lib"
   }
 }

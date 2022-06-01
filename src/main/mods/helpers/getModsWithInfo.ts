@@ -3,7 +3,7 @@ import { getService } from '../../core/Service'
 import { SettingsService } from '../../core/SettingsService'
 import { getDb } from '../../db'
 import { Setting } from '../../db/entities/Setting'
-import { ModInfo } from '../ModInfo'
+import { ModInfo } from '../types'
 
 export default async function getModsWithInfo(
   { latestFoundModsMap, category, inMenu, modId } = {} as any

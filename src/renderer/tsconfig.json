@@ -5,21 +5,20 @@
     "sourceMap": true,
     "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "module": "es6",
+    "target": "es6",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "jsx": "react",
+    "baseUrl": "./",
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["esnext", "dom"],
-    "target": "es2017",
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "useDefineForClassFields": true,
-    "incremental": true,
-    "baseUrl": "./",
-    "outDir": "dist",
     "paths": {
       "mtyk-frontend/*": ["src/renderer/mtyk-frontend/*"]
     }
   },
-  "include": ["src/renderer/**"]
+  "include": ["src/renderer/**/*"]
 }

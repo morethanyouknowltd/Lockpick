@@ -1,4 +1,5 @@
-import { Constructor, InstanceOf } from 'ts-morph'
+import { InstanceOf } from 'ts-morph'
+import { RootState } from '../../connector/shared/state/rootStore'
 import { logger } from './Log'
 const colors = require('colors')
 
@@ -64,6 +65,15 @@ export class BESService {
   logger: ReturnType<typeof logger.child>
   constructor(public readonly name: string) {
     this.logger = logger.child({ service: name })
+  }
+
+  updateStore(cb: (state: RootState) => void) {
+    const stateService = getService('StateService') as any
+    if (stateService?.server?.store) {
+      cb(stateService.server.store)
+    } else {
+      console.log('State service not ready')
+    }
   }
 
   /**

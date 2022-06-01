@@ -53,7 +53,7 @@ async function openAutomationForTrack(targetT) {
 }
 
 async function showAutomationImpl(all, { onlyShow } = { onlyShow: false }) {
-  const track = Bitwig.currentTrack.name
+  const track = Bitwig.currentTrack
   let { automationShown } = await Db.getTrackData(track)
   if (onlyShow && automationShown) {
     return log('Automation already shown')

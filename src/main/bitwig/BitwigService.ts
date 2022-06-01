@@ -1,12 +1,34 @@
+import { Model, model, prop, tProp, types } from 'mobx-keystone'
+import { StateService } from 'state/StateService'
 import _ from 'underscore'
 import { BESService, getService, makeEvent } from '../core/Service'
 import { SettingsService } from '../core/SettingsService'
 import { interceptPacket } from '../core/WebsocketToSocket'
-import { CueMarker } from '../mods/ModInfo'
+import { CueMarker } from '../mods/types'
 import { PopupService } from '../popup/PopupService'
 import { ShortcutsService } from '../shortcuts/ShortcutsService'
+import getBitwigModApi from './helpers/getBitwigModApi'
 
 const { Bitwig } = require('bindings')('bes')
+
+@model('korus/BitwigTrack')
+class BitwigTrack extends Model({
+  name: prop<string>(''),
+  color: prop<string>('#ffffff'),
+  solo: prop<boolean>(false),
+  mute: prop<boolean>(false),
+  position: prop<number>(0),
+  volume: prop<number>(0),
+  volumeString: prop<string>('0db'),
+  type: prop<string>(),
+}) {}
+@model('korus/BitwigState')
+class BitwigState extends Model({
+  text: prop<string>('asdasd'),
+  transportState: prop<'stopped' | 'playing'>('stopped'),
+  browserIsOpen: prop<boolean>(),
+  tracks: tProp(types.array(types.model(BitwigTrack)), () => []),
+}) {}
 
 /**
  * Bitwig Service keeps track of Bitwig internal state, whether the browser is open etc.
@@ -21,6 +43,8 @@ export class BitwigService extends BESService {
   browserIsOpen = false
   transportState = 'stopped'
   tracks: any[] = []
+
+  static providedModel = BitwigState
 
   // Events
   events = {
@@ -37,6 +61,10 @@ export class BitwigService extends BESService {
   cueMarkers: CueMarker[] = []
   currTrack?: any
   activeEngineProject = ''
+
+  getApi(args) {
+    return getBitwigModApi(args)
+  }
 
   get simplifiedProjectName() {
     if (!this.currProject) {
@@ -75,26 +103,31 @@ export class BitwigService extends BESService {
       undefined,
       async ({ data: { name: projectName, hasActiveEngine, selectedTrack } }) => {
         const projectChanged = this.currProject !== projectName
-        if (projectChanged) {
-          this.currProject = projectName
-          this.events.projectChanged.emit(projectName)
-          if (hasActiveEngine) {
-            this.activeEngineProject = projectName
-            this.events.activeEngineProjectChanged.emit(projectName)
+        this.updateStore(store => {
+          if (projectChanged) {
+            store.bitwig.setCurrProject(projectName)
           }
-        }
-        if (selectedTrack && (!this.currTrack || this.currTrack.name !== selectedTrack.name)) {
-          const prev = this.currTrack
-          this.currTrack = selectedTrack
-          this.events.selectedTrackChanged.emit(this.currTrack, prev)
-        }
+          if (hasActiveEngine) {
+            store.bitwig.setActiveEngineProject(projectName)
+          }
+          if (
+            selectedTrack &&
+            (!store.bitwig.currTrack || store.bitwig.currTrack !== selectedTrack.name)
+          ) {
+            store.bitwig.setCurrTrack(selectedTrack.name)
+          }
+        })
       }
     )
     interceptPacket(
       'tracks',
       undefined,
       (_ as any).debounce(async ({ data: tracks }) => {
-        this.tracks = tracks
+        this.updateStore(store => {
+          // Start a mobx action
+          store.bitwig.setTracks(tracks.map(t => new BitwigTrack(t)))
+          // store.bitwig.tracks = tracks
+        })
       }, 1000)
     )
 

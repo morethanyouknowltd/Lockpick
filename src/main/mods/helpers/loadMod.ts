@@ -1,5 +1,5 @@
 import * as path from 'path'
-import winston from 'winston'
+import * as winston from 'winston'
 import { buildModsPath } from '../../config'
 import { spawn } from 'child_process'
 import { createDirIfNotExist, writeStrFile } from '../../core/Files'

@@ -9,23 +9,17 @@ import isLockpickActiveApplication from '../../core/helpers/isLockpickActiveAppl
 import { logger as mainLogger } from '../../core/Log'
 import { getService } from '../../core/Service'
 import { SettingsService } from '../../core/SettingsService'
-import {
-  interceptPacket,
-  sendPacketToBitwig,
-  sendPacketToBitwigPromise,
-  SocketMiddlemanService,
-} from '../../core/WebsocketToSocket'
+import { interceptPacket, SocketMiddlemanService } from '../../core/WebsocketToSocket'
 import { getDb } from '../../db'
 import { Project } from '../../db/entities/Project'
 import { ProjectTrack } from '../../db/entities/ProjectTrack'
 import { PopupService } from '../../popup/PopupService'
 import { ActionSpec, ShortcutsService } from '../../shortcuts/ShortcutsService'
 import { UIService } from '../../ui/UIService'
-import { normalizeBitwigAction } from '../actionMap'
 import type { ModsService } from '../ModsService'
 import { KeyboardEvent } from './KeyboardEvent'
-import { addNotAlreadyIn } from './addNotAlreadyIn'
 import { createOrUpdateTrack, getProjectIdForName, loadDataForTrack } from './loadData'
+import logForMod from './logForMod'
 import makeEmitterEventsFn from './makeEmitterEventsFn'
 const colors = require('colors')
 const { Keyboard, MainWindow, Bitwig } = require('bindings')('bes')
@@ -33,7 +27,7 @@ const { Keyboard, MainWindow, Bitwig } = require('bindings')('bes')
 let nextId = 0
 const logger = mainLogger.child('modApi')
 
-export default async function getModApi(this: ModsService, mod, { onReloadMods, logForMod }) {
+export default async function getModApi(this: ModsService, mod) {
   const db = await getDb()
   const projectTracks = db.getRepository(ProjectTrack)
   const projects = db.getRepository(Project)
@@ -48,22 +42,23 @@ export default async function getModApi(this: ModsService, mod, { onReloadMods, 
   const wrappedOnForReloadDisconnect = parent => {
     return (...args) => {
       const id = parent.on(...args)
-      onReloadMods.push(() => {
+      modsService.onReloadMods.push(() => {
         parent.off(id)
       })
     }
   }
 
-  const makeEmitterEvents = map => makeEmitterEventsFn({ mod, onReloadMods }, map)
+  const makeEmitterEvents = map =>
+    makeEmitterEventsFn({ mod, onReloadMods: modsService.onReloadMods }, map)
   const uiApi = uiService.getApi({
     mod,
     makeEmitterEvents,
-    onReloadMods: cb => onReloadMods.push(cb),
+    onReloadMods: cb => modsService.onReloadMods.push(cb),
   })
   const popupApi = popupService.getApi({
     mod,
     makeEmitterEvents,
-    onReloadMods: cb => onReloadMods.push(cb),
+    onReloadMods: cb => modsService.onReloadMods.push(cb),
   })
   const wrapCbForApplication = cb => {
     return (...args) => {
@@ -82,6 +77,10 @@ export default async function getModApi(this: ModsService, mod, { onReloadMods, 
     }
   }
 
+  const apiGenArgs = {
+    makeEmitterEvents,
+    modsService,
+  }
   const api = {
     _,
     Popup: popupApi.Popup,
@@ -135,69 +134,7 @@ export default async function getModApi(this: ModsService, mod, { onReloadMods, 
       },
     },
     UI: uiApi.UI,
-    Bitwig: addNotAlreadyIn(
-      {
-        get connected() {
-          return socketService.bitwigConnected
-        },
-        closeFloatingWindows: Bitwig.closeFloatingWindows,
-        get isAccessibilityOpen() {
-          return Bitwig.isAccessibilityOpen()
-        },
-        get isPluginWindowActive() {
-          return Bitwig.isPluginWindowActive()
-        },
-        get tracks() {
-          return bitwigService.tracks
-        },
-        get isBrowserOpen() {
-          return bitwigService.browserIsOpen
-        },
-        isActiveApplication(...args) {
-          return Bitwig.isActiveApplication(...args)
-        },
-        MainWindow,
-        get currentTrack() {
-          return bitwigService.currTrack
-        },
-        get currentDevice() {
-          return modsService.currDevice
-        },
-        get cueMarkers() {
-          return modsService.cueMarkers
-        },
-        get currentProject() {
-          return bitwigService.simplifiedProjectName
-        },
-        sendPacket: packet => {
-          return sendPacketToBitwig(packet)
-        },
-        sendPacketPromise: packet => {
-          return sendPacketToBitwigPromise(packet)
-        },
-        runAction: action => {
-          let actions = action
-          if (!Array.isArray(actions)) {
-            actions = [action]
-          }
-          return sendPacketToBitwigPromise({
-            type: 'action',
-            data: actions.map(normalizeBitwigAction),
-          })
-        },
-        getFocusedPluginWindow: () => {
-          const pluginWindows = Bitwig.getPluginWindowsPosition()
-          return Object.values(pluginWindows).find((w: any) => w.focused)
-        },
-        showMessage: popupService.showMessage,
-        intersectsPluginWindows: event => uiService.eventIntersectsPluginWindows(event),
-        ...makeEmitterEvents({
-          cueMarkersChanged: modsService.events.cueMarkersChanged,
-          ...bitwigService.events,
-        }),
-      },
-      Bitwig
-    ),
+    Bitwig: bitwigService.getApi(apiGenArgs),
     MainDisplay: {
       getDimensions() {
         return MainWindow.getMainScreen()
@@ -298,10 +235,10 @@ export default async function getModApi(this: ModsService, mod, { onReloadMods, 
         }
       },
       getCurrentTrackData: () => {
-        return api.Db.getTrackData(api.Bitwig.currentTrack.name)
+        return api.Db.getTrackData(api.Bitwig.currentTrack)
       },
       setCurrentTrackData: data => {
-        return api.Db.setTrackData(api.Bitwig.currentTrack.name, data)
+        return api.Db.setTrackData(api.Bitwig.currentTrack, data)
       },
     },
     Mod: {
@@ -402,7 +339,7 @@ export default async function getModApi(this: ModsService, mod, { onReloadMods, 
             settingApi.value = settingsService.postload(setting).value.enabled
           }
         })
-        onReloadMods.push(() => {
+        modsService.onReloadMods.push(() => {
           settingsService.events.settingUpdated.stopListening(listenId)
         })
 
@@ -458,7 +395,7 @@ export default async function getModApi(this: ModsService, mod, { onReloadMods, 
               },
               settingValue
             )
-            onReloadMods.push(() => {
+            modsService.onReloadMods.push(() => {
               shortcutsService.removeActionFromShortcutRegistry(action.id)
             })
           } else {
@@ -504,7 +441,7 @@ export default async function getModApi(this: ModsService, mod, { onReloadMods, 
             special: 'null',
           }
         )
-        onReloadMods.push(() => {
+        modsService.onReloadMods.push(() => {
           shortcutsService.removeActionFromShortcutRegistry(actionId)
         })
       },
@@ -519,7 +456,7 @@ export default async function getModApi(this: ModsService, mod, { onReloadMods, 
         }
         const id = setInterval(fn, ms)
         modsService.log('Added interval id: ' + id)
-        onReloadMods.push(() => {
+        modsService.onReloadMods.push(() => {
           clearInterval(id)
           modsService.log('Clearing interval id: ' + id)
         })
@@ -532,7 +469,7 @@ export default async function getModApi(this: ModsService, mod, { onReloadMods, 
         if (!mod.enabled) {
           return
         }
-        onReloadMods.push(cb)
+        modsService.onReloadMods.push(cb)
       },
       getClipboard() {
         return clipboard.readText()
@@ -542,7 +479,7 @@ export default async function getModApi(this: ModsService, mod, { onReloadMods, 
           return
         }
         const remove = interceptPacket(type, ...rest)
-        onReloadMods.push(remove)
+        modsService.onReloadMods.push(remove)
       },
       ...makeEmitterEvents({
         actionTriggered: shortcutsService.events.actionTriggered,

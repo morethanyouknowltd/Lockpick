@@ -1,6 +1,7 @@
 const path = require('path')
 import { createDirIfNotExist, rmRfDir } from '../core/Files'
 import { isMac, isWindows } from '../core/Os'
+
 const os = require('os')
 const isRenderer = require('is-electron-renderer')
 const newUser = !!process.env.NEW_USER

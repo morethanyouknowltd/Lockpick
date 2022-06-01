@@ -1,34 +1,40 @@
-import { Flex } from 'mtyk-frontend/core/components'
-import React, { useRef } from 'react'
-import * as monaco from 'monaco-editor'
 import Editor, { loader } from '@monaco-editor/react'
+import * as monaco from 'monaco-editor'
+import { Flex } from 'mtyk-frontend/core/components'
+import React, { useEffect, useRef, useState } from 'react'
+import { callAPI } from '../../bitwig-api/Bitwig'
+
 loader.config({
   monaco,
 })
 
 export default function ModEditor({ mod }) {
-  const editorRef = useRef(null)
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  const [dts, setDts] = useState(false)
+
+  useEffect(() => {
+    callAPI('/api/doc').then(dts => {
+      monaco.languages.typescript.typescriptDefaults.addExtraLib(dts, '')
+      setDts(true)
+    })
+  }, [])
 
   function handleEditorDidMount(editor) {
-    console.log('editorDidMount')
     editorRef.current = editor
-  }
-
-  function showValue() {
-    alert(editorRef.current?.getValue())
   }
 
   return (
     <Flex style={{}}>
-      <button onClick={showValue}>Show value</button>
-      <Editor
-        theme="vs-dark"
-        height="90vh"
-        options={{ minimap: { enabled: false }, folding: false }}
-        defaultLanguage="javascript"
-        defaultValue={mod.contents}
-        onMount={handleEditorDidMount}
-      />
+      {dts ? (
+        <Editor
+          theme="vs-dark"
+          height="90vh"
+          options={{ minimap: { enabled: false }, folding: false }}
+          defaultLanguage="javascript"
+          defaultValue={mod.contents}
+          onMount={handleEditorDidMount}
+        />
+      ) : null}
     </Flex>
   )
 }

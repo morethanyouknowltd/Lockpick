@@ -7,7 +7,7 @@ const project = new Project({
   skipAddingFilesFromTsConfig: true,
 })
 
-const [modsServiceFile] = project.addSourceFilesAtPaths('src/main/mods/ModsService.ts')
+const [modsServiceFile] = project.addSourceFilesAtPaths('mods/ModsService.ts')
 const modsServiceClass = modsServiceFile.getClassOrThrow('ModsService')
 const makeApiFunc = modsServiceClass.getInstanceMethodOrThrow('makeApi')
 const returnType = makeApiFunc.getReturnType()

@@ -75,7 +75,7 @@ Mouse.on('mousedown', async event => {
         const { data: track } = await Bitwig.sendPacketPromise({
           type: 'track/get',
           data: {
-            name: Bitwig.currentTrack.name,
+            name: Bitwig.currentTrack,
           },
         })
         startWithTrack({ ...t, ...track })
