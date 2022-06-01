@@ -264,6 +264,7 @@ export class Canvas extends LockpickComponent<any> {
     return (
       <>
         <Wrap>
+          {/* <div>Lockpick Canvas Active</div> */}
           <canvas ref={this.canvasRef} />
           {this.renderNotifications()}
           <Static>

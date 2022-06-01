@@ -2,6 +2,7 @@ import _ from 'underscore'
 import { BESService, getService, makeEvent } from '../core/Service'
 import { SettingsService } from '../core/SettingsService'
 import { interceptPacket } from '../core/WebsocketToSocket'
+import { CueMarker } from '../mods/ModInfo'
 import { PopupService } from '../popup/PopupService'
 import { ShortcutsService } from '../shortcuts/ShortcutsService'
 
@@ -28,9 +29,12 @@ export class BitwigService extends BESService {
     projectChanged: makeEvent<string>(),
     activeEngineProjectChanged: makeEvent<string>(),
     selectedTrackChanged: makeEvent<string>(),
+    cueMarkersChanged: makeEvent<CueMarker[]>(),
   }
 
   currProject = ''
+  currDevice = ''
+  cueMarkers: CueMarker[] = []
   currTrack?: any
   activeEngineProject = ''
 
@@ -58,6 +62,13 @@ export class BitwigService extends BESService {
       if (this.transportState !== previous) {
         this.events.transportStateChanged.emit(state, previous)
       }
+    })
+    interceptPacket('device', undefined, async ({ data: device }) => {
+      this.currDevice = device
+    })
+    interceptPacket('cue-markers', undefined, async ({ data: cueMarkers }) => {
+      this.cueMarkers = cueMarkers
+      this.events.cueMarkersChanged.emit(this.cueMarkers)
     })
     interceptPacket(
       'project',

@@ -1,5 +1,5 @@
-import { spawn } from 'child_process'
 import { promises as fs } from 'fs'
+import * as glob from 'glob'
 import * as path from 'path'
 import { APP_NAME } from '../../connector/shared/Constants'
 import { wait } from '../../connector/shared/engine/Debounce'
@@ -7,8 +7,8 @@ import { clamp } from '../../connector/shared/Math'
 import { getResourcePath } from '../../connector/shared/ResourcePath'
 import { BitwigService } from '../bitwig/BitwigService'
 import { buildModsPath } from '../config'
-import { createDirIfNotExist, exists as fileExists, writeStrFile } from '../core/Files'
-import { lockpickFileLogger, logger } from '../core/Log'
+import { createDirIfNotExist } from '../core/Files'
+import { logger } from '../core/Log'
 import { BESService, getService, makeEvent } from '../core/Service'
 import { SettingsService } from '../core/SettingsService'
 import {
@@ -24,21 +24,20 @@ import { PopupService } from '../popup/PopupService'
 import { ShortcutsService } from '../shortcuts/ShortcutsService'
 import { UIService } from '../ui/UIService'
 import copyControllerScript from './helpers/copyControllerScript'
-import getModsWithInfo from './helpers/getModsWithInfo'
-import { CueMarker, Device, ModInfo, SettingInfo } from './ModInfo'
-import getModsFolderPaths from './helpers/getModsFolderPaths'
-import winston = require('winston')
-import glob = require('glob')
-import isBuiltInModule = require('is-builtin-module')
+import gatherModsFromPaths from './helpers/gatherModsFromPaths'
 import getModApi from './helpers/getModApi'
+import getModsFolderPaths from './helpers/getModsFolderPaths'
+import getModsWithInfo from './helpers/getModsWithInfo'
+import isModEnabled from './helpers/isModEnabled'
+import loadMod from './helpers/loadMod'
+import logForMod from './helpers/logForMod'
+import { ModInfo, SettingInfo } from './ModInfo'
 const chokidar = require('chokidar')
 const colors = require('colors')
 const { app } = require('electron')
 
 let nextId = 0
 let modsLoading = false
-
-const { Keyboard, Mouse, MainWindow, Bitwig, UI } = require('bindings')('bes')
 
 export class ModsService extends BESService {
   // Services
@@ -52,10 +51,7 @@ export class ModsService extends BESService {
   isQuitting = false
 
   // Internal state
-  currProject: string | null = null
-  currTrack: any | null = null
-  cueMarkers: CueMarker[] = []
-  currDevice: Device | null = null
+
   folderWatcher?: any
   controllerScriptFolderWatcher?: any
 
@@ -72,21 +68,7 @@ export class ModsService extends BESService {
 
   // Events
   events = {
-    selectedTrackChanged: makeEvent<any>(),
-    cueMarkersChanged: makeEvent<any>(),
-    projectChanged: makeEvent<number>(),
     modsReloaded: makeEvent<void>(),
-    activeEngineProjectChanged: makeEvent<string>(),
-  }
-
-  get simplifiedProjectName() {
-    if (!this.currProject) {
-      return null
-    }
-    return this.currProject
-      .split(/v[0-9]+/)[0]
-      .trim()
-      .toLowerCase()
   }
 
   lastLogMsg = ''
@@ -94,26 +76,6 @@ export class ModsService extends BESService {
   waitingMessagesByModId: {
     [modId: string]: { msg: string; count: number }[]
   } = {}
-
-  logForMod(modId: string, level: string, ...args: any[]) {
-    const socketLoggingMod = this.suckitService
-      .getActiveWebsockets()
-      .find(sock => sock.activeModLogKey === modId)
-
-    const modData = this.getLatestModData(modId)
-    if (modData?.logger) {
-      modData.logger.log(level, args)
-    } else {
-      console.warn(`${modId} logger not ready, logged: `, ...args)
-    }
-
-    // if (socketLoggingMod) {
-    //   socketLoggingMod.send({
-    //     type: 'log',
-    //     data: args,
-    //   })
-    // }
-  }
 
   getLatestModData(modId: string) {
     return this.latestFoundModsMap[`mod/${modId}`]
@@ -126,33 +88,6 @@ export class ModsService extends BESService {
     interceptPacket('notification', undefined, async ({ data: notif }) => {
       this.popupService.showNotification(notif)
     })
-    interceptPacket(
-      'project',
-      undefined,
-      async ({ data: { name: projectName, hasActiveEngine, selectedTrack } }) => {
-        const projectChanged = this.currProject !== projectName
-        if (projectChanged) {
-          this.currProject = projectName
-          this.events.projectChanged.emit(projectName)
-          if (hasActiveEngine) {
-            this.activeEngineProject = projectName
-            this.events.activeEngineProjectChanged.emit(projectName)
-          }
-        }
-        if (selectedTrack && (!this.currTrack || this.currTrack.name !== selectedTrack.name)) {
-          const prev = this.currTrack
-          this.currTrack = selectedTrack
-          this.events.selectedTrackChanged.emit(this.currTrack, prev)
-        }
-      }
-    )
-    interceptPacket('device', undefined, async ({ data: device }) => {
-      this.currDevice = device
-    })
-    interceptPacket('cue-markers', undefined, async ({ data: cueMarkers }) => {
-      this.cueMarkers = cueMarkers
-      this.events.cueMarkersChanged.emit(this.cueMarkers)
-    })
 
     // API endpoint to set the current log for specific websocket
     interceptPacket('api/mods/log', ({ data: modId }, websocket) => {
@@ -161,7 +96,7 @@ export class ModsService extends BESService {
     interceptPacket('bitwig/log', undefined, packet => {
       logger.info(colors.yellow(`Bitwig: ` + packet.data.msg))
       if (packet.data.modId) {
-        this.logForMod(packet.data.modId, 'info', packet.data.msg)
+        logForMod(packet.data.modId, 'info', packet.data.msg)
       }
     })
     interceptPacket('apiCall', undefined, async packet => {
@@ -391,81 +326,6 @@ export class ModsService extends BESService {
     })
   }
 
-  async gatherModsFromPaths(paths: string[], { type }: { type: 'bitwig' | 'local' }) {
-    let modsById = {}
-    // Load mods from all folders, with latter folders having higher precedence (overwriting by id)
-    for (const modsFolder of paths) {
-      const files = await fs.readdir(modsFolder)
-      for (const filePath of files) {
-        const actualType = filePath.indexOf('bitwig.js') >= 0 ? 'bitwig' : 'local'
-        // console.log(filePath, actualType)
-        if (filePath.substr(-3) !== '.js' || actualType !== type) {
-          continue
-        }
-        try {
-          const contents = await fs.readFile(path.join(modsFolder, filePath), 'utf8')
-          const hasTag = tag => {
-            const result = new RegExp(`@${tag}`).exec(contents)
-            return !!result
-          }
-          const checkForTag = tag => {
-            const result = new RegExp(`@${tag} (.*)`).exec(contents)
-            return result ? result[1] : undefined
-          }
-          const id = checkForTag('id')
-          const name = checkForTag('name') ?? 'No name set'
-          const description = checkForTag('description') || ''
-          const disabled = hasTag('disabled')
-          const category = checkForTag('category') ?? 'global'
-          const version = checkForTag('version') ?? '0.0.1'
-          const os = checkForTag('os') ?? ''
-          const creator = checkForTag('creator')
-          const applications = checkForTag('applications')?.split(',') ?? []
-          const noReload = contents.indexOf('@noReload') >= 0
-          const settingsKey = `mod/${id}`
-          const p = path.join(modsFolder, filePath)
-          const isDefault = p.indexOf(getResourcePath('/default-mods')) >= 0
-          const actualId = id === undefined ? 'temp' + nextId++ : id
-
-          const thisOS =
-            {
-              darwin: 'macOS',
-              win32: 'windows',
-            }[require('os').platform()] || 'unknown'
-
-          const osMatches =
-            os === '' ||
-            os.split(',').some(os => {
-              return os.trim().toLowerCase() === thisOS.toLowerCase()
-            })
-          modsById[actualId] = {
-            id: actualId,
-            name,
-            applications,
-            disabled,
-            osMatches,
-            settingsKey,
-            isBuiltIn: true, // FIXME
-            description,
-            category,
-            actionCategories: {},
-            actions: {},
-            version,
-            creator,
-            contents,
-            noReload,
-            path: p,
-            isDefault,
-            valid: id !== undefined,
-          }
-        } catch (e) {
-          this.log(colors.red(`Error with ${filePath}`, e))
-        }
-      }
-    }
-    return modsById
-  }
-
   async initModAndStoreInMap(mod) {
     if (mod.valid) {
       // Don't add settings for invalid (not loaded properly mods)
@@ -480,22 +340,6 @@ export class ModsService extends BESService {
     }
 
     this.latestFoundModsMap[mod.settingsKey] = mod
-  }
-
-  async isModEnabled(mod) {
-    if (process.env.SAFE_MODE === 'true') {
-      return false
-    }
-    return (await this.settingsService.getSetting(mod.settingsKey))?.value.enabled ?? false
-  }
-
-  wrappedOnForReloadDisconnect = parent => {
-    return (...args) => {
-      const id = parent.on(...args)
-      this.onReloadMods.push(() => {
-        parent.off(id)
-      })
-    }
   }
 
   staticApi = {
@@ -524,99 +368,12 @@ export class ModsService extends BESService {
     await createDirIfNotExist(buildModsPath)
 
     try {
-      const modsById = await this.gatherModsFromPaths(modsFolders, {
+      const modsById = await gatherModsFromPaths(modsFolders, {
         type: 'local',
       })
-
       for (const modId in modsById) {
         const mod = modsById[modId]
-        const { disabled, osMatches } = mod
-        this.initModAndStoreInMap(mod)
-        const isEnabled = await this.isModEnabled(mod)
-        mod.enabled = isEnabled
-        if (!isEnabled && !mod.isBuiltIn) {
-          // Don't automatically run externally added mods because we should warn the user first before enabling
-          continue
-        }
-        if ((process.env.SCREENSHOTS !== 'true' && disabled) || !osMatches) {
-          mod.enabled = false
-          mod.disabled = true
-          // Disable dev only mods (@disabled) and mods where the os doesn't match
-          continue
-        } else {
-          // Force it to not disabled when SCREENSHOTS=true
-          mod.disabled = false
-        }
-
-        const api = await getModApi.call(this, mod)
-        this.activeModApiIds[api.id] = api
-
-        // Populate function scope with api objects
-        const fileStr = `
-module.exports = async function ({ ${[...Object.keys(api), ...Object.keys(this.staticApi)].join(
-          ', '
-        )} }) {
-${mod.contents}
-}
-`
-        // Make folder for mod
-        const modFolder = path.join(buildModsPath, mod.id)
-        await createDirIfNotExist(modFolder)
-        const p = path.join(modFolder, `${mod.id}${nextId++}.js`)
-        await writeStrFile(fileStr, p)
-
-        // Create a logger in the subdirectory for this mod only
-        mod.logger = winston.createLogger({
-          defaultMeta: { mod: mod.id },
-          // format: lockpickLogFormatter,
-          transports: [
-            lockpickFileLogger({
-              filename: path.join(modFolder, 'log.log'),
-              level: 'debug',
-            }),
-            new winston.transports.Console({
-              level: 'warn',
-            }),
-          ],
-        })
-
-        const requireRegex = /require\('([^']+)'\)/g
-        const nodeModules = Array.from(fileStr.matchAll(requireRegex))
-          .map(m => m[1])
-          .filter(module => !isBuiltInModule(module))
-
-        if (nodeModules.length > 0) {
-          // Try install npm modules in same folder withExec
-          this.debug(`Installing ${nodeModules.join(', ')} for ${mod.id}`)
-          const result = spawn(
-            'yarn',
-            ['add', ...nodeModules, '--non-interactive', '--no-progress'],
-            {
-              cwd: modFolder,
-              stdio: 'inherit',
-            }
-          )
-          // wait for result to finish
-          await new Promise((resolve, rej) => {
-            result.on('error', rej)
-            result.on('close', resolve)
-          })
-        }
-
-        this.logForMod(mod.id, 'debug', `About to load ${mod.name} from ${p}`)
-        try {
-          const fn = require(p)
-          const allApi = { ...api, ...this.staticApi }
-          await fn(allApi)
-        } catch (e) {
-          this.error(`Error loading mod ${mod.id}`)
-          mod.error = {
-            message: e.message,
-            stack: e.stack,
-          }
-          this.popupService.showMessage(`Error loading ${mod.id}, check preferences for details`)
-          logger.error(e)
-        }
+        await loadMod.call(this, mod)
       }
     } catch (e) {
       this.error(`Error loading mods`)
@@ -634,7 +391,7 @@ function loadMods(api) {
 
 function modsImpl(api) {
 `
-    const modsById = await this.gatherModsFromPaths(modsFolders, {
+    const modsById = await gatherModsFromPaths(modsFolders, {
       type: 'bitwig',
     })
     const defaultControllerScriptSettings = {}
@@ -644,7 +401,7 @@ function modsImpl(api) {
       if (!this.getLatestModData(mod.id)) {
         this.initModAndStoreInMap(mod)
       }
-      const isEnabled = await this.isModEnabled(mod)
+      const isEnabled = await isModEnabled(mod)
       if (isEnabled || mod.noReload) {
         this.log('Enabled Bitwig Mod: ' + colors.green(modId))
         defaultControllerScriptSettings[modId] = isEnabled
