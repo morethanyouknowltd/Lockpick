@@ -11,6 +11,7 @@ import { Preferences } from './Preferences'
 import { Route, withRouter } from 'react-router-dom'
 import { state } from '../core/State'
 import { Observer } from 'mobx-react-lite'
+import { KorusView } from '../core/KorusStateWeb'
 
 const Classs = class SettingsWindow extends LockpickComponent<any> {
   state = {
@@ -96,11 +97,14 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
                   setSearchQuery={q => this.setState({ searchQuery: q })}
                 />
               </ScrollableSection>
-              {this.selectedMod ? (
-                <ScrollableSection style={{ left: '15rem', width: 'calc(100% - 15rem)' }}>
-                  <ModView modId={this.state.selectedModId} />
-                </ScrollableSection>
-              ) : null}
+
+              {/* <div>hello</div> */}
+              {/* {this.selectedMod ? <ScrollableSection style={{left: '15rem', width: 'calc(100% - 15rem)'}}><ModView modId={this.state.selectedModId} /></ScrollableSection> : null} */}
+              <ScrollableSection
+                style={{ left: '15rem', width: 'calc(100% - 15rem)', background: '#333' }}>
+                ahsdkahsdjkahk
+                <KorusView />
+              </ScrollableSection>
             </ContentWrap>
           )
         }}

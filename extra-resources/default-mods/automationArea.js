@@ -305,19 +305,19 @@ Mod.registerAction({
     'Focuses the automation value field in the inspector for quickly setting value of selected automation.',
   action: async () => {
     Mod.runAction('focus-arranger')
-    const uiLayout = UI.MainWindow.getLayoutState()
-    if (uiLayout.inspector) {
-      // showMessage(JSON.stringify(uiLayout.inspector))
-      await Mouse.click(0, {
-        x: uiLayout.inspector.rect.x + UI.scale(100),
-        y: uiLayout.inspector.rect.y + UI.scale(60),
-        Meta: true,
-        returnAfter: true,
-      })
-      Mod.setEnteringValue(true)
-    } else {
-      showMessage('Inspector not open')
-    }
+    // const uiLayout = UI.MainWindow.getLayoutState()
+    // if (uiLayout.inspector) {
+    // showMessage(JSON.stringify(uiLayout.inspector))
+    await Mouse.click(0, {
+      x: UI.scale(2) + UI.scale(100),
+      y: UI.scale(80) + UI.scale(60),
+      Meta: true,
+      returnAfter: true,
+    })
+    Mod.setEnteringValue(true)
+    // } else {
+    // showMessage('Inspector not open')
+    // }
   },
 })
 

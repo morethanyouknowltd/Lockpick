@@ -10,6 +10,7 @@ import { ModsService } from './mods/ModsService'
 import { BitwigService } from './bitwig/BitwigService'
 import { UIService } from './ui/UIService'
 import { PopupService } from './popup/PopupService'
+import { StateService } from './state/StateService'
 import { createFolders } from './config'
 import { logger } from './core/Log'
 
@@ -42,6 +43,7 @@ app.whenReady().then(async () => {
       uiService: await registerService(UIService),
       modsService: await registerService(ModsService),
       trayService: await registerService(TrayService),
+      stateService: await registerService(StateService),
     }
 
     // Service creation order is manually controlled atm, but each

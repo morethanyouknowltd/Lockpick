@@ -20,6 +20,7 @@ export const basePath = isRenderer
   ? ''
   : path.join(getAppDataPath(), newUser ? `Lockpick-temp` : `Lockpick`)
 export const sqlitePath = isRenderer ? '' : path.join(basePath, 'db.sqlite')
+export const jsonPath = isRenderer ? '' : path.join(basePath, 'db.json')
 export const sqliteBackupPath = isRenderer ? '' : path.join(basePath, 'backups')
 export const storagePath = isRenderer ? '' : path.join(basePath, 'files')
 export const buildModsPath: string = isRenderer ? '' : path.join(basePath, 'built-mods')

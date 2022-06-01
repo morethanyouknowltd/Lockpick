@@ -2,6 +2,15 @@
   "folders": [
     {
       "path": "."
+    },
+    {
+      "path": "../lockpick-shared"
+    },
+    {
+      "path": "../lockpick-website"
+    },
+    {
+      "path": "../korus-api"
     }
   ],
   "settings": {
@@ -91,6 +100,33 @@
       "xlocmon": "cpp",
       "xloctime": "cpp"
     },
-    "typescript.tsdk": "node_modules/typescript/lib"
+    "restoreTerminals.runOnStartup": false,
+    "restoreTerminals.terminals": [
+      {
+        "splitTerminals": [
+          {
+            "name": "Server watch",
+            "commands": ["yarn watch"]
+          }
+        ]
+      },
+
+      {
+        "splitTerminals": [
+          {
+            "name": "Electron start",
+            "commands": ["yarn start:dev"]
+          }
+        ]
+      },
+      {
+        "splitTerminals": [
+          {
+            "name": "Webpack Dev Server",
+            "commands": ["yarn dev"]
+          }
+        ]
+      }
+    ]
   }
 }

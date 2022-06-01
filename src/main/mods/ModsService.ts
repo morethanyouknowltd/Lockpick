@@ -31,7 +31,7 @@ import getModsWithInfo from './helpers/getModsWithInfo'
 import isModEnabled from './helpers/isModEnabled'
 import loadMod from './helpers/loadMod'
 import logForMod from './helpers/logForMod'
-import { ModInfo, SettingInfo } from './ModInfo'
+import { ModInfo, SettingInfo } from './types'
 const chokidar = require('chokidar')
 const colors = require('colors')
 const { app } = require('electron')
