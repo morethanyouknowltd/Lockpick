@@ -53,7 +53,7 @@ interface OpenPopup {
 // Clicking opens a static, interactable version on the ClickableCanvas rather than standard canvas
 export class PopupService extends BESService {
   // Other services
-  settingsService = getService<SettingsService>('SettingsService')
+  settingsService = getService(SettingsService)
 
   // Internal state
   currentPopups: { [id: string]: OpenPopup } = {}
@@ -236,7 +236,7 @@ export class PopupService extends BESService {
       }
       return false
     }
-    const uiSevice = getService<UIService>('UIService')
+    const uiSevice = getService(UIService)
     // this.mouseListenerRemoveCbs.push(uiSevice.Mouse.on('mousemove', (_ as any).throttle(event => {
     //     // Mouse move
     //     if (intersectsAnything(event)) {
@@ -397,7 +397,7 @@ export class PopupService extends BESService {
   }
 
   async postActivate() {
-    const uiService = getService<UIService>('UIService')
+    const uiService = getService(UIService)
     uiService.Mouse.on('keyup', event => {
       if (
         Bitwig.isActiveApplication() ||

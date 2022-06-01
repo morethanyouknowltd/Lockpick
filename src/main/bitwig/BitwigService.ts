@@ -1,21 +1,20 @@
-import { interceptPacket } from '../core/WebsocketToSocket'
+import _ from 'underscore'
 import { BESService, getService, makeEvent } from '../core/Service'
 import { SettingsService } from '../core/SettingsService'
-import { ShortcutsService } from '../shortcuts/ShortcutsService'
-import _ from 'underscore'
+import { interceptPacket } from '../core/WebsocketToSocket'
 import { PopupService } from '../popup/PopupService'
-import { APP_NAME } from '../../connector/shared/Constants'
+import { ShortcutsService } from '../shortcuts/ShortcutsService'
 
-const { Keyboard, Bitwig, UI } = require('bindings')('bes')
+const { Bitwig } = require('bindings')('bes')
 
 /**
  * Bitwig Service keeps track of Bitwig internal state, whether the browser is open etc.
  */
 export class BitwigService extends BESService {
   // Other services
-  settingsService = getService<SettingsService>('SettingsService')
-  shortcutsService = getService<ShortcutsService>('ShortcutsService')
-  popupService = getService<PopupService>('PopupService')
+  settingsService = getService(SettingsService)
+  shortcutsService = getService(ShortcutsService)
+  popupService = getService(PopupService)
 
   // Internal state
   browserIsOpen = false
@@ -26,6 +25,23 @@ export class BitwigService extends BESService {
   events = {
     transportStateChanged: makeEvent<string>(),
     browserOpen: makeEvent<boolean>(),
+    projectChanged: makeEvent<string>(),
+    activeEngineProjectChanged: makeEvent<string>(),
+    selectedTrackChanged: makeEvent<string>(),
+  }
+
+  currProject = ''
+  currTrack?: any
+  activeEngineProject = ''
+
+  get simplifiedProjectName() {
+    if (!this.currProject) {
+      return null
+    }
+    return this.currProject
+      .split(/v[0-9]+/)[0]
+      .trim()
+      .toLowerCase()
   }
 
   async activate() {
@@ -44,26 +60,34 @@ export class BitwigService extends BESService {
       }
     })
     interceptPacket(
+      'project',
+      undefined,
+      async ({ data: { name: projectName, hasActiveEngine, selectedTrack } }) => {
+        const projectChanged = this.currProject !== projectName
+        if (projectChanged) {
+          this.currProject = projectName
+          this.events.projectChanged.emit(projectName)
+          if (hasActiveEngine) {
+            this.activeEngineProject = projectName
+            this.events.activeEngineProjectChanged.emit(projectName)
+          }
+        }
+        if (selectedTrack && (!this.currTrack || this.currTrack.name !== selectedTrack.name)) {
+          const prev = this.currTrack
+          this.currTrack = selectedTrack
+          this.events.selectedTrackChanged.emit(this.currTrack, prev)
+        }
+      }
+    )
+    interceptPacket(
       'tracks',
       undefined,
       (_ as any).debounce(async ({ data: tracks }) => {
         this.tracks = tracks
-        // Check for duplicate track names
-        const uniqNames = (_ as any).uniq(this.tracks.map(t => t.name))
-        const numberOfDuplicates = tracks.length - uniqNames.length
-        if (numberOfDuplicates > 0) {
-          this.popupService.showMessage(
-            `${APP_NAME} works best when all tracks have unique names. Check the settings for the 'Rename Tracks' action to auto-rename ${numberOfDuplicates} tracks`
-          )
-        }
       }, 1000)
     )
 
     // The following just ensures that pids are populated
-    // setInterval(() => {
-    //   console.log('hellohellohello')
-    //   Bitwig.isActiveApplication()
-    // }, 1000 * 10)
     setTimeout(() => {
       Bitwig.isActiveApplication()
     }, 1000 * 2)

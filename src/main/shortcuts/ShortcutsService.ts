@@ -55,7 +55,7 @@ export interface ActionSpec extends BaseActionSpec {
 type AnyActionSpec = ActionSpec | TempActionSpec
 
 export class ShortcutsService extends BESService {
-  popupService = getService<PopupService>('PopupService')
+  popupService = getService(PopupService)
 
   browserIsOpen
   enteringValue = false
@@ -71,8 +71,8 @@ export class ShortcutsService extends BESService {
   newCache: { [shortcutCode: string]: Function[] } = {}
   pauseCacheUpdateVar = 0
 
-  socketService = getService<SocketMiddlemanService>('SocketMiddlemanService')
-  settingsService = getService<SettingsService>('SettingsService')
+  socketService = getService(SocketMiddlemanService)
+  settingsService = getService(SettingsService)
   // searchWindow: BrowserWindow
   extraShortcuts: any[]
   events = {
@@ -448,7 +448,7 @@ export class ShortcutsService extends BESService {
   }
 
   postActivate() {
-    const uiService = getService<UIService>('UIService')
+    const uiService = getService(UIService)
     uiService.Mouse.on('mouseup', event => {
       this.setEnteringValue(false)
       this.mouseIsDownMightBeDragging = false

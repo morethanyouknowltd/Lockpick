@@ -1,95 +1,53 @@
 import { spawn } from 'child_process'
-import { clipboard } from 'electron'
 import { promises as fs } from 'fs'
 import * as path from 'path'
-import _ from 'underscore'
-import { APP_NAME, APP_VERSION } from '../../connector/shared/Constants'
-import { debounce, wait } from '../../connector/shared/engine/Debounce'
-import { whenActiveListener } from '../../connector/shared/EventUtils'
+import { APP_NAME } from '../../connector/shared/Constants'
+import { wait } from '../../connector/shared/engine/Debounce'
 import { clamp } from '../../connector/shared/Math'
-import { containsPoint, containsX, containsY } from '../../connector/shared/Rect'
 import { getResourcePath } from '../../connector/shared/ResourcePath'
 import { BitwigService } from '../bitwig/BitwigService'
 import { buildModsPath } from '../config'
 import { createDirIfNotExist, exists as fileExists, writeStrFile } from '../core/Files'
 import { lockpickFileLogger, logger } from '../core/Log'
-import { BESService, EventEmitter, getService, makeEvent } from '../core/Service'
+import { BESService, getService, makeEvent } from '../core/Service'
 import { SettingsService } from '../core/SettingsService'
 import {
   addAPIMethod,
   interceptPacket,
   sendPacketToBitwig,
-  sendPacketToBitwigPromise,
   sendPacketToBrowser,
   SocketMiddlemanService,
 } from '../core/WebsocketToSocket'
 import { getDb } from '../db'
-import { Project } from '../db/entities/Project'
-import { ProjectTrack } from '../db/entities/ProjectTrack'
 import { Setting } from '../db/entities/Setting'
 import { PopupService } from '../popup/PopupService'
-import { ActionSpec, ShortcutsService } from '../shortcuts/ShortcutsService'
+import { ShortcutsService } from '../shortcuts/ShortcutsService'
 import { UIService } from '../ui/UIService'
-import { normalizeBitwigAction } from './actionMap'
-
+import copyControllerScript from './helpers/copyControllerScript'
+import getModsWithInfo from './helpers/getModsWithInfo'
+import { CueMarker, Device, ModInfo, SettingInfo } from './ModInfo'
+import getModsFolderPaths from './helpers/getModsFolderPaths'
 import winston = require('winston')
 import glob = require('glob')
 import isBuiltInModule = require('is-builtin-module')
+import getModApi from './helpers/getModApi'
 const chokidar = require('chokidar')
 const colors = require('colors')
 const { app } = require('electron')
-
-const KeyboardEvent = {
-  noModifiers() {
-    return !(this.Meta || this.Control || this.Alt || this.Shift)
-  },
-}
 
 let nextId = 0
 let modsLoading = false
 
 const { Keyboard, Mouse, MainWindow, Bitwig, UI } = require('bindings')('bes')
 
-interface ModInfo {
-  name: string
-  logger: winston.Logger
-  version: string
-  settingsKey: string
-  disabled: boolean
-  description: string
-  category: string
-  id: string
-  actions: { [actionKey: string]: any }
-  path: string
-  noReload: boolean
-  valid: boolean
-  error?: any
-}
-
-interface CueMarker {
-  name: string
-  position: number
-  color: string
-}
-
-interface Device {
-  name: string
-}
-
-interface SettingInfo {
-  name: string
-  description?: string
-  hidden: boolean
-}
-
 export class ModsService extends BESService {
   // Services
-  settingsService = getService<SettingsService>('SettingsService')
-  shortcutsService = getService<ShortcutsService>('ShortcutsService')
-  suckitService = getService<SocketMiddlemanService>('SocketMiddlemanService')
-  uiService = getService<UIService>('UIService')
-  bitwigService = getService<BitwigService>('BitwigService')
-  popupService = getService<PopupService>('PopupService')
+  settingsService = getService(SettingsService)
+  shortcutsService = getService(ShortcutsService)
+  suckitService = getService(SocketMiddlemanService)
+  uiService = getService(UIService)
+  bitwigService = getService(BitwigService)
+  popupService = getService(PopupService)
 
   isQuitting = false
 
@@ -157,766 +115,8 @@ export class ModsService extends BESService {
     // }
   }
 
-  isActive() {
-    return (
-      Bitwig.isActiveApplication() ||
-      (process.env.NODE_ENV === 'dev'
-        ? Bitwig.isActiveApplication('Electron')
-        : Bitwig.isActiveApplication(APP_NAME))
-    )
-  }
-
   getLatestModData(modId: string) {
     return this.latestFoundModsMap[`mod/${modId}`]
-  }
-
-  async makeApi(mod) {
-    const db = await getDb()
-    const projectTracks = db.getRepository(ProjectTrack)
-    const projects = db.getRepository(Project)
-    const that = this
-
-    const defaultData = {}
-    async function loadDataForTrack(name: string, project: string) {
-      const existingProject = await projects.findOne({
-        where: { name: project },
-      })
-      if (!existingProject) {
-        that.log(`No project exists for ${project} (track name: ${name}), returning default data`)
-        return defaultData
-      }
-      const saved = await projectTracks.findOne({
-        where: {
-          project_id: existingProject.id,
-          name,
-        },
-      })
-      let data = saved ? saved.data : defaultData
-      return data
-    }
-    async function getProjectIdForName(
-      project: string,
-      create: boolean = false
-    ): Promise<string | null> {
-      const existingProject = await projects.findOne({
-        where: { name: project },
-      })
-      if (!existingProject && create) {
-        const newProjectId = (await projects.save(projects.create({ name: project, data: {} }))).id
-        that.log(`Created new project with id ${newProjectId}`)
-        return newProjectId
-      } else {
-        return existingProject?.id ?? null
-      }
-    }
-    async function createOrUpdateTrack(track: string, project: string, data: any) {
-      const projectId = await getProjectIdForName(project, true)
-      const existingTrack = await projectTracks.findOne({
-        where: { name: track, project_id: projectId },
-      })
-      if (existingTrack) {
-        logger.info(
-          `Updating track (${existingTrack.name} (id: ${existingTrack.id})) with data: `,
-          data
-        )
-        await projectTracks.update(existingTrack.id, {
-          data: { ...existingTrack.data, ...data },
-        })
-      } else {
-        const newTrack = projectTracks.create({
-          name: track,
-          project_id: projectId,
-          data,
-          scroll: 0, // TODO remove
-        })
-        await projectTracks.save(newTrack)
-      }
-    }
-
-    const wrappedOnForReloadDisconnect = parent => {
-      return (...args) => {
-        const id = parent.on(...args)
-        this.onReloadMods.push(() => {
-          parent.off(id)
-        })
-      }
-    }
-
-    const makeEmitterEvents = <Keys extends string>(mapOfKeysAndEmitters: {
-      [K in Keys]: EventEmitter<any>
-    }) => {
-      const handlers: {
-        [K in Keys]: {
-          on: (cb: (data: any) => void) => any
-          off: (id: any) => void
-        }
-      } = {} as any
-
-      for (const key in mapOfKeysAndEmitters) {
-        const emitter = mapOfKeysAndEmitters[key]
-        handlers[key] = {
-          on: (cb: (data: any) => void) => {
-            if (!mod.enabled) {
-              return
-            }
-            let id = emitter.listen(cb)
-            this.onReloadMods.push(() => {
-              handlers[key].off(id)
-            })
-            return id
-          },
-          off: id => {
-            if (!mod.enabled) {
-              return
-            }
-            // console.log('Removing listener id:' + id)
-            emitter.stopListening(id)
-          },
-        }
-      }
-      const out = {
-        on: (eventName: Keys, cb: Function) => {
-          if (!mod.enabled) {
-            return () => {}
-          }
-          const wrappedCb = (...args) => {
-            try {
-              cb(...args)
-            } catch (e) {
-              this.logForMod(mod.id, 'error', colors.red(e))
-            }
-          }
-          return handlers[eventName].on(wrappedCb)
-        },
-        once: (eventName: Keys, cb: Function) => {
-          if (!mod.enabled) {
-            return
-          }
-          const id = out.on(eventName, (...args) => {
-            out.off(eventName, id)
-            cb(...args)
-          })
-        },
-        off: (eventName: Keys, id: number) => {
-          if (!mod.enabled) {
-            return
-          }
-          handlers[eventName].off(id)
-        },
-      }
-      return out
-    }
-
-    const addNotAlreadyIn = <A, B>(obj: A & Partial<B>, parent: B): A & B => {
-      for (const key in parent) {
-        if (!(key in obj)) {
-          ;(obj as any)[key] = parent[key]
-        }
-      }
-      return obj as A & B
-    }
-    const thisApiId = nextId++
-    const uiApi = this.uiService.getApi({
-      mod,
-      makeEmitterEvents,
-      onReloadMods: cb => this.onReloadMods.push(cb),
-    })
-    const popupApi = this.popupService.getApi({
-      mod,
-      makeEmitterEvents,
-      onReloadMods: cb => this.onReloadMods.push(cb),
-    })
-    const wrapCbForApplication = cb => {
-      return (...args) => {
-        if ((mod.applications?.length ?? 0) > 0) {
-          // Don't run cb if specified application not active
-          const apps = mod.applications
-          const oneActive = apps.find(a => Bitwig.isActiveApplication(a))
-          if (!oneActive) {
-            return
-          }
-        } else if (!this.isActive()) {
-          // @applications was empty, assume meant for Bitwig only
-          return
-        }
-        return cb(...args)
-      }
-    }
-
-    const api = {
-      _,
-      Popup: popupApi.Popup,
-      id: thisApiId,
-      log: (...args) => {
-        this.logForMod(mod.id, 'info', ...args)
-      },
-      error: (...args) => {
-        logger.info(`${colors.red(mod.id)}:`, ...args)
-        this.logForMod(mod.id, 'error', ...args)
-      },
-      Keyboard: {
-        ...Keyboard,
-        on: (eventName: string, cb: Function) => {
-          if (!mod.enabled) {
-            return
-          }
-          const wrappedCb = (event, ...rest) => {
-            const eventCopy = { ...event }
-            // this.logForMod(mod.id, 'info', `${eventName}`)
-            Object.setPrototypeOf(eventCopy, KeyboardEvent)
-            return cb(eventCopy, ...rest)
-          }
-          wrappedOnForReloadDisconnect(Keyboard)(eventName, wrapCbForApplication(wrappedCb))
-        },
-        type: (str, opts?) => {
-          if (!mod.enabled) {
-            return
-          }
-          String(str)
-            .split('')
-            .forEach(char => {
-              Keyboard.keyPress(char === ' ' ? 'Space' : char, opts)
-            })
-        },
-      },
-      Shortcuts: this.shortcutsService.getApi(),
-      whenActiveListener: whenActiveListener,
-      Rect: {
-        containsPoint,
-        containsX,
-        containsY,
-      },
-      Mouse: {
-        ...uiApi.Mouse,
-        on: (eventName: string, cb) => {
-          if (!mod.enabled) {
-            return
-          }
-          return uiApi.Mouse.on(eventName, wrapCbForApplication(cb))
-        },
-      },
-      UI: uiApi.UI,
-      Bitwig: addNotAlreadyIn(
-        {
-          get connected() {
-            return that.suckitService.bitwigConnected
-          },
-          closeFloatingWindows: Bitwig.closeFloatingWindows,
-          get isAccessibilityOpen() {
-            return Bitwig.isAccessibilityOpen()
-          },
-          get isPluginWindowActive() {
-            return Bitwig.isPluginWindowActive()
-          },
-          get tracks() {
-            return that.bitwigService.tracks
-          },
-          get isBrowserOpen() {
-            return that.bitwigService.browserIsOpen
-          },
-          isActiveApplication(...args) {
-            return Bitwig.isActiveApplication(...args)
-          },
-          MainWindow,
-          get currentTrack() {
-            return that.currTrack
-          },
-          get currentDevice() {
-            return that.currDevice
-          },
-          get cueMarkers() {
-            return that.cueMarkers
-          },
-          get currentProject() {
-            return that.simplifiedProjectName
-          },
-          sendPacket: packet => {
-            return sendPacketToBitwig(packet)
-          },
-          sendPacketPromise: packet => {
-            return sendPacketToBitwigPromise(packet)
-          },
-          runAction: action => {
-            let actions = action
-            if (!Array.isArray(actions)) {
-              actions = [action]
-            }
-            return sendPacketToBitwigPromise({
-              type: 'action',
-              data: actions.map(normalizeBitwigAction),
-            })
-          },
-          getFocusedPluginWindow: () => {
-            const pluginWindows = Bitwig.getPluginWindowsPosition()
-            return Object.values(pluginWindows).find((w: any) => w.focused)
-          },
-          showMessage: this.popupService.showMessage,
-          intersectsPluginWindows: event => this.uiService.eventIntersectsPluginWindows(event),
-          ...makeEmitterEvents({
-            selectedTrackChanged: this.events.selectedTrackChanged,
-            projectChanged: this.events.projectChanged,
-            activeEngineProjectChanged: this.events.activeEngineProjectChanged,
-            cueMarkersChanged: this.events.cueMarkersChanged,
-            ...this.bitwigService.events,
-          }),
-        },
-        Bitwig
-      ),
-      MainDisplay: {
-        getDimensions() {
-          return MainWindow.getMainScreen()
-        },
-      },
-      Db: {
-        getData: async () => {
-          const modSetting = await this.settingsService.settingExists(`mod/${mod.id}`)
-          if (!modSetting) {
-            return {}
-          }
-          return (await this.settingsService.getSettingValue(`mod/${mod.id}`)).data || {}
-        },
-        setData: async data => {
-          const existingSetting =
-            (await this.settingsService.getSettingValueOrNull(`mod/${mod.id}`)) || {}
-          await this.settingsService.upsertSetting({
-            key: `mod/${mod.id}`,
-            type: 'boolean',
-            value: {
-              enabled: false,
-              keys: [],
-              ...existingSetting,
-              data,
-            },
-          })
-        },
-        getTrackData: async (name: string, options: { modId?: string } = {}) => {
-          if (!this.simplifiedProjectName) {
-            this.logForMod(
-              mod.id,
-              'warn',
-              colors.yellow('Tried to get track data but no project loaded')
-            )
-            return null
-          }
-          return (
-            (await loadDataForTrack(name, this.simplifiedProjectName))[options?.modId ?? mod.id] ||
-            {}
-          )
-        },
-        setCurrentProjectData: async data => {
-          if (!this.simplifiedProjectName) {
-            this.logForMod(mod.id, colors.yellow('Tried to set project data but no project loaded'))
-            return null
-          }
-          const projectName = this.simplifiedProjectName
-          const projectId = await getProjectIdForName(projectName, true)
-          const project = await projects.findOne(projectId)
-          this.logForMod(mod.id, 'info', `Setting project data: `, data)
-          await projects.update(projectId, {
-            data: {
-              ...project.data,
-              [mod.id]: data,
-            },
-          })
-        },
-        getCurrentProjectData: async () => {
-          if (!this.simplifiedProjectName) {
-            this.logForMod(
-              mod.id,
-              'warn',
-              colors.yellow('Tried to get project data but no project loaded')
-            )
-            return null
-          }
-          const project = this.simplifiedProjectName
-          const existingProject = await projects.findOne({
-            where: { name: project },
-          })
-          return existingProject?.data[mod.id] ?? {}
-        },
-        setTrackData: (name: string, data) => {
-          if (!this.simplifiedProjectName) {
-            this.logForMod(
-              mod.id,
-              'warn',
-              colors.yellow('Tried to set track data but no project loaded')
-            )
-            return null
-          }
-          return createOrUpdateTrack(name, this.simplifiedProjectName, {
-            [mod.id]: data,
-          })
-        },
-        setExistingTracksData: async (data, exclude: string[] = []) => {
-          if (!this.simplifiedProjectName) {
-            this.logForMod(
-              mod.id,
-              'warn',
-              colors.yellow('Tried to set track data but no project loaded')
-            )
-            return null
-          }
-          const project = this.simplifiedProjectName
-          const existingProject = await projects.findOne({
-            where: { name: project },
-          })
-          if (!existingProject) {
-            return
-          }
-
-          const tracksInProject = await projectTracks.find({
-            where: { project_id: existingProject.id },
-          })
-          for (const track of tracksInProject) {
-            if (exclude.indexOf(track.name) === -1) {
-              await api.Db.setTrackData(track.name, data)
-            }
-          }
-        },
-        getCurrentTrackData: () => {
-          return api.Db.getTrackData(api.Bitwig.currentTrack.name)
-        },
-        setCurrentTrackData: data => {
-          return api.Db.setTrackData(api.Bitwig.currentTrack.name, data)
-        },
-      },
-      Mod: {
-        hostVersion: APP_VERSION,
-        id: mod.id,
-        /**
-         * Prevents shortcuts from being triggered if true
-         * @param isEnteringValue whether Lockpick should assume you are currently typing in a value for example
-         */
-        setEnteringValue: (isEnteringValue: boolean) => {
-          if (!mod.enabled) {
-            return
-          }
-          this.shortcutsService.enteringValue = isEnteringValue
-        },
-        /**
-         * Run another Lockpick action by its internal action id
-         */
-        runAction: (actionId: string, ...args: any[]) => {
-          if (!mod.enabled) {
-            return
-          }
-          return this.shortcutsService.runAction(actionId, ...args)
-        },
-        /**
-         * Run multiple Lockpick actions by their internal action ids
-         */
-        runActions: (...actionIds: string[]) => {
-          if (!mod.enabled) {
-            return
-          }
-          for (const action of actionIds) {
-            api.Mod.runAction(action)
-          }
-        },
-        registerActionCategory: categoryDetails => {
-          const { title } = categoryDetails
-          mod.actionCategories = mod.actionCategories || {}
-          mod.actionCategories[title] = categoryDetails
-          return title // use title as id-like
-        },
-        /**
-         * Must be called with await to ensure non async value is ready to go
-         */
-        registerSetting: async settingSpec => {
-          const defaultValue = JSON.stringify(settingSpec.value ?? {})
-          const actualKey = `mod/${mod.id}/${settingSpec.id}`
-          const type = settingSpec.type ?? 'boolean'
-
-          const setting = {
-            name: settingSpec.name,
-            type,
-            category: 'global',
-            value: defaultValue,
-            key: actualKey,
-            mod: mod.id,
-          }
-
-          this.logForMod(mod.id, 'info', colors.blue(setting.name), ':', colors.blue(setting.value))
-          this.settingsService.insertSettingIfNotExist(setting)
-          this.settingKeyInfo[actualKey] = {
-            name: settingSpec.name,
-            description: settingSpec.description,
-            hidden: !!settingSpec.hidden,
-          }
-
-          const settingApi = {
-            value: false,
-            getValue: async () => {
-              if (!(await that.settingsService.settingExists(actualKey))) {
-                settingApi.value = false
-                return false
-              }
-              const val = (await that.settingsService.getSettingValue(actualKey)).enabled
-              settingApi.value = val
-              return val
-            },
-            setValue: async value => {
-              if (!mod.enabled) {
-                return
-              }
-              that.settingsService.setSettingValue(actualKey, {
-                enabled: value,
-              })
-              settingApi.value = value
-            },
-            toggleValue: async () => {
-              if (!mod.enabled) {
-                return
-              }
-              settingApi.value = !settingApi.value
-              settingApi.setValue(!(await settingApi.getValue()))
-            },
-          }
-
-          const listenId = this.settingsService.events.settingUpdated.listen(setting => {
-            if (setting.key === actualKey) {
-              settingApi.value = this.settingsService.postload(setting).value.enabled
-            }
-          })
-          this.onReloadMods.push(() => {
-            this.settingsService.events.settingUpdated.stopListening(listenId)
-          })
-
-          // Non async access, updated whenever we set
-          settingApi.value = await settingApi.getValue()
-          return settingApi
-        },
-        registerAction: async (action: ActionSpec) => {
-          if (action.id.indexOf('mod/') === 0) {
-            throw new Error(`"mod/" is a reserved prefix`)
-          }
-          mod.actions = mod.actions || {}
-          mod.actions[action.id] = action
-          action.category = action.category ? mod.actionCategories[action.category] : null
-          // Some of the functions below are async, and we'd rather not restrict mod
-          // authors to have to await registerAction() each time. So, we keep track of
-          // how many are waiting to fulfil and then update the shortcut cache when
-          // we know everything is done.
-          this.shortcutsService.pauseCacheUpdate()
-
-          const existingSetting = await this.settingsService.getSetting(action.id)
-          if (existingSetting && existingSetting.mod !== mod.id) {
-            this.error(
-              colors.red(
-                `Action with id ${action.id} already exists for mod ${mod.id}. Overwriting`
-              )
-            )
-            await this.settingsService.deleteSetting(action.id)
-          }
-
-          await this.settingsService.insertSettingIfNotExist({
-            key: action.id,
-            mod: mod.id,
-            value: {
-              keys: [],
-            },
-            type: 'shortcut',
-          })
-          this.logForMod(mod.id, 'info', colors.green(`Registered action: ${action.id}`))
-
-          try {
-            const settingValue = await this.settingsService.getSettingValue(action.id)
-            if (mod.enabled) {
-              const wrappedAction = async (...args) => {
-                try {
-                  await (async () => action.action(...args))()
-                } catch (e) {
-                  this.logForMod(mod.id, 'error', colors.red(e))
-                }
-              }
-              this.shortcutsService.addActionToShortcutRegistry(
-                {
-                  ...action,
-                  action: wrappedAction,
-                },
-                settingValue
-              )
-              this.onReloadMods.push(() => {
-                this.shortcutsService.removeActionFromShortcutRegistry(action.id)
-              })
-            } else {
-              this.log(`Skipping action register ${action.id}, mod ${mod.id} not enabled`)
-            }
-          } catch (e) {
-            this.error(e)
-          }
-          this.shortcutsService.unpauseCacheUpdate()
-        },
-        registerActionsWithRange: (
-          name: string,
-          start: number,
-          end: number,
-          cb: (i: number) => ActionSpec
-        ) => {
-          for (let i = start; i <= end; i++) {
-            const action = cb(i)
-            action.id = name + i
-            api.Mod.registerAction(action)
-          }
-        },
-        _registerShortcut: (keys: string[], runner: Function) => {
-          const actionId = mod.id + '/' + keys.join('+')
-          this.shortcutsService.addActionToShortcutRegistry(
-            {
-              id: actionId,
-              mod: mod.id,
-              action: async (...args) => {
-                if (!mod.enabled) {
-                  return this.log('Not running, mod disabled')
-                }
-                try {
-                  await (async () => runner(...args))()
-                } catch (e) {
-                  this.logForMod(mod.id, 'error', colors.red(e))
-                }
-              },
-              title: `${mod.title} Shortcut`,
-            },
-            {
-              keys,
-              special: 'null',
-            }
-          )
-          this.onReloadMods.push(() => {
-            this.shortcutsService.removeActionFromShortcutRegistry(actionId)
-          })
-        },
-        registerShortcutMap: shortcutMap => {
-          for (const keys in shortcutMap) {
-            api.Mod._registerShortcut(keys.split(' '), shortcutMap[keys])
-          }
-        },
-        setInterval: (fn, ms) => {
-          if (!mod.enabled) {
-            return 0
-          }
-          const id = setInterval(fn, ms)
-          this.log('Added interval id: ' + id)
-          this.onReloadMods.push(() => {
-            clearInterval(id)
-            this.log('Clearing interval id: ' + id)
-          })
-          return id
-        },
-        get isActive() {
-          return thisApiId in that.activeModApiIds
-        },
-        onExit: cb => {
-          if (!mod.enabled) {
-            return
-          }
-          this.onReloadMods.push(cb)
-        },
-        getClipboard() {
-          return clipboard.readText()
-        },
-        interceptPacket: (type: string, ...rest) => {
-          if (!mod.enabled) {
-            return
-          }
-          const remove = interceptPacket(type, ...rest)
-          this.onReloadMods.push(remove)
-        },
-        ...makeEmitterEvents({
-          actionTriggered: this.shortcutsService.events.actionTriggered,
-        }),
-      },
-      debounce,
-      throttle: (_ as any).throttle,
-      showNotification: notif => {
-        if (!mod.enabled) {
-          return
-        }
-        this.popupService.showNotification(notif)
-      },
-    }
-    const wrapFunctionsWithTryCatch = <T>(value: T, key?: string): T => {
-      if (typeof value === 'object') {
-        for (const k in value) {
-          const desc = Object.getOwnPropertyDescriptor(value, k)
-          if ((!desc || !desc.get) && typeof value[k] === 'function') {
-            value[k] = wrapFunctionsWithTryCatch(value[k], k)
-          } else if ((!desc || !desc.get) && typeof value[k] === 'object') {
-            value[k] = wrapFunctionsWithTryCatch(value[k], k)
-          }
-        }
-      } else if (typeof value === 'function') {
-        const fn: any = (...args) => {
-          const called = value.name || key || 'Unknown function'
-          try {
-            // if (value !== api.log) {
-            //     this.logForMod(mod.id, 'info', `Called ${called}`)
-            // }
-            return value(...args)
-          } catch (e) {
-            logger.error(
-              colors.red(`${mod.id} threw an error while calling "${colors.yellow(called)}":`)
-            )
-            logger.error('Fn:', value.toString())
-            logger.error(colors.red(`arguments were: `), ...args)
-            logger.error('Raw error:')
-            logger.error(e)
-            logger.error('Raw error stack:')
-            logger.error(e.stack)
-            throw e
-          }
-        }
-        return fn
-      }
-      return value
-    }
-    return {
-      ...wrapFunctionsWithTryCatch(api),
-      _,
-    }
-  }
-
-  async getModsWithInfo(
-    { category, inMenu, modId } = {} as any
-  ): Promise<(ModInfo & { key: string; value: any })[]> {
-    const db = await getDb()
-    const settings = db.getRepository(Setting)
-    const where = { type: 'mod' } as any
-    if (category) {
-      where.category = category
-    }
-    if (modId) {
-      where.key = `mod/${modId}`
-    }
-    const results = await settings.find({ where })
-    const byKey = {}
-    for (const r of results) {
-      byKey[r.key] = r
-    }
-    return Object.keys(this.latestFoundModsMap)
-      .filter(key => {
-        const matchesModQuery = !modId || `mod/${modId}` === key
-        const notDisabled = !this.latestFoundModsMap[key].disabled
-        return matchesModQuery && notDisabled
-      })
-      .map(settingKey => {
-        const res = byKey[settingKey]
-          ? this.settingsService.postload(byKey[settingKey])
-          : {
-              value: {
-                enabled: false,
-                keys: [],
-              },
-            }
-        const modInfo = _.omit(this.latestFoundModsMap[settingKey], 'logger')
-        return {
-          ...res,
-          ...modInfo,
-        }
-      })
-      .filter(mod => {
-        return inMenu ? mod.value.showInMenu : true
-      }) as any
   }
 
   async activate() {
@@ -973,7 +173,7 @@ export class ModsService extends BESService {
         return api.Mod.id === modId
       })
       if (!modApi) {
-        modApi = await this.makeApi({ id: modId })
+        modApi = await getModApi.call(this, { id: modId })
         this.activeModApiIds[modApi.id] = modApi
       }
       const defrostFunctions = obj => {
@@ -1009,7 +209,7 @@ export class ModsService extends BESService {
       }
     })
     addAPIMethod('api/mods', async () => {
-      return await this.getModsWithInfo()
+      return await getModsWithInfo({ latestFoundModsMap: this.latestFoundModsMap })
     })
     addAPIMethod('api/mod/action', async ({ action, id }) => {
       if (action === 'resetToDefault') {
@@ -1025,7 +225,9 @@ export class ModsService extends BESService {
       return await this.shortcutsService.runAction(id)
     })
     addAPIMethod('api/mod', async ({ id }) => {
-      const mod = (await this.getModsWithInfo({ modId: id }))[0] as any
+      const mod = (
+        await getModsWithInfo({ modId: id, latestFoundModsMap: this.latestFoundModsMap })
+      )[0] as any
       const db = await getDb()
       const settings = db.getRepository(Setting)
       const settingsForMod = await settings.find({
@@ -1070,7 +272,7 @@ export class ModsService extends BESService {
         this.debug('Quitting, not restarting another folder watcher')
         return
       }
-      const folderPaths = await this.getModsFolderPaths()
+      const folderPaths = await getModsFolderPaths()
       this.debug('Watching ' + folderPaths)
 
       this.folderWatcher = chokidar
@@ -1189,59 +391,6 @@ export class ModsService extends BESService {
     })
   }
 
-  getDefaultModsFolderPath() {
-    return getResourcePath('/default-mods')
-  }
-
-  async getModsFolderPaths(): Promise<string[]> {
-    const userLibPath = await this.settingsService.userLibraryPath()
-    const exists = typeof userLibPath === 'string' && (await fileExists(userLibPath))
-    if (exists) {
-      await createDirIfNotExist(path.join(userLibPath!, APP_NAME))
-      await createDirIfNotExist(path.join(userLibPath!, APP_NAME, 'Mods'))
-    }
-    return [
-      this.getDefaultModsFolderPath(),
-      ...(exists
-        ? [path.join((await this.settingsService.lockpickLibraryLocation())!, 'Mods')]
-        : []),
-    ]
-  }
-
-  async copyControllerScript() {
-    const userLibPath = await this.settingsService.userLibraryPath()
-    try {
-      await fs.access(userLibPath!)
-    } catch (e) {
-      return this.log('Not copying controller script until user library path set')
-    }
-
-    try {
-      const controllerSrcFolder = getResourcePath('/controller-script')
-      const controllerDestFolder = path.join(userLibPath!, 'Controller Scripts', APP_NAME)
-
-      await createDirIfNotExist(controllerDestFolder)
-      for (const file of [...(await fs.readdir(controllerSrcFolder)), 'mods.js']) {
-        const src = (
-          await fs.readFile(
-            path.join(file === 'mods.js' ? buildModsPath : controllerSrcFolder, file)
-          )
-        )
-          .toString()
-          .replace(/process\.env\.([a-zA-Z_-][a-zA-Z-_0-9]+)/g, (match, name) => {
-            // this.log(match, name)
-            return JSON.stringify(process.env[name])
-          })
-        const dest = path.join(controllerDestFolder, file)
-        if (!(await fileExists(dest)) || (await fs.readFile(dest)).toString() !== src) {
-          await fs.writeFile(dest, src)
-        }
-      }
-    } catch (e) {
-      logger.error(e)
-    }
-  }
-
   async gatherModsFromPaths(paths: string[], { type }: { type: 'bitwig' | 'local' }) {
     let modsById = {}
     // Load mods from all folders, with latter folders having higher precedence (overwriting by id)
@@ -1356,7 +505,7 @@ export class ModsService extends BESService {
   }
 
   async refreshLocalMods() {
-    const modsFolders = await this.getModsFolderPaths()
+    const modsFolders = await getModsFolderPaths()
     this.activeModApiIds = {}
     this.shortcutsService.pauseCacheUpdate()
 
@@ -1399,7 +548,7 @@ export class ModsService extends BESService {
           mod.disabled = false
         }
 
-        const api = await this.makeApi(mod)
+        const api = await getModApi.call(this, mod)
         this.activeModApiIds[api.id] = api
 
         // Populate function scope with api objects
@@ -1478,7 +627,7 @@ ${mod.contents}
   }
 
   async refreshBitwigMods(noWriteFile: boolean) {
-    const modsFolders = await this.getModsFolderPaths()
+    const modsFolders = await getModsFolderPaths()
     let controllerScript = `
 // Auto generated by ${APP_NAME}
 function loadMods(api) {
@@ -1528,7 +677,7 @@ modsImpl(api)
     const controllerScriptMods = path.join(buildModsPath, 'mods.js')
     if (!noWriteFile) {
       await fs.writeFile(controllerScriptMods, controllerScript)
-      await this.copyControllerScript()
+      await copyControllerScript({ settingsService: this.settingsService })
     }
   }
 

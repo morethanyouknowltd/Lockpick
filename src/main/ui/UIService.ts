@@ -16,9 +16,9 @@ const { Keyboard, Bitwig, UI, Mouse: _Mouse, MainWindow } = require('bindings')(
  */
 export class UIService extends BESService {
   // Other services
-  settingsService = getService<SettingsService>('SettingsService')
-  shortcutsService = getService<ShortcutsService>('ShortcutsService')
-  bitwigService = getService<BitwigService>('BitwigService')
+  settingsService = getService(SettingsService)
+  shortcutsService = getService(ShortcutsService)
+  bitwigService = getService(BitwigService)
 
   // Internal state
   activeTool = 0

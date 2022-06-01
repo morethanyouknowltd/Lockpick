@@ -1,13 +1,14 @@
-import { BESService, getService } from './Service'
-import { Tray, Menu, app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, Menu, Tray } from 'electron'
+import { APP_NAME } from '../../connector/shared/Constants'
 import { getAppPath, getResourcePath } from '../../connector/shared/ResourcePath'
-import { url } from './Url'
-import { addAPIMethod, interceptPacket, SocketMiddlemanService } from './WebsocketToSocket'
-import { SettingsService } from './SettingsService'
+import getModsWithInfo from '../mods/helpers/getModsWithInfo'
 import { ModsService } from '../mods/ModsService'
 import { ShortcutsService } from '../shortcuts/ShortcutsService'
-import { APP_NAME, APP_VERSION } from '../../connector/shared/Constants'
 import { isWindows } from './Os'
+import { BESService, getService } from './Service'
+import { SettingsService } from './SettingsService'
+import { url } from './Url'
+import { addAPIMethod, interceptPacket, SocketMiddlemanService } from './WebsocketToSocket'
 const path = require('path')
 const { Bitwig } = require('bindings')('bes')
 
@@ -16,10 +17,10 @@ export class TrayService extends BESService {
   animationI = 0
   connected = false
   settingsWindow
-  settingsService = getService<SettingsService>('SettingsService')
-  socket = getService<SocketMiddlemanService>('SocketMiddlemanService')
-  modsService = getService<ModsService>('ModsService')
-  shortcutsService = getService<ShortcutsService>('ShortcutsService')
+  settingsService = getService(SettingsService)
+  socket = getService(SocketMiddlemanService)
+  modsService = getService(ModsService)
+  shortcutsService = getService(ShortcutsService)
 
   async activate() {
     const tray = new Tray(getResourcePath('/images/tray-0Template.png'))
@@ -74,7 +75,10 @@ export class TrayService extends BESService {
 
     const updateMenu = async () => {
       const modItems: Electron.MenuItemConstructorOptions[] = (
-        await this.modsService.getModsWithInfo({ inMenu: true })
+        await getModsWithInfo({
+          latestFoundModsMap: this.modsService.latestFoundModsMap,
+          inMenu: true,
+        })
       ).map(modSetting => {
         return {
           label: modSetting.name,

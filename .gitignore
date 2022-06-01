@@ -1,6 +1,15 @@
 .env
 *.icloud
 
+# Yarn 3
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
 /build/**
 /dist/**
 /out/**
@@ -29,4 +38,3 @@ ipch/
 
 # Visual Studio build files
 **/HookDll/x64
-

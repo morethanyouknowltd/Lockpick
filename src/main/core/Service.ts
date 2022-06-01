@@ -1,3 +1,4 @@
+import { Constructor, InstanceOf } from 'ts-morph'
 import { logger } from './Log'
 const colors = require('colors')
 
@@ -107,6 +108,6 @@ export async function registerService<T>(service: Function): Promise<T> {
   return instance
 }
 
-export function getService<T>(name: string): T {
-  return servicesByName[name] as any
+export function getService<T>(name: string | T): InstanceOf<T> {
+  return servicesByName[typeof name === 'string' ? name : (name as any).name] as any
 }

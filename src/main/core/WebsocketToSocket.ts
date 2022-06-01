@@ -194,10 +194,7 @@ export class SocketMiddlemanService extends BESService {
 }
 
 function sendToBitwig(str) {
-  if (
-    bitwigClient &&
-    getService<SocketMiddlemanService>('SocketMiddlemanService').bitwigConnected
-  ) {
+  if (bitwigClient && getService(SocketMiddlemanService).bitwigConnected) {
     const buff = Buffer.from(str, 'utf8')
     const sizeBuf = Buffer.alloc(4)
     sizeBuf.writeInt32BE(str.length, 0)
@@ -279,7 +276,7 @@ interceptPacket('api/status', ({ id }) => {
   sendPacketToBrowser({
     type: 'api/status',
     data: {
-      bitwigConnected: getService<SocketMiddlemanService>('SocketMiddlemanService').bitwigConnected,
+      bitwigConnected: getService(SocketMiddlemanService).bitwigConnected,
       accessibilityEnabled: Bitwig.isAccessibilityEnabled(false),
     },
     id,

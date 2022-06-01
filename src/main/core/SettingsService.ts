@@ -19,7 +19,7 @@ export class SettingsService extends BESService {
     settingsUpdated: makeEvent<void>(),
     settingUpdated: makeEvent<Partial<SettingTemplate>>(),
   }
-  socketService = getService<SocketMiddlemanService>('SocketMiddlemanService')
+  socketService = getService(SocketMiddlemanService)
 
   async activate() {
     this.db = await getDb()

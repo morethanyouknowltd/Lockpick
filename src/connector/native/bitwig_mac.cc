@@ -441,7 +441,6 @@ bool isAXUIElementActiveApp(AXUIElementRef element)
 
 bool isAppActive(std::string app)
 {
-  std::cout << "isAppActive " << app << std::endl;
   if (!activeAppDirty)
   {
     return activeApp == app;

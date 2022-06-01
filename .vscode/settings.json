@@ -4,5 +4,9 @@
     "**/bower_components": true,
     "**/*.code-search": true,
     "**/dist": true
+  },
+  "files.exclude": {
+    "src/**/*.js": true,
+    "src/**/*.js.map": true
   }
 }
