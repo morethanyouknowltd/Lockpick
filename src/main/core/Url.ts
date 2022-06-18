@@ -1,6 +1,6 @@
 import * as p from 'path'
 
-export function url(path) {
+export function url(path: string) {
   if (process.env.NODE_ENV === 'dev') {
     if (process.env.DEV_SERVER === 'true') {
       return 'http://localhost:8081' + path

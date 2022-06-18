@@ -1,6 +1,7 @@
 import { fromSnapshot } from 'mobx-keystone'
 import KorusStateServer from '../../connector/shared/state/KorusStateServer'
 import { BitwigState } from '../../connector/shared/state/models/BitwigTrack.model'
+import { ModsState } from '../../connector/shared/state/models/Mod.model'
 import { RootState } from '../../connector/shared/state/rootStore'
 import { jsonPath } from '../config'
 import { BESService } from '../core/Service'
@@ -17,6 +18,7 @@ export class StateService extends BESService {
     const dbLocation = jsonPath
     let initialState = new RootState({
       bitwig: new BitwigState({}),
+      mods: new ModsState({}),
     })
     try {
       const data = require(dbLocation)

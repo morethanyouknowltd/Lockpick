@@ -17,5 +17,6 @@
     "baseUrl": "./",
     "outDir": "../../dist"
   },
+  "reflection": true,
   "include": ["**/*"]
 }

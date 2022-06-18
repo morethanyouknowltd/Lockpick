@@ -17,9 +17,7 @@ let korusState = null
 function useKorusState() {
   // Keep this otherwise the import to RootState gets automatically removed
   const testState = new RootState({
-    bitwig: new BitwigState({
-      tracks: [],
-    }),
+    bitwig: new BitwigState({}),
   })
 
   let [korusChangedCount, setKorusChangeCount] = useState(0)

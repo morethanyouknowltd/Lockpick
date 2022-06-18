@@ -36,7 +36,7 @@ const getBitwigModApi: ModApiCreator = args => {
       get isBrowserOpen() {
         return bitwigService.browserIsOpen
       },
-      isActiveApplication(...args) {
+      isActiveApplication(...args: any[]) {
         return Bitwig.isActiveApplication(...args)
       },
       MainWindow,
@@ -52,13 +52,13 @@ const getBitwigModApi: ModApiCreator = args => {
       get currentProject() {
         return bitwigService.simplifiedProjectName
       },
-      sendPacket: packet => {
+      sendPacket: (packet: any) => {
         return sendPacketToBitwig(packet)
       },
-      sendPacketPromise: packet => {
+      sendPacketPromise: (packet: any) => {
         return sendPacketToBitwigPromise(packet)
       },
-      runAction: action => {
+      runAction: (action: any) => {
         let actions = action
         if (!Array.isArray(actions)) {
           actions = [action]
@@ -73,7 +73,7 @@ const getBitwigModApi: ModApiCreator = args => {
         return Object.values(pluginWindows).find((w: any) => w.focused)
       },
       showMessage: popupService.showMessage,
-      intersectsPluginWindows: event => uiService.eventIntersectsPluginWindows(event),
+      intersectsPluginWindows: (event: any) => uiService.eventIntersectsPluginWindows(event),
       ...args.makeEmitterEvents({
         ...bitwigService.events,
       }),

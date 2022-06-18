@@ -1,8 +1,9 @@
-import * as _ from 'lodash'
+import { Keyed } from '@mtyk/types'
+import { omit } from 'lodash'
 import { getService } from '../../core/Service'
-import { SettingsService } from '../../core/SettingsService'
 import { getDb } from '../../db'
 import { Setting } from '../../db/entities/Setting'
+import { SettingsService } from '../../settings/SettingsService'
 import { ModInfo } from '../types'
 
 export default async function getModsWithInfo(
@@ -19,7 +20,8 @@ export default async function getModsWithInfo(
     where.key = `mod/${modId}`
   }
   const results = await settings.find({ where })
-  const byKey = {}
+  const byKey: Keyed<any> = {}
+
   for (const r of results) {
     byKey[r.key] = r
   }
@@ -38,7 +40,7 @@ export default async function getModsWithInfo(
               keys: [],
             },
           }
-      const modInfo = _.omit(latestFoundModsMap[settingKey], 'logger')
+      const modInfo = omit(latestFoundModsMap[settingKey], 'logger')
       return {
         ...res,
         ...modInfo,

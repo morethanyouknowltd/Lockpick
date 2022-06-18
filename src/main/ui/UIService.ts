@@ -1,13 +1,14 @@
-import { interceptPacket } from '../core/WebsocketToSocket'
-import { BESService, EventRouter, getService, makeEvent } from '../core/Service'
-import { SettingsService } from '../core/SettingsService'
-import { ShortcutsService } from '../shortcuts/ShortcutsService'
-import _ from 'underscore'
-import { BitwigService } from '../bitwig/BitwigService'
+import { Geometry } from '@mtyk/types'
+import { debounce } from 'lodash'
 import { wait } from '../../connector/shared/engine/Debounce'
 import { returnMouseAfter } from '../../connector/shared/EventUtils'
+import { BitwigService } from '../bitwig/BitwigService'
+import { BESService, EventRouter, makeEvent } from '../core/Service'
+import { interceptPacket } from '../core/WebsocketToSocket'
+import { SettingsService } from '../settings/SettingsService'
+import { ShortcutsService } from '../shortcuts/ShortcutsService'
 const { app } = require('electron')
-const { Keyboard, Bitwig, UI, Mouse: _Mouse, MainWindow } = require('bindings')('bes')
+const { Keyboard, Bitwig, UI, Mouse: NativeMouse, MainWindow } = require('bindings')('bes')
 
 /**
  * UI Service is basically responsible for keeping an up to date (insofar as possbile) representation of the Bitwig UI.
@@ -15,10 +16,13 @@ const { Keyboard, Bitwig, UI, Mouse: _Mouse, MainWindow } = require('bindings')(
  * gradually move things over to here when it makes sense.
  */
 export class UIService extends BESService {
-  // Other services
-  settingsService = getService(SettingsService)
-  shortcutsService = getService(ShortcutsService)
-  bitwigService = getService(BitwigService)
+  constructor(
+    protected settingsService: SettingsService,
+    protected shortcutsService: ShortcutsService,
+    protected bitwigService: BitwigService
+  ) {
+    super('UIService')
+  }
 
   // Internal state
   activeTool = 0
@@ -30,7 +34,7 @@ export class UIService extends BESService {
   apiEventRouter = new EventRouter<any>()
   idsByEventType: { [type: string]: number } = {}
   modalWasOpen = false
-  Mouse
+  Mouse: any
   isQuitting = false
 
   // Events
@@ -41,16 +45,16 @@ export class UIService extends BESService {
   addExtras() {
     const uiService = this
     this.Mouse = {
-      click: async (...args) => {
+      click: async (...args: any[]) => {
         const button = args[0]
         const opts = args[args.length - 1] || {}
         const doIt = async () => {
           const reallyDoIt = async () => {
             let ret
             if (typeof button !== 'number') {
-              ret = _Mouse.click(0, ...args)
+              ret = NativeMouse.click(0, ...args)
             } else {
-              ret = _Mouse.click(...args)
+              ret = NativeMouse.click(...args)
             }
             if (typeof opts.returnAfter === 'number') {
               await wait(opts.returnAfter)
@@ -69,10 +73,10 @@ export class UIService extends BESService {
           return doIt()
         }
       },
-      on: (event, cb) => {
+      on: (event: string, cb: (data: any) => void) => {
         const id = this.apiEventRouter.on(event, cb)
         if (!this.idsByEventType[event]) {
-          const id = Keyboard.on(event, (...args) => {
+          const id = Keyboard.on(event, (...args: any) => {
             this.apiEventRouter.emit(event, ...args)
           })
           // this.log(`Id for ${event} is ${id}`)
@@ -82,10 +86,10 @@ export class UIService extends BESService {
           this.Mouse.off(event, id)
         }
       },
-      off: (event, id) => {
+      off: (event: string, id: number) => {
         this.apiEventRouter.off(event, id)
       },
-      avoidingPluginWindows: async (pointOpts, cb) => {
+      avoidingPluginWindows: async (pointOpts: { noReposition: any }, cb: () => any) => {
         if (!this.eventIntersectsPluginWindows(pointOpts)) {
           return Promise.resolve(cb())
         }
@@ -131,7 +135,7 @@ export class UIService extends BESService {
         const folderIconWidth = uiService.scale(18)
         // Click a few from the left hand side in increments of the folder icon width
         // so we only hit it once. Quicker than working out where it is
-        const startPos = _Mouse.getPosition()
+        const startPos = NativeMouse.getPosition()
         const opts = {
           y: this.visibleRect.y + uiService.scale(this.isLargeTrackHeight ? 32 : 14),
           avoidPluginWindows: true,
@@ -143,12 +147,12 @@ export class UIService extends BESService {
             x,
           })
         }
-        _Mouse.setPosition(startPos.x, startPos.y)
+        NativeMouse.setPosition(startPos.x, startPos.y)
       },
     }
-    proto.getArrangerTracks = (...args) => {
+    proto.getArrangerTracks = (...args: any) => {
       const results = proto._getArrangerTracks(...args)
-      return results ? results.map(obj => Object.setPrototypeOf(obj, ArrangerTrack)) : null
+      return results ? results.map((obj: any) => Object.setPrototypeOf(obj, ArrangerTrack)) : null
     }
   }
 
@@ -166,9 +170,9 @@ export class UIService extends BESService {
 
     const api = {
       Mouse: {
-        ..._Mouse,
+        ...NativeMouse,
         ...this.Mouse,
-        _on: (event, cb) => {
+        _on: (event: any, cb: any) => {
           if (!mod.enabled) {
             return () => {}
           }
@@ -183,18 +187,18 @@ export class UIService extends BESService {
           if (!mod.enabled) {
             return
           }
-          const wrappedCb = async (event, ...rest) => {
+          const wrappedCb = async (event: any, ...rest: any[]) => {
             // this.eventLogger({msg: eventName, modId: mod.id})
             Object.setPrototypeOf(event, MouseEvent)
             cb(event, ...rest)
           }
           if (eventName === 'click') {
-            let downEvent, downTime
-            api.Mouse._on('mousedown', event => {
+            let downEvent: string, downTime: Date
+            api.Mouse._on('mousedown', (event: any) => {
               downTime = new Date()
               downEvent = JSON.stringify(event)
             })
-            api.Mouse._on('mouseup', (event, ...rest) => {
+            api.Mouse._on('mouseup', (event: any, ...rest: any) => {
               if (
                 JSON.stringify(event) === downEvent &&
                 downTime &&
@@ -205,7 +209,7 @@ export class UIService extends BESService {
             })
           } else if (eventName === 'doubleClick') {
             let lastClickTime = new Date(0)
-            api.Mouse._on('click', (event, ...rest) => {
+            api.Mouse._on('click', (event: any, ...rest: any) => {
               if (new Date().getTime() - lastClickTime.getTime() < 250) {
                 wrappedCb(event, ...rest)
                 lastClickTime = new Date(0)
@@ -234,12 +238,12 @@ export class UIService extends BESService {
           activeToolChanged: this.events.toolChanged,
         }),
         screenshotsEnabled: process.env.SCREENSHOTS === 'true',
-        scaleXY: args => this.scaleXY(args),
-        scale: point => this.scaleXY({ x: point, y: 0 }).x,
-        unScaleXY: args => this.unScaleXY(args),
-        unScale: point => this.unScaleXY({ x: point, y: 0 }).x,
-        bwToScreen: args => this.bwToScreen(args),
-        screenToBw: args => this.screenToBw(args),
+        scaleXY: (args: Geometry.Point) => this.scaleXY(args),
+        scale: (point: any) => this.scaleXY({ x: point, y: 0 }).x,
+        unScaleXY: (args: Geometry.Point) => this.unScaleXY(args),
+        unScale: (point: any) => this.unScaleXY({ x: point, y: 0 }).x,
+        bwToScreen: (args: Geometry.Point) => this.bwToScreen(args),
+        screenToBw: (args: Geometry.Point) => this.screenToBw(args),
         get doubleClickInterval() {
           return 250
         },
@@ -248,7 +252,7 @@ export class UIService extends BESService {
     return api
   }
 
-  checkIfModalOpen = _.debounce(() => {
+  checkIfModalOpen = debounce(() => {
     UI.invalidateLayout()
     this.uiMainWindow.updateFrame()
 
@@ -282,25 +286,28 @@ export class UIService extends BESService {
     })
 
     // Track tool changes via number keys
-    Keyboard.on('keydown', event => {
-      if (!Bitwig.isActiveApplication()) {
-        return
+    Keyboard.on(
+      'keydown',
+      (event: { lowerKey: string; Meta: any; Shift: any; Control: any; Alt: any }) => {
+        if (!Bitwig.isActiveApplication()) {
+          return
+        }
+        const asNumber = parseInt(event.lowerKey, 10)
+        if (
+          asNumber !== this.activeTool &&
+          !(event.Meta || event.Shift || event.Control || event.Alt) &&
+          asNumber > 0 &&
+          asNumber < 6
+        ) {
+          this.previousTool = this.activeTool
+          this.activeTool = asNumber
+          this.activeToolKeyDownAt = new Date()
+          this.events.toolChanged.emit(this.activeTool)
+        }
       }
-      const asNumber = parseInt(event.lowerKey, 10)
-      if (
-        asNumber !== this.activeTool &&
-        !(event.Meta || event.Shift || event.Control || event.Alt) &&
-        asNumber > 0 &&
-        asNumber < 6
-      ) {
-        this.previousTool = this.activeTool
-        this.activeTool = asNumber
-        this.activeToolKeyDownAt = new Date()
-        this.events.toolChanged.emit(this.activeTool)
-      }
-    })
+    )
 
-    Keyboard.on('keyup', event => {
+    Keyboard.on('keyup', (event: { lowerKey: string }) => {
       if (!Bitwig.isActiveApplication()) {
         return
       }
@@ -336,37 +343,40 @@ export class UIService extends BESService {
     })
 
     this.addExtras()
-    this.Mouse.on('mousedown', event => {
+    this.Mouse.on('mousedown', (event: { button: number }) => {
       if (event.button === 0) {
         this.apiEventRouter.muteEvent('mousedown')
       }
     })
-    this.Mouse.on('mouseup', event => {
-      if (event.button === 0) {
-        this.apiEventRouter.unmuteEvent('mousedown')
-      }
+    this.Mouse.on(
+      'mouseup',
+      (event: { button: number; y: number; Meta: any; Shift: any; Alt: any; Control: any }) => {
+        if (event.button === 0) {
+          this.apiEventRouter.unmuteEvent('mousedown')
+        }
 
-      // Attempt to track when user is entering a text field
-      // FIXME for scaling
-      if (
-        Bitwig.isActiveApplication() &&
-        event.y > 1000 &&
-        event.Meta &&
-        !event.Shift &&
-        !event.Alt &&
-        !event.Control &&
-        !this.eventIntersectsPluginWindows(event) &&
-        !this.bitwigService.browserIsOpen
-      ) {
-        // Assume they are clicking to enter a value by keyboard
-        this.shortcutsService.setEnteringValue(true)
-      }
+        // Attempt to track when user is entering a text field
+        // FIXME for scaling
+        if (
+          Bitwig.isActiveApplication() &&
+          event.y > 1000 &&
+          event.Meta &&
+          !event.Shift &&
+          !event.Alt &&
+          !event.Control &&
+          !this.eventIntersectsPluginWindows(event) &&
+          !this.bitwigService.browserIsOpen
+        ) {
+          // Assume they are clicking to enter a value by keyboard
+          this.shortcutsService.setEnteringValue(true)
+        }
 
-      this.checkIfModalOpen()
-    })
+        this.checkIfModalOpen()
+      }
+    )
   }
 
-  eventIntersectsPluginWindows(event) {
+  eventIntersectsPluginWindows(event: any) {
     if ('_intersectsPluginWindows' in event) {
       return event._intersectsPluginWindows
     }
@@ -390,7 +400,7 @@ export class UIService extends BESService {
     return false
   }
 
-  bwToScreen({ x, y, ...rest }) {
+  bwToScreen({ x, y, ...rest }: Geometry.Point) {
     const frame = this.uiMainWindow.getFrame()
     const scaled = this.scaleXY({ x, y })
     return {
@@ -400,7 +410,7 @@ export class UIService extends BESService {
     }
   }
 
-  screenToBw({ x, y, ...rest }) {
+  screenToBw({ x, y, ...rest }: Geometry.Point) {
     const frame = this.uiMainWindow.getFrame()
     const bwRelative = {
       x: x - frame.x,
@@ -410,7 +420,7 @@ export class UIService extends BESService {
     return this.unScaleXY(bwRelative)
   }
 
-  scaleXY({ x, y, ...rest }) {
+  scaleXY({ x, y, ...rest }: Geometry.Point) {
     return {
       x: x * this.uiScale,
       y: y * this.uiScale,
@@ -418,10 +428,10 @@ export class UIService extends BESService {
     }
   }
 
-  scale = point => this.scaleXY({ x: point, y: 0 }).x
-  unscale = point => this.unScaleXY({ x: point, y: 0 }).x
+  scale = (point: number) => this.scaleXY({ x: point, y: 0 }).x
+  unscale = (point: number) => this.unScaleXY({ x: point, y: 0 }).x
 
-  unScaleXY({ x, y, ...rest }) {
+  unScaleXY({ x, y, ...rest }: Geometry.Point) {
     return {
       x: x / this.uiScale,
       y: y / this.uiScale,

@@ -1,10 +1,10 @@
-import { interceptPacket, SocketMiddlemanService } from '../core/WebsocketToSocket'
-import { BESService, getService, makeEvent } from '../core/Service'
-import { SettingsService } from '../core/SettingsService'
-import { PopupService } from '../popup/PopupService'
-import { UIService } from '../ui/UIService'
-import { isPreferencesActive, isWindows } from '../core/Os'
 import { getAppPath } from '../../connector/shared/ResourcePath'
+import { isWindows } from '../core/Os'
+import { BESService, getService, makeEvent } from '../core/Service'
+import { interceptPacket, SocketMiddlemanService } from '../core/WebsocketToSocket'
+import { PopupService } from '../popup/PopupService'
+import { SettingsService } from '../settings/SettingsService'
+import { UIService } from '../ui/UIService'
 const colors = require('colors')
 const { Keyboard, Bitwig } = require('bindings')('bes')
 

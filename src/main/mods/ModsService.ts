@@ -1,6 +1,8 @@
+import { Keyed } from '@mtyk/types'
 import { promises as fs } from 'fs'
 import * as glob from 'glob'
 import * as path from 'path'
+import { StateService } from 'state/StateService'
 import { APP_NAME } from '../../connector/shared/Constants'
 import { wait } from '../../connector/shared/engine/Debounce'
 import { clamp } from '../../connector/shared/Math'
@@ -9,25 +11,22 @@ import { BitwigService } from '../bitwig/BitwigService'
 import { buildModsPath } from '../config'
 import { createDirIfNotExist } from '../core/Files'
 import { logger } from '../core/Log'
-import { BESService, getService, makeEvent } from '../core/Service'
-import { SettingsService } from '../core/SettingsService'
+import { BESService, makeEvent } from '../core/Service'
+import { SettingsService } from '../settings/SettingsService'
 import {
   addAPIMethod,
   interceptPacket,
   sendPacketToBitwig,
-  sendPacketToBrowser,
   SocketMiddlemanService,
 } from '../core/WebsocketToSocket'
-import { getDb } from '../db'
-import { Setting } from '../db/entities/Setting'
 import { PopupService } from '../popup/PopupService'
 import { ShortcutsService } from '../shortcuts/ShortcutsService'
 import { UIService } from '../ui/UIService'
 import copyControllerScript from './helpers/copyControllerScript'
+import createModSetting from './helpers/createModSetting'
 import gatherModsFromPaths from './helpers/gatherModsFromPaths'
 import getModApi from './helpers/getModApi'
 import getModsFolderPaths from './helpers/getModsFolderPaths'
-import getModsWithInfo from './helpers/getModsWithInfo'
 import isModEnabled from './helpers/isModEnabled'
 import loadMod from './helpers/loadMod'
 import logForMod from './helpers/logForMod'
@@ -36,17 +35,20 @@ const chokidar = require('chokidar')
 const colors = require('colors')
 const { app } = require('electron')
 
-let nextId = 0
 let modsLoading = false
 
 export class ModsService extends BESService {
-  // Services
-  settingsService = getService(SettingsService)
-  shortcutsService = getService(ShortcutsService)
-  suckitService = getService(SocketMiddlemanService)
-  uiService = getService(UIService)
-  bitwigService = getService(BitwigService)
-  popupService = getService(PopupService)
+  constructor(
+    protected settingsService: SettingsService,
+    protected shortcutsService: ShortcutsService,
+    protected uiService: UIService,
+    protected popupService: PopupService,
+    protected bitwigService: BitwigService,
+    protected suckitService: SocketMiddlemanService,
+    protected stateService: StateService
+  ) {
+    super('ModsService')
+  }
 
   isQuitting = false
 
@@ -63,8 +65,8 @@ export class ModsService extends BESService {
   onReloadMods: Function[] = []
   refreshCount = 0
   activeEngineProject: string | null = null
-  activeModApiIds: { [key: string]: any } = {}
   settingKeyInfo: { [key: string]: SettingInfo } = {}
+  activeModApiIds: { [id: string]: any } = {}
 
   // Events
   events = {
@@ -76,6 +78,10 @@ export class ModsService extends BESService {
   waitingMessagesByModId: {
     [modId: string]: { msg: string; count: number }[]
   } = {}
+
+  get ModsState() {
+    return this.stateService.server.store.mods
+  }
 
   getLatestModData(modId: string) {
     return this.latestFoundModsMap[`mod/${modId}`]
@@ -129,7 +135,7 @@ export class ModsService extends BESService {
         }
         return obj
       }
-      const deepValue = function (obj, path) {
+      const deepValue = function (obj: any, path: any) {
         for (var i = 0, path = path.split('.'), len = path.length; i < len; i++) {
           obj = obj[path[i]]
         }
@@ -143,9 +149,6 @@ export class ModsService extends BESService {
         funcResolved(...args2)
       }
     })
-    addAPIMethod('api/mods', async () => {
-      return await getModsWithInfo({ latestFoundModsMap: this.latestFoundModsMap })
-    })
     addAPIMethod('api/mod/action', async ({ action, id }) => {
       if (action === 'resetToDefault') {
         await this.settingsService.removeAllForMod(id)
@@ -158,43 +161,6 @@ export class ModsService extends BESService {
     addAPIMethod('api/actions/run', async ({ id }) => {
       this.log('Got packet with id ' + id)
       return await this.shortcutsService.runAction(id)
-    })
-    addAPIMethod('api/mod', async ({ id }) => {
-      const mod = (
-        await getModsWithInfo({ modId: id, latestFoundModsMap: this.latestFoundModsMap })
-      )[0] as any
-      const db = await getDb()
-      const settings = db.getRepository(Setting)
-      const settingsForMod = await settings.find({
-        where: {
-          mod: mod.id,
-        },
-      })
-      // console.log(settingsForMod)
-      mod.actions = settingsForMod
-        .filter(setting => {
-          const isShortcut = setting.type === 'shortcut'
-          const registeredNow = setting.key in this.latestFoundModsMap[`mod/${mod.id}`].actions!
-          return isShortcut && registeredNow
-        })
-        .map(setting => {
-          const action = this.shortcutsService.newShortcutRegistry[setting.key]?.action || {}
-          return {
-            ...this.settingsService.postload(setting),
-            ...action,
-          }
-        })
-      mod.settings = settingsForMod
-        .filter(setting => setting.type !== 'mod' && setting.type !== 'shortcut')
-        .map(setting => {
-          const info = this.settingKeyInfo[setting.key]
-          return {
-            ...this.settingsService.postload(setting),
-            ...info,
-            notFound: !info,
-          }
-        })
-      return mod
     })
 
     const refreshFolderWatcher = async () => {
@@ -231,6 +197,10 @@ export class ModsService extends BESService {
           })
       }
     }
+
+    // TODO need to mirror the way that browsers cache data from the backend
+    // when storing data about our mods in the model. Think about how to do this
+
     this.settingsService.events.settingUpdated.listen(setting => {
       // this.log(setting)
       const key = setting.key!
@@ -326,22 +296,6 @@ export class ModsService extends BESService {
     })
   }
 
-  async initModAndStoreInMap(mod) {
-    if (mod.valid) {
-      // Don't add settings for invalid (not loaded properly mods)
-      await this.settingsService.insertSettingIfNotExist({
-        key: mod.settingsKey,
-        value: {
-          enabled: false,
-          keys: [],
-        },
-        type: 'mod',
-      })
-    }
-
-    this.latestFoundModsMap[mod.settingsKey] = mod
-  }
-
   staticApi = {
     wait: wait,
     clamp: clamp,
@@ -394,12 +348,12 @@ function modsImpl(api) {
     const modsById = await gatherModsFromPaths(modsFolders, {
       type: 'bitwig',
     })
-    const defaultControllerScriptSettings = {}
+    const defaultControllerScriptSettings: Keyed<string> = {}
 
     for (const modId in modsById) {
       const mod = modsById[modId]
       if (!this.getLatestModData(mod.id)) {
-        this.initModAndStoreInMap(mod)
+        await createModSetting(mod)
       }
       const isEnabled = await isModEnabled(mod)
       if (isEnabled || mod.noReload) {
@@ -465,10 +419,6 @@ modsImpl(api)
 
     this.refreshCount++
     modsLoading = false
-
-    sendPacketToBrowser({
-      type: 'event/mods-reloaded',
-    })
     this.events.modsReloaded.emit()
 
     if (this.waitingOnAnotherReload) {

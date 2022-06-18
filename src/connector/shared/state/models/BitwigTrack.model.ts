@@ -1,5 +1,12 @@
 import { Model, model, prop, tProp, types } from 'mobx-keystone'
+import { CueMarker } from 'mods/types'
 
+@model('korus/BitwigCueMarker')
+export class BitwigCueMarker extends Model({
+  name: prop<string>('').withSetter(),
+  position: prop<number>(0).withSetter(),
+  color: prop<string>('#ffffff').withSetter(),
+}) {}
 @model('korus/BitwigTrack')
 export class BitwigTrack extends Model({
   name: prop<string>('').withSetter(),
@@ -19,6 +26,7 @@ export class BitwigState extends Model({
   activeEngineProject: prop<string>('').withSetter(),
   currDevice: prop<string>('').withSetter(),
   currTrack: prop<string>('').withSetter(),
+  cueMarkers: prop<CueMarker[]>(() => []).withSetter(),
   browserIsOpen: prop<boolean>(false).withSetter(),
   tracks: prop<BitwigTrack[]>(() => []).withSetter(),
 }) {}

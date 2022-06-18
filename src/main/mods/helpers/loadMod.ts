@@ -1,23 +1,35 @@
-import * as path from 'path'
-import * as winston from 'winston'
-import { buildModsPath } from '../../config'
 import { spawn } from 'child_process'
-import { createDirIfNotExist, writeStrFile } from '../../core/Files'
-import { lockpickFileLogger, logger as mainLogger } from '../../core/Log'
-import getModApi from './getModApi'
-import logForMod from './logForMod'
+import { getService } from 'core/Service'
 import * as isBuiltInModule from 'is-builtin-module'
-import type { ModsService } from '../ModsService'
+import * as path from 'path'
+import { PopupService } from 'popup/PopupService'
+import { Mod } from '../../../connector/shared/state/models/Mod.model'
+import { getBuildModPath as getBuiltModFolder } from '../../config'
+import { createDirIfNotExist, writeStrFile } from '../../core/Files'
+import { logger as mainLogger } from '../../core/Log'
+import { ModsService } from '../ModsService'
+import createModLogger from './createModLogger'
+import createModSetting from './createModSetting'
+import getModApi from './getModApi'
+import IdStore from './IdStore'
 import isModEnabled from './isModEnabled'
+import logForMod from './logForMod'
 let nextId = 0
 
 const logger = mainLogger.child(`loadMod`)
+const modData = IdStore<any, any>()
 
-export default async function loadMod(this: ModsService, mod: any) {
+export default async function loadMod(mod: Mod) {
   const { disabled, osMatches } = mod
-  await this.initModAndStoreInMap(mod)
+  const modsService = getService(ModsService)
+  const popupService = getService(PopupService)
+
+  if (mod.valid) {
+    await createModSetting(mod)
+  }
+
   const isEnabled = await isModEnabled(mod)
-  mod.enabled = isEnabled
+  mod.setDisabled(!isEnabled)
 
   if (!isEnabled && !mod.isBuiltIn) {
     // Don't automatically run externally added mods because we should warn the user first before enabling
@@ -25,45 +37,36 @@ export default async function loadMod(this: ModsService, mod: any) {
   }
 
   if (disabled || !osMatches) {
-    mod.enabled = false
-    mod.disabled = true
+    mod.setDisabled(true)
     // Disable dev only mods (@disabled) and mods where the os doesn't match
     return
   } else {
-    mod.disabled = false
+    mod.setDisabled(false)
   }
 
-  const api = await getModApi.call(this, mod)
-  this.activeModApiIds[api.id] = api
+  const api = await getModApi.call(modsService, mod)
+  modsService.activeModApiIds[api.id] = api
 
   // Populate function scope with api objects
   const fileStr = `
-module.exports = async function ({ ${[...Object.keys(api), ...Object.keys(this.staticApi)].join(
-    ', '
-  )} }) {
+module.exports = async function ({ ${[
+    ...Object.keys(api),
+    ...Object.keys(modsService.staticApi),
+  ].join(', ')} }) {
 ${mod.contents}
 }
 `
+
+  modData.update(mod.id, {
+    api,
+    logger: createModLogger(mod),
+  })
+
   // Make folder for mod
-  const modFolder = path.join(buildModsPath, mod.id)
+  const modFolder = getBuiltModFolder(mod.id)
   await createDirIfNotExist(modFolder)
   const p = path.join(modFolder, `${mod.id}${nextId++}.js`)
   await writeStrFile(fileStr, p)
-
-  // Create a logger in the subdirectory for this mod only
-  mod.logger = winston.createLogger({
-    defaultMeta: { mod: mod.id },
-    // format: lockpickLogFormatter,
-    transports: [
-      lockpickFileLogger({
-        filename: path.join(modFolder, 'log.log'),
-        level: 'debug',
-      }),
-      new winston.transports.Console({
-        level: 'warn',
-      }),
-    ],
-  })
 
   const requireRegex = /require\('([^']+)'\)/g
   const nodeModules = Array.from(fileStr.matchAll(requireRegex))
@@ -72,7 +75,7 @@ ${mod.contents}
 
   if (nodeModules.length > 0) {
     // Try install npm modules in same folder withExec
-    this.debug(`Installing ${nodeModules.join(', ')} for ${mod.id}`)
+    modsService.debug(`Installing ${nodeModules.join(', ')} for ${mod.id}`)
     const result = spawn('yarn', ['add', ...nodeModules, '--non-interactive', '--no-progress'], {
       cwd: modFolder,
       stdio: 'inherit',
@@ -87,15 +90,15 @@ ${mod.contents}
   logForMod(mod.id, 'debug', `About to load ${mod.name} from ${p}`)
   try {
     const fn = require(p)
-    const allApi = { ...api, ...this.staticApi }
+    const allApi = { ...api, ...modsService.staticApi }
     await fn(allApi)
   } catch (e) {
-    this.error(`Error loading mod ${mod.id}`)
-    mod.error = {
+    modsService.error(`Error loading mod ${mod.id}`)
+    modData.set(mod.id, {
       message: e.message,
       stack: e.stack,
-    }
-    this.popupService.showMessage(`Error loading ${mod.id}, check preferences for details`)
+    })
+    popupService.showMessage(`Error loading ${mod.id}, check preferences for details`)
     logger.error(e)
   }
 }

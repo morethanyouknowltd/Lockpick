@@ -3,7 +3,6 @@ import { getDb } from '../../db'
 import { Project } from '../../db/entities/Project'
 import { ProjectTrack } from '../../db/entities/ProjectTrack'
 const logger = mainLogger.child(`loadData`)
-
 const defaultData = {}
 
 export async function loadDataForTrack(name: string, project: string) {
@@ -30,10 +29,9 @@ export async function loadDataForTrack(name: string, project: string) {
 export async function getProjectIdForName(
   project: string,
   create: boolean = false
-): Promise<string | null> {
+): Promise<typeof create extends true ? string : string | null> {
   const db = await getDb()
-  const projectTracks = db.getRepository(ProjectTrack)
-  const projects = db.getRepository(Project)
+  const projects = db.getRepository(Project) as any
   const existingProject = await projects.findOne({
     where: { name: project },
   })
@@ -48,12 +46,12 @@ export async function getProjectIdForName(
 
 export async function createOrUpdateTrack(track: string, project: string, data: any) {
   const db = await getDb()
-  const projectTracks = db.getRepository(ProjectTrack)
-  const projects = db.getRepository(Project)
+  const projectTracks = db.getRepository(ProjectTrack) as any
   const projectId = await getProjectIdForName(project, true)
   const existingTrack = await projectTracks.findOne({
     where: { name: track, project_id: projectId },
   })
+
   if (existingTrack) {
     logger.info(
       `Updating track (${existingTrack.name} (id: ${existingTrack.id})) with data: `,

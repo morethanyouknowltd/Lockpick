@@ -1,29 +1,24 @@
-import { BESService, getService, makeEvent } from './Service'
-import { getDb } from '../db'
-import { Setting } from '../db/entities/Setting'
-import { addAPIMethod, interceptPacket, SocketMiddlemanService } from './WebsocketToSocket'
+import DBService from 'db/DbService'
 import * as path from 'path'
-import { logger } from './Log'
-
-interface SettingTemplate {
-  key: string
-  value: any
-  type: 'boolean' | 'shortcut' | 'string' | 'mod'
-  mod?: string
-}
+import { BESService, getService, makeEvent } from '../core/Service'
+import { addAPIMethod, SocketMiddlemanService } from '../core/WebsocketToSocket'
+import { Setting } from '../db/entities/Setting'
+import { SettingTemplate } from './SettingsTypes'
 
 export class SettingsService extends BESService {
-  db
-  Settings
   events = {
     settingsUpdated: makeEvent<void>(),
     settingUpdated: makeEvent<Partial<SettingTemplate>>(),
   }
   socketService = getService(SocketMiddlemanService)
+  Settings: any
+
+  constructor(protected dbService: DBService) {
+    super('SettingsService')
+  }
 
   async activate() {
-    this.db = await getDb()
-    this.Settings = this.db.getRepository(Setting)
+    this.Settings = this.dbService.getRepository(Setting)
 
     addAPIMethod('api/settings/set', async setting => {
       await this.setSettingValue(setting.key, setting.value)
@@ -73,8 +68,8 @@ export class SettingsService extends BESService {
     return this.Settings.find({ where: { category } })
   }
 
-  preSave(setting) {
-    if (setting.type in { string: true }) {
+  preSave(setting: Partial<SettingTemplate>) {
+    if (setting.type && setting.type in { string: true }) {
       return setting
     } else {
       return {
@@ -84,8 +79,8 @@ export class SettingsService extends BESService {
     }
   }
 
-  postload(setting) {
-    if (setting.type in { string: true }) {
+  postload(setting: Partial<SettingTemplate>) {
+    if (setting.type && setting.type in { string: true }) {
       return setting
     } else {
       return {
@@ -185,21 +180,7 @@ export class SettingsService extends BESService {
     }
   }
 
-  normalise(label) {
+  normalise(label: string) {
     return label.replace(/[\s]+/g, '-').toLowerCase()
   }
 }
-
-// export interface BitwigSettings {
-//     colors: {
-//         trackColor: string,
-//         trackSelectedInactiveColor: string,
-//         trackSelectedColor: string,
-//         deviceBackgroundColor: string,
-//         deviceHeaderColor: string,
-//         deviceHeaderSelectedColor: string,
-//         // deviceHandleSelectedInactiveColor: string,
-//         automationButtonColor: string,
-//         automationButtonDisabledColor: string
-//     }
-// }

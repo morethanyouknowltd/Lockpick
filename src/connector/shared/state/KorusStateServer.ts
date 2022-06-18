@@ -1,5 +1,4 @@
 import {
-  ActionTrackingResult,
   applySerializedActionAndTrackNewModelIds,
   getSnapshot,
   ModelData,
@@ -8,8 +7,8 @@ import {
   SerializedActionCall,
   SerializedActionCallWithModelIdOverrides,
 } from 'mobx-keystone'
-import { createRootStore, RootState } from './rootStore'
 import { logger as mainLogger } from '../../../main/core/Log'
+import { createRootStore, RootState } from './rootStore'
 
 type MsgListener = (actionCall: SerializedActionCallWithModelIdOverrides) => void
 

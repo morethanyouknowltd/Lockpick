@@ -1,19 +1,21 @@
 import { clipboard } from 'electron'
 import * as _ from 'lodash'
+import { SettingTemplate } from 'settings/SettingsTypes'
 import { APP_VERSION } from '../../../connector/shared/Constants'
 import { debounce } from '../../../connector/shared/engine/Debounce'
 import { whenActiveListener } from '../../../connector/shared/EventUtils'
 import { containsPoint, containsX, containsY } from '../../../connector/shared/Rect'
+import { Mod } from '../../../connector/shared/state/models/Mod.model'
 import { BitwigService } from '../../bitwig/BitwigService'
 import isLockpickActiveApplication from '../../core/helpers/isLockpickActiveApplication'
 import { logger as mainLogger } from '../../core/Log'
-import { getService } from '../../core/Service'
-import { SettingsService } from '../../core/SettingsService'
-import { interceptPacket, SocketMiddlemanService } from '../../core/WebsocketToSocket'
+import { EventEmitter, getService } from '../../core/Service'
+import { interceptPacket } from '../../core/WebsocketToSocket'
 import { getDb } from '../../db'
 import { Project } from '../../db/entities/Project'
 import { ProjectTrack } from '../../db/entities/ProjectTrack'
 import { PopupService } from '../../popup/PopupService'
+import { SettingsService } from '../../settings/SettingsService'
 import { ActionSpec, ShortcutsService } from '../../shortcuts/ShortcutsService'
 import { UIService } from '../../ui/UIService'
 import type { ModsService } from '../ModsService'
@@ -27,20 +29,22 @@ const { Keyboard, MainWindow, Bitwig } = require('bindings')('bes')
 let nextId = 0
 const logger = mainLogger.child('modApi')
 
-export default async function getModApi(this: ModsService, mod) {
+export default async function getModApi(this: ModsService, mod: Mod) {
   const db = await getDb()
   const projectTracks = db.getRepository(ProjectTrack)
   const projects = db.getRepository(Project)
   const uiService = getService(UIService)
   const popupService = getService(PopupService)
   const shortcutsService = getService(ShortcutsService)
-  const socketService = getService(SocketMiddlemanService)
   const bitwigService = getService(BitwigService)
   const settingsService = getService(SettingsService)
   const modsService = this
   const thisApiId = nextId++
-  const wrappedOnForReloadDisconnect = parent => {
-    return (...args) => {
+  const wrappedOnForReloadDisconnect = (parent: {
+    on: (...arg0: any[]) => any
+    off: (...arg0: any[]) => void
+  }) => {
+    return (...args: any) => {
       const id = parent.on(...args)
       modsService.onReloadMods.push(() => {
         parent.off(id)
@@ -48,24 +52,24 @@ export default async function getModApi(this: ModsService, mod) {
     }
   }
 
-  const makeEmitterEvents = map =>
+  const makeEmitterEvents = (map: { [x: string]: EventEmitter<any> }) =>
     makeEmitterEventsFn({ mod, onReloadMods: modsService.onReloadMods }, map)
   const uiApi = uiService.getApi({
     mod,
     makeEmitterEvents,
-    onReloadMods: cb => modsService.onReloadMods.push(cb),
+    onReloadMods: (cb: Function) => modsService.onReloadMods.push(cb),
   })
   const popupApi = popupService.getApi({
     mod,
     makeEmitterEvents,
-    onReloadMods: cb => modsService.onReloadMods.push(cb),
+    onReloadMods: (cb: Function) => modsService.onReloadMods.push(cb),
   })
-  const wrapCbForApplication = cb => {
-    return (...args) => {
+  const wrapCbForApplication = (cb: (...args: any[]) => any) => {
+    return (...args: any) => {
       if ((mod.applications?.length ?? 0) > 0) {
         // Don't run cb if specified application not active
         const apps = mod.applications
-        const oneActive = apps.find(a => Bitwig.isActiveApplication(a))
+        const oneActive = apps.find((a: any) => Bitwig.isActiveApplication(a))
         if (!oneActive) {
           return
         }
@@ -85,20 +89,20 @@ export default async function getModApi(this: ModsService, mod) {
     _,
     Popup: popupApi.Popup,
     id: thisApiId,
-    log: (...args) => {
+    log: (...args: any) => {
       logForMod(mod.id, 'info', ...args)
     },
-    error: (...args) => {
+    error: (...args: any) => {
       logger.info(`${colors.red(mod.id)}:`, ...args)
       logForMod(mod.id, 'error', ...args)
     },
     Keyboard: {
       ...Keyboard,
       on: (eventName: string, cb: Function) => {
-        if (!mod.enabled) {
+        if (mod.disabled) {
           return
         }
-        const wrappedCb = (event, ...rest) => {
+        const wrappedCb = (event: any, ...rest: any[]) => {
           const eventCopy = { ...event }
           // logForMod(mod.id, 'info', `${eventName}`)
           Object.setPrototypeOf(eventCopy, KeyboardEvent)
@@ -106,8 +110,8 @@ export default async function getModApi(this: ModsService, mod) {
         }
         wrappedOnForReloadDisconnect(Keyboard)(eventName, wrapCbForApplication(wrappedCb))
       },
-      type: (str, opts?) => {
-        if (!mod.enabled) {
+      type: (str: any, opts?: any) => {
+        if (mod.disabled) {
           return
         }
         String(str)
@@ -126,8 +130,8 @@ export default async function getModApi(this: ModsService, mod) {
     },
     Mouse: {
       ...uiApi.Mouse,
-      on: (eventName: string, cb) => {
-        if (!mod.enabled) {
+      on: (eventName: string, cb: any) => {
+        if (mod.disabled) {
           return
         }
         return uiApi.Mouse.on(eventName, wrapCbForApplication(cb))
@@ -148,7 +152,7 @@ export default async function getModApi(this: ModsService, mod) {
         }
         return (await settingsService.getSettingValue(`mod/${mod.id}`)).data || {}
       },
-      setData: async data => {
+      setData: async (data: any) => {
         const existingSetting = (await settingsService.getSettingValueOrNull(`mod/${mod.id}`)) || {}
         await settingsService.upsertSetting({
           key: `mod/${mod.id}`,
@@ -172,18 +176,18 @@ export default async function getModApi(this: ModsService, mod) {
           ] || {}
         )
       },
-      setCurrentProjectData: async data => {
+      setCurrentProjectData: async (data: any) => {
         if (!bitwigService.simplifiedProjectName) {
           logForMod(mod.id, colors.yellow('Tried to set project data but no project loaded'))
           return null
         }
         const projectName = bitwigService.simplifiedProjectName
-        const projectId = await getProjectIdForName(projectName, true)
-        const project = await projects.findOne(projectId)
+        const projectId = (await getProjectIdForName(projectName, true))!
+        const project = (await projects.findOne(projectId))!
         logForMod(mod.id, 'info', `Setting project data: `, data)
         await projects.update(projectId, {
           data: {
-            ...project.data,
+            ...(project.data as any),
             [mod.id]: data,
           },
         })
@@ -203,7 +207,7 @@ export default async function getModApi(this: ModsService, mod) {
         })
         return existingProject?.data[mod.id] ?? {}
       },
-      setTrackData: (name: string, data) => {
+      setTrackData: (name: string, data: any) => {
         if (!bitwigService.simplifiedProjectName) {
           logForMod(mod.id, 'warn', colors.yellow('Tried to set track data but no project loaded'))
           return null
@@ -212,7 +216,7 @@ export default async function getModApi(this: ModsService, mod) {
           [mod.id]: data,
         })
       },
-      setExistingTracksData: async (data, exclude: string[] = []) => {
+      setExistingTracksData: async (data: any, exclude: string[] = []) => {
         if (!bitwigService.simplifiedProjectName) {
           logForMod(mod.id, 'warn', colors.yellow('Tried to set track data but no project loaded'))
           return null
@@ -237,7 +241,7 @@ export default async function getModApi(this: ModsService, mod) {
       getCurrentTrackData: () => {
         return api.Db.getTrackData(api.Bitwig.currentTrack)
       },
-      setCurrentTrackData: data => {
+      setCurrentTrackData: (data: any) => {
         return api.Db.setTrackData(api.Bitwig.currentTrack, data)
       },
     },
@@ -249,7 +253,7 @@ export default async function getModApi(this: ModsService, mod) {
        * @param isEnteringValue whether Lockpick should assume you are currently typing in a value for example
        */
       setEnteringValue: (isEnteringValue: boolean) => {
-        if (!mod.enabled) {
+        if (mod.disabled) {
           return
         }
         shortcutsService.enteringValue = isEnteringValue
@@ -258,7 +262,7 @@ export default async function getModApi(this: ModsService, mod) {
        * Run another Lockpick action by its internal action id
        */
       runAction: (actionId: string, ...args: any[]) => {
-        if (!mod.enabled) {
+        if (mod.disabled) {
           return
         }
         return shortcutsService.runAction(actionId, ...args)
@@ -267,23 +271,30 @@ export default async function getModApi(this: ModsService, mod) {
        * Run multiple Lockpick actions by their internal action ids
        */
       runActions: (...actionIds: string[]) => {
-        if (!mod.enabled) {
+        if (!mod.disabled) {
           return
         }
         for (const action of actionIds) {
           api.Mod.runAction(action)
         }
       },
-      registerActionCategory: categoryDetails => {
+      registerActionCategory: (categoryDetails: { title: any }) => {
         const { title } = categoryDetails
-        mod.actionCategories = mod.actionCategories || {}
-        mod.actionCategories[title] = categoryDetails
+
+        mod.setActionCategories({ ...mod.actionCategories, [title]: categoryDetails })
         return title // use title as id-like
       },
       /**
        * Must be called with await to ensure non async value is ready to go
        */
-      registerSetting: async settingSpec => {
+      registerSetting: async (
+        settingSpec: SettingTemplate & {
+          id: number
+          name: string
+          description: string
+          hidden: boolean
+        }
+      ) => {
         const defaultValue = JSON.stringify(settingSpec.value ?? {})
         const actualKey = `mod/${mod.id}/${settingSpec.id}`
         const type = settingSpec.type ?? 'boolean'
@@ -316,8 +327,8 @@ export default async function getModApi(this: ModsService, mod) {
             settingApi.value = val
             return val
           },
-          setValue: async value => {
-            if (!mod.enabled) {
+          setValue: async (value: boolean) => {
+            if (mod.disabled) {
               return
             }
             settingsService.setSettingValue(actualKey, {
@@ -326,7 +337,7 @@ export default async function getModApi(this: ModsService, mod) {
             settingApi.value = value
           },
           toggleValue: async () => {
-            if (!mod.enabled) {
+            if (mod.disabled) {
               return
             }
             settingApi.value = !settingApi.value
@@ -351,9 +362,14 @@ export default async function getModApi(this: ModsService, mod) {
         if (action.id.indexOf('mod/') === 0) {
           throw new Error(`"mod/" is a reserved prefix`)
         }
-        mod.actions = mod.actions || {}
-        mod.actions[action.id] = action
-        action.category = action.category ? mod.actionCategories[action.category] : null
+        mod.setActions({
+          ...mod.actions,
+          [action.id]: {
+            ...action,
+            category: action.category ? mod.actionCategories[action.category] : null,
+          },
+        })
+
         // Some of the functions below are async, and we'd rather not restrict mod
         // authors to have to await registerAction() each time. So, we keep track of
         // how many are waiting to fulfil and then update the shortcut cache when
@@ -380,8 +396,8 @@ export default async function getModApi(this: ModsService, mod) {
 
         try {
           const settingValue = await settingsService.getSettingValue(action.id)
-          if (mod.enabled) {
-            const wrappedAction = async (...args) => {
+          if (!mod.disabled) {
+            const wrappedAction = async (...args: any[]) => {
               try {
                 await (async () => action.action(...args))()
               } catch (e) {
@@ -424,8 +440,8 @@ export default async function getModApi(this: ModsService, mod) {
           {
             id: actionId,
             mod: mod.id,
-            action: async (...args) => {
-              if (!mod.enabled) {
+            action: async (...args: any) => {
+              if (mod.disabled) {
                 return modsService.log('Not running, mod disabled')
               }
               try {
@@ -434,7 +450,7 @@ export default async function getModApi(this: ModsService, mod) {
                 logForMod(mod.id, 'error', colors.red(e))
               }
             },
-            title: `${mod.title} Shortcut`,
+            title: `${mod.name} Shortcut`,
           },
           {
             keys,
@@ -445,13 +461,13 @@ export default async function getModApi(this: ModsService, mod) {
           shortcutsService.removeActionFromShortcutRegistry(actionId)
         })
       },
-      registerShortcutMap: shortcutMap => {
+      registerShortcutMap: (shortcutMap: { [x: string]: Function }) => {
         for (const keys in shortcutMap) {
           api.Mod._registerShortcut(keys.split(' '), shortcutMap[keys])
         }
       },
-      setInterval: (fn, ms) => {
-        if (!mod.enabled) {
+      setInterval: (fn: () => void, ms: number | undefined) => {
+        if (mod.disabled) {
           return 0
         }
         const id = setInterval(fn, ms)
@@ -465,8 +481,8 @@ export default async function getModApi(this: ModsService, mod) {
       get isActive() {
         return thisApiId in modsService.activeModApiIds
       },
-      onExit: cb => {
-        if (!mod.enabled) {
+      onExit: (cb: Function) => {
+        if (mod.disabled) {
           return
         }
         modsService.onReloadMods.push(cb)
@@ -474,8 +490,8 @@ export default async function getModApi(this: ModsService, mod) {
       getClipboard() {
         return clipboard.readText()
       },
-      interceptPacket: (type: string, ...rest) => {
-        if (!mod.enabled) {
+      interceptPacket: (type: string, ...rest: any) => {
+        if (mod.disabled) {
           return
         }
         const remove = interceptPacket(type, ...rest)
@@ -487,8 +503,8 @@ export default async function getModApi(this: ModsService, mod) {
     },
     debounce,
     throttle: (_ as any).throttle,
-    showNotification: notif => {
-      if (!mod.enabled) {
+    showNotification: (notif: any) => {
+      if (mod.disabled) {
         return
       }
       popupService.showNotification(notif)
@@ -505,7 +521,7 @@ export default async function getModApi(this: ModsService, mod) {
         }
       }
     } else if (typeof value === 'function') {
-      const fn: any = (...args) => {
+      const fn: any = (...args: any[]) => {
         const called = value.name || key || 'Unknown function'
         try {
           // if (value !== api.log) {
@@ -520,8 +536,10 @@ export default async function getModApi(this: ModsService, mod) {
           logger.error(colors.red(`arguments were: `), ...args)
           logger.error('Raw error:')
           logger.error(e)
-          logger.error('Raw error stack:')
-          logger.error(e.stack)
+          if (typeof e === 'object' && !!e && 'stack' in e) {
+            logger.error('Raw error stack:')
+            logger.error(e.stack)
+          }
           throw e
         }
       }

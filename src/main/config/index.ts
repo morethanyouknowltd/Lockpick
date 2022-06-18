@@ -26,6 +26,8 @@ export const sqliteBackupPath = isRenderer ? '' : path.join(basePath, 'backups')
 export const storagePath = isRenderer ? '' : path.join(basePath, 'files')
 export const buildModsPath: string = isRenderer ? '' : path.join(basePath, 'built-mods')
 
+export const getBuildModPath = (modId: string) => `${buildModsPath}/${modId}`
+
 export const createFolders = async () => {
   if (newUser && process.env.NEW_USER_CLEAN) {
     await rmRfDir(basePath)

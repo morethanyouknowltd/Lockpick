@@ -1,8 +1,10 @@
 import { promises as fs } from 'fs'
 import * as path from 'path'
 import { getResourcePath } from '../../../connector/shared/ResourcePath'
-const colors = require('colors')
+import { Mod } from '../../../connector/shared/state/models/Mod.model'
 import { logger as mainLogger } from '../../core/Log'
+import type { Keyed } from '@mtyk/types'
+const colors = require('colors')
 const logger = mainLogger.child('gatherModsFromPaths')
 
 let nextId = 0
@@ -11,7 +13,7 @@ export default async function gatherModsFromPaths(
   paths: string[],
   { type }: { type: 'bitwig' | 'local' }
 ) {
-  let modsById = {}
+  const modsById: Keyed<Mod> = {}
   // Load mods from all folders, with latter folders having higher precedence (overwriting by id)
   for (const modsFolder of paths) {
     const files = await fs.readdir(modsFolder)
@@ -23,11 +25,11 @@ export default async function gatherModsFromPaths(
       }
       try {
         const contents = await fs.readFile(path.join(modsFolder, filePath), 'utf8')
-        const hasTag = tag => {
+        const hasTag = (tag: string) => {
           const result = new RegExp(`@${tag}`).exec(contents)
           return !!result
         }
-        const checkForTag = tag => {
+        const checkForTag = (tag: string) => {
           const result = new RegExp(`@${tag} (.*)`).exec(contents)
           return result ? result[1] : undefined
         }
@@ -46,18 +48,19 @@ export default async function gatherModsFromPaths(
         const isDefault = p.indexOf(getResourcePath('/default-mods')) >= 0
         const actualId = id === undefined ? 'temp' + nextId++ : id
 
-        const thisOS =
+        const thisOS: string =
           {
             darwin: 'macOS',
             win32: 'windows',
-          }[require('os').platform()] || 'unknown'
+          }[require('os').platform() as string] || 'unknown'
 
         const osMatches =
           os === '' ||
           os.split(',').some(os => {
             return os.trim().toLowerCase() === thisOS.toLowerCase()
           })
-        modsById[actualId] = {
+
+        modsById[actualId] = new Mod({
           id: actualId,
           name,
           applications,
@@ -68,7 +71,7 @@ export default async function gatherModsFromPaths(
           description,
           category,
           actionCategories: {},
-          actions: {},
+          actions: [],
           version,
           creator,
           contents,
@@ -76,7 +79,7 @@ export default async function gatherModsFromPaths(
           path: p,
           isDefault,
           valid: id !== undefined,
-        }
+        })
       } catch (e) {
         logger.log(colors.red(`Error with ${filePath}`, e))
       }

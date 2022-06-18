@@ -1,7 +1,6 @@
 import { InstanceOf } from 'ts-morph'
 import { RootState } from '../../connector/shared/state/rootStore'
 import { logger } from './Log'
-const colors = require('colors')
 
 export class EventEmitter<T> {
   nextId = 0
@@ -84,22 +83,22 @@ export class BESService {
 
   postActivate(): any {}
 
-  verbose(...args) {
+  verbose(...args: any[]) {
     this.logger.verbose(args)
   }
-  debug(...args) {
+  debug(...args: any[]) {
     this.logger.debug(args)
   }
-  log(...args) {
+  log(...args: any[]) {
     this.logger.info(args)
   }
-  info(...args) {
+  info(...args: any[]) {
     this.logger.info(args)
   }
-  warn(...args) {
+  warn(...args: any[]) {
     this.logger.warn(args)
   }
-  error(...args) {
+  error(...args: any[]) {
     this.logger.error(args)
   }
 }

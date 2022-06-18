@@ -2,7 +2,7 @@ const path = require('path')
 import { APP_NAME } from '../../../connector/shared/Constants'
 import { createDirIfNotExist, exists as fileExists } from '../../core/Files'
 import { getService } from '../../core/Service'
-import { SettingsService } from '../../core/SettingsService'
+import { SettingsService } from '../../settings/SettingsService'
 import getDefaultModsFolderPath from './getDefaultModsFolderPath'
 
 export default async function getModsFolderPaths(): Promise<string[]> {

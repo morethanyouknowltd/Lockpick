@@ -1,14 +1,13 @@
 import { Model, model, prop, tProp, types } from 'mobx-keystone'
-import { StateService } from 'state/StateService'
-import _ from 'underscore'
+import { BitwigCueMarker } from '../../connector/shared/state/models/BitwigTrack.model'
 import { BESService, getService, makeEvent } from '../core/Service'
-import { SettingsService } from '../core/SettingsService'
+import { debounce } from 'lodash'
+import { SettingsService } from '../settings/SettingsService'
 import { interceptPacket } from '../core/WebsocketToSocket'
 import { CueMarker } from '../mods/types'
 import { PopupService } from '../popup/PopupService'
 import { ShortcutsService } from '../shortcuts/ShortcutsService'
 import getBitwigModApi from './helpers/getBitwigModApi'
-
 const { Bitwig } = require('bindings')('bes')
 
 @model('korus/BitwigTrack')
@@ -78,25 +77,22 @@ export class BitwigService extends BESService {
 
   async activate() {
     interceptPacket('browser/state', undefined, ({ data }) => {
-      this.log('received browser state packet: ' + data.isOpen)
-      const previous = this.browserIsOpen
-      this.browserIsOpen = data.isOpen
-      this.events.browserOpen.emit(data, previous)
+      this.updateStore(store => {
+        store.bitwig.setBrowserIsOpen(data.isOpen)
+      })
     })
     interceptPacket('transport/state', undefined, ({ data: state }) => {
-      this.log('received transport state packet: ' + state)
-      const previous = this.transportState
-      this.transportState = state
-      if (this.transportState !== previous) {
-        this.events.transportStateChanged.emit(state, previous)
-      }
+      this.updateStore(store => {
+        store.bitwig.setTransportState(state)
+      })
     })
     interceptPacket('device', undefined, async ({ data: device }) => {
-      this.currDevice = device
+      this.updateStore(store => store.bitwig.setCurrDevice(device))
     })
-    interceptPacket('cue-markers', undefined, async ({ data: cueMarkers }) => {
-      this.cueMarkers = cueMarkers
-      this.events.cueMarkersChanged.emit(this.cueMarkers)
+    interceptPacket('cue-markers', undefined, async ({ data }) => {
+      this.updateStore(store =>
+        store.bitwig.setCueMarkers(data.map(d => new BitwigCueMarker(data)))
+      )
     })
     interceptPacket(
       'project',
@@ -122,7 +118,7 @@ export class BitwigService extends BESService {
     interceptPacket(
       'tracks',
       undefined,
-      (_ as any).debounce(async ({ data: tracks }) => {
+      debounce(async ({ data: tracks }) => {
         this.updateStore(store => {
           // Start a mobx action
           store.bitwig.setTracks(tracks.map(t => new BitwigTrack(t)))

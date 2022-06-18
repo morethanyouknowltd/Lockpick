@@ -2,7 +2,7 @@
 var nodemon = require('nodemon');
 const execSync = require('child_process').execSync
 execSync('npm run buildc:dev', {
-    stdio: 'inherit'    
+    stdio: 'inherit'
 })
 
 nodemon({

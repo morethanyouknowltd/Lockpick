@@ -115,7 +115,7 @@
         "splitTerminals": [
           {
             "name": "Electron start",
-            "commands": ["yarn start:dev"]
+            "commands": ["yarn start:dev:quiet"]
           }
         ]
       },

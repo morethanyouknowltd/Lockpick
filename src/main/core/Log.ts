@@ -13,7 +13,7 @@ export const lockpickFileLogger = (
 ) => {
   return new winston.transports.File({
     ...(opts as any),
-    stringify(obj) {
+    stringify(obj: any) {
       return flatted.stringify(obj)
     },
   })

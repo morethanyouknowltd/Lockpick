@@ -5,8 +5,8 @@ import getModsWithInfo from '../mods/helpers/getModsWithInfo'
 import { ModsService } from '../mods/ModsService'
 import { ShortcutsService } from '../shortcuts/ShortcutsService'
 import { isWindows } from './Os'
-import { BESService, getService } from './Service'
-import { SettingsService } from './SettingsService'
+import { BESService } from './Service'
+import { SettingsService } from '../settings/SettingsService'
 import { url } from './Url'
 import { addAPIMethod, interceptPacket, SocketMiddlemanService } from './WebsocketToSocket'
 const path = require('path')
@@ -16,11 +16,16 @@ export class TrayService extends BESService {
   timer: any
   animationI = 0
   connected = false
-  settingsWindow
-  settingsService = getService(SettingsService)
-  socket = getService(SocketMiddlemanService)
-  modsService = getService(ModsService)
-  shortcutsService = getService(ShortcutsService)
+  settingsWindow?: BrowserWindow
+
+  constructor(
+    protected settingsService: SettingsService,
+    protected modsService: ModsService,
+    protected shortcutsService: ShortcutsService,
+    protected socketService: SocketMiddlemanService
+  ) {
+    super('TrayService')
+  }
 
   async activate() {
     const tray = new Tray(getResourcePath('/images/tray-0Template.png'))
@@ -32,7 +37,7 @@ export class TrayService extends BESService {
     })
     const isSetupComplete = async () => await this.settingsService.getSettingValue('setupComplete')
 
-    const openWindow = async ({ type }) => {
+    const openWindow = async ({ type }: { type: string }) => {
       const loadUrl = url(`/#/${type}`)
       if (this.settingsWindow && !this.settingsWindow.isDestroyed()) {
         this.settingsWindow.close()
@@ -63,9 +68,7 @@ export class TrayService extends BESService {
       {
         title: `Open Lockpick Preferences`,
         id: 'open-preferences-internal',
-        action: () => {
-          openWindow({ type: 'settings' })
-        },
+        action: () => openWindow({ type: 'settings' }),
         defaultSetting: {
           keys: ['Meta', 'Shift', ','],
         },
@@ -124,7 +127,8 @@ export class TrayService extends BESService {
       ])
       tray.setContextMenu(contextMenu)
     }
-    const imageOrWarning = str => {
+
+    const imageOrWarning = (str: string) => {
       if (!Bitwig.isAccessibilityEnabled(false)) {
         return getResourcePath(`/images/tray-warningTemplate.png`)
       }
@@ -139,7 +143,8 @@ export class TrayService extends BESService {
       //     this.animationI++
       // }, 250)
     }
-    this.socket.events.connected.listen(isConnected => {
+
+    this.socketService.events.connected.listen(isConnected => {
       this.connected = isConnected
       if (isConnected && this.timer) {
         // clearInterval(this.timer)

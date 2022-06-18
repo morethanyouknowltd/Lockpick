@@ -99,12 +99,16 @@ const Classs = class SettingsWindow extends LockpickComponent<any> {
               </ScrollableSection>
 
               {/* <div>hello</div> */}
-              {/* {this.selectedMod ? <ScrollableSection style={{left: '15rem', width: 'calc(100% - 15rem)'}}><ModView modId={this.state.selectedModId} /></ScrollableSection> : null} */}
-              <ScrollableSection
-                style={{ left: '15rem', width: 'calc(100% - 15rem)', background: '#333' }}>
-                ahsdkahsdjkahk
-                <KorusView />
-              </ScrollableSection>
+              {this.selectedMod ? (
+                <ScrollableSection style={{ left: '15rem', width: 'calc(100% - 15rem)' }}>
+                  <ModView modId={this.state.selectedModId} />
+                </ScrollableSection>
+              ) : null}
+              {/* <ScrollableSection */}
+              {/* style={{ left: '15rem', width: 'calc(100% - 15rem)', background: '#333' }}> */}
+              {/* ahsdkahsdjkahk */}
+              {/* <KorusView /> */}
+              {/* </ScrollableSection> */}
             </ContentWrap>
           )
         }}

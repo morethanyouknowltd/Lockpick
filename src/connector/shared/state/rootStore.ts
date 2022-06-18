@@ -9,6 +9,7 @@ import {
 } from 'mobx-keystone'
 import { Project } from './models/Project.model'
 import { BitwigTrack, BitwigState } from './models/BitwigTrack.model'
+import { ModsState, Mod, ModSetting, ModAction } from './models/Mod.model'
 import { Setting } from './models/Settings.model'
 import { Action } from './models/Actions.model'
 
@@ -18,6 +19,9 @@ const modlels = {
   BitwigState,
   Setting,
   Action,
+  Mod,
+  ModSetting,
+  ModAction,
 }
 for (const model in modlels) {
   // Try to stop webpack from removing unused variables
@@ -32,6 +36,7 @@ setGlobalConfig({
 @model('korus/RootState')
 export class RootState extends Model({
   bitwig: tProp(types.model(BitwigState)),
+  mods: tProp(types.model(ModsState)),
 }) {}
 
 export function createRootStore(state): RootState {

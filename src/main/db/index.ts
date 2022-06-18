@@ -1,4 +1,4 @@
-import { createConnection } from 'typeorm'
+import { Connection, createConnection } from 'typeorm'
 import { Project } from './entities/Project'
 import { ProjectTrack } from './entities/ProjectTrack'
 import { Setting } from './entities/Setting'
@@ -7,7 +7,7 @@ import { logger } from '../core/Log'
 const fs = require('fs')
 const path = require('path')
 
-let conn
+let conn: Connection
 export async function getDb() {
   if (!conn) {
     const newdb = !fs.existsSync(sqlitePath)
@@ -54,7 +54,7 @@ export async function getDb() {
     })
     logger.debug('About to run migrations...')
     await conn.runMigrations({
-      transaction: false,
+      transaction: 'none',
     })
     logger.debug('Migration ran successfully!')
   }

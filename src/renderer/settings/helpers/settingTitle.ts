@@ -32,7 +32,7 @@ export const shortcutToTextDescription = setting => {
   if ((value.keys || []).length === 0) {
     return ''
   }
-  const mac = process.platform === 'darwin'
+  const mac = true
   return (value.keys || [])
     .map(key => {
       if (key === 'Meta' && mac) {

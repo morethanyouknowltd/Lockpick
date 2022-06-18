@@ -1,5 +1,5 @@
 import { getService } from '../../core/Service'
-import { SettingsService } from '../../core/SettingsService'
+import { SettingsService } from '../../settings/SettingsService'
 
 export default async function isModEnabled(mod) {
   if (process.env.SAFE_MODE === 'true') {

@@ -1,3 +1,4 @@
+import { SerializedActionCallWithModelIdOverrides } from 'mobx-keystone'
 import { SOCKET_PORT, WEBSOCKET_PORT } from '../../connector/shared/Constants'
 import { logger } from './Log'
 import { BESService, getService, makeEvent } from './Service'
@@ -21,7 +22,7 @@ let waitingForResponseById: { [id: string]: Function } = {}
  * We have to have a queue here because our interceptors can be async, which means our
  * data processor could end up out of order (as we process multiple packets in one function call)
  */
-const bitwigToClientQueue = async.queue(async function ({ data }, callback) {
+const bitwigToClientQueue = async.queue(async function ({ data }: any, callback: () => void) {
   let leftToParse = data.toString()
   while (leftToParse.length > 0) {
     if (waiting === 0) {
@@ -65,7 +66,7 @@ let toBWInterceptors: { [type: string]: ClientToBitwigInterceptor[] } = {}
 let fromBWInterceptors: { [type: string]: BitwigToClientInterceptor[] } = {}
 
 async function processInterceptors(
-  packetStr,
+  packetStr: string,
   ceptors: { [type: string]: (ClientToBitwigInterceptor | BitwigToClientInterceptor)[] },
   websocketSrc?: WebsocketData
 ) {
@@ -126,8 +127,8 @@ export class SocketMiddlemanService extends BESService {
           this.events.connected.emit(true)
           this.bitwigConnected = true
         })
-        bitwigClient.on('data', data => bitwigToClientQueue.push({ data }))
-        bitwigClient.on('error', err => {
+        bitwigClient.on('data', (data: any) => bitwigToClientQueue.push({ data }))
+        bitwigClient.on('error', (err: any) => {
           logger.error(err)
         })
         bitwigClient.on('close', () => {
@@ -155,7 +156,7 @@ export class SocketMiddlemanService extends BESService {
       let socketData: WebsocketData = {
         ws,
         id,
-        send: obj => {
+        send: (obj: any) => {
           const toSend = JSON.stringify(obj)
           this.log(`Sending to specific websocket (${id}): `, toSend)
           ws.send(toSend)
@@ -163,7 +164,7 @@ export class SocketMiddlemanService extends BESService {
       }
       activeWebsockets.push(socketData)
       this.log(`Browser connected (${id})`)
-      ws.on('message', async messageFromBrowser => {
+      ws.on('message', async (messageFromBrowser: any) => {
         if (logInOut) this.log('Browser sent: ', messageFromBrowser)
         try {
           const { parsedBefore } = await processInterceptors(
@@ -188,12 +189,12 @@ export class SocketMiddlemanService extends BESService {
     })
   }
 
-  sendPacketToBrowser(packet) {
+  sendPacketToBrowser<Packet extends { type: string; data?: any }>(packet: Packet) {
     sendPacketToBrowser(packet)
   }
 }
 
-function sendToBitwig(str) {
+function sendToBitwig(str: string) {
   if (bitwigClient && getService(SocketMiddlemanService).bitwigConnected) {
     const buff = Buffer.from(str, 'utf8')
     const sizeBuf = Buffer.alloc(4)
@@ -209,7 +210,10 @@ function sendToBitwig(str) {
   }
 }
 
-export function sendPacketToBitwig(packet, cb?: Function) {
+export function sendPacketToBitwig(
+  packet: { type?: string; data?: { [x: string]: any }; id?: any },
+  cb?: Function
+) {
   if (cb) {
     let packetId = `internal` + nextPacketId++
     packet.id = packetId
@@ -218,11 +222,18 @@ export function sendPacketToBitwig(packet, cb?: Function) {
   return sendToBitwig(JSON.stringify(packet))
 }
 
-export function sendPacketToBitwigPromise(packet): Promise<any> {
+export function sendPacketToBitwigPromise(packet: { type: string; data: any }): Promise<any> {
   return new Promise(res => sendPacketToBitwig(packet, res))
 }
 
-export function sendPacketToBrowser(packet) {
+export function sendPacketToBrowser(packet: {
+  id?: any
+  data?:
+    | {}
+    | { bitwigConnected: boolean; accessibilityEnabled: any }
+    | SerializedActionCallWithModelIdOverrides
+  type?: string
+}) {
   const str = JSON.stringify(packet)
   if (logInOut) {
     logger.info('Sending to browser:', str)

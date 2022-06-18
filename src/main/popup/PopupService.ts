@@ -4,49 +4,15 @@ import { containsPoint } from '../../connector/shared/Rect'
 import { getAppPath } from '../../connector/shared/ResourcePath'
 import { logger } from '../core/Log'
 import { BESService, getService } from '../core/Service'
-import { SettingsService } from '../core/SettingsService'
 import { url } from '../core/Url'
 import { addAPIMethod } from '../core/WebsocketToSocket'
+import { SettingsService } from '../settings/SettingsService'
 import { UIService } from '../ui/UIService'
+import { OpenPopup, PopupSpec } from './PopupSpec'
 const colors = require('colors')
 const { app, screen } = require('electron')
-const { Keyboard, Bitwig, UI, Mouse, MainWindow } = require('bindings')('bes')
+const { Bitwig } = require('bindings')('bes')
 let nextId = 0
-
-export interface PopupSpec {
-  /**
-   * Unique id for this popup. When opening a popup with the same id as one already existing,
-   * it will be replaced. Otherwise, a new popup will be created
-   */
-  id: string
-  component: String
-  props: any
-  rect: { x: number; y: number; w: number; h: number }
-  onReceivedData?: Function
-
-  /**
-   * Defaults to false, whether the popup should stay onscreen
-   * even when "closeAll" methods are called
-   */
-  persistent?: boolean
-
-  /**
-   * Defaults to false, whether the popup should be clickable
-   */
-  clickable?: boolean
-
-  /**
-   * Defaults to 3000, only releveant for non-clickable popups
-   */
-  timeout?: number
-}
-
-interface OpenPopup {
-  popup: PopupSpec
-  openedAt: Date
-  closeTimeout?: any
-  clickedAt?: Date
-}
 
 // Popup opened for a specific period of time
 // While open, we can hover over to keep it open
