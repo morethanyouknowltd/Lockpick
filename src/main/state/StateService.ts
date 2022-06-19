@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { fromSnapshot } from 'mobx-keystone'
 import KorusStateServer from '../../connector/shared/state/KorusStateServer'
 import { BitwigState } from '../../connector/shared/state/models/BitwigTrack.model'
@@ -7,6 +8,7 @@ import { jsonPath } from '../config'
 import { BESService } from '../core/Service'
 import { addAPIMethod, interceptPacket, sendPacketToBrowser } from '../core/WebsocketToSocket'
 
+@Injectable()
 export class StateService extends BESService {
   server: KorusStateServer
   bitwigUpdateInterval: any

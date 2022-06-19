@@ -1,6 +1,7 @@
-import DbService from 'db/DbService'
+import DBService from 'db/DbService'
 import { clipboard } from 'electron'
 import * as _ from 'lodash'
+import { omit } from 'lodash'
 import { SettingTemplate } from 'settings/SettingsTypes'
 import { APP_VERSION } from '../../../connector/shared/Constants'
 import { debounce } from '../../../connector/shared/engine/Debounce'
@@ -28,7 +29,7 @@ let nextId = 0
 const logger = mainLogger.child('modApi')
 
 export default async function getModApi(this: ModsService, mod: Mod) {
-  const dbService = getService(DbService)
+  const dbService = getService(DBService)
   const { projects, projectTracks } = dbService
   const uiService = getService(UIService)
   const popupService = getService(PopupService)
@@ -312,6 +313,7 @@ export default async function getModApi(this: ModsService, mod: Mod) {
           description: settingSpec.description,
           hidden: !!settingSpec.hidden,
         }
+        mod.setSettings({ ...mod.settings, [settingSpec.id]: settingSpec })
 
         const settingApi = {
           value: false,
@@ -362,8 +364,7 @@ export default async function getModApi(this: ModsService, mod: Mod) {
         mod.setActions({
           ...mod.actions,
           [action.id]: {
-            ...action,
-            category: action.category ? mod.actionCategories[action.category] : null,
+            ...omit(action, 'action'),
           },
         })
 
@@ -520,12 +521,7 @@ export default async function getModApi(this: ModsService, mod: Mod) {
     } else if (typeof value === 'function') {
       const fn: any = (...args: any[]) => {
         const called = value.name || key || 'Unknown function'
-        try {
-          // if (value !== api.log) {
-          //     logForMod(mod.id, 'info', `Called ${called}`)
-          // }
-          return value(...args)
-        } catch (e) {
+        const handleError = e => {
           logger.error(
             colors.red(`${mod.id} threw an error while calling "${colors.yellow(called)}":`)
           )
@@ -538,6 +534,20 @@ export default async function getModApi(this: ModsService, mod: Mod) {
             logger.error(e.stack)
           }
           throw e
+        }
+        try {
+          logForMod(mod.id, 'info', `Called ${called}`)
+          const returned = value(...args)
+          if (returned?.then === 'function') {
+            returned
+              .then(result => {
+                logForMod(mod.id, 'info', `${called} resolved with:`, result)
+              })
+              .catch(handleError)
+          }
+          return returned
+        } catch (e) {
+          handleError(e)
         }
       }
       return fn

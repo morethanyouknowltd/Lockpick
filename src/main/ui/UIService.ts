@@ -9,6 +9,7 @@ import { interceptPacket } from '../core/WebsocketToSocket'
 import { SettingsService } from '../settings/SettingsService'
 import { ShortcutsService } from '../shortcuts/ShortcutsService'
 import { app } from 'electron'
+import { LazyGetter } from 'lazy-get-decorator'
 const { Keyboard, Bitwig, UI, Mouse: NativeMouse, MainWindow } = require('bindings')('bes')
 
 /**
@@ -36,7 +37,6 @@ export class UIService extends BESService {
   apiEventRouter = new EventRouter<any>()
   idsByEventType: { [type: string]: number } = {}
   modalWasOpen = false
-  Mouse: any
   isQuitting = false
 
   // Events
@@ -44,9 +44,9 @@ export class UIService extends BESService {
     toolChanged: makeEvent<number>(),
   }
 
-  addExtras() {
-    const uiService = this
-    this.Mouse = {
+  @LazyGetter()
+  get Mouse() {
+    return {
       click: async (...args: any[]) => {
         const button = args[0]
         const opts = args[args.length - 1] || {}
@@ -120,7 +120,10 @@ export class UIService extends BESService {
         })
       },
     }
+  }
 
+  addExtras() {
+    const uiService = this
     const proto = this.uiMainWindow
     const ArrangerTrack = {
       async selectWithMouse() {

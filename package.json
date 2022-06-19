@@ -5,7 +5,7 @@
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "configure": "node-gyp configure",
-    "electron": "electron --inspect=5858 -r ts-node/register ./dist/main/main.js",
+    "electron": "electron --inspect=5858 ./dist/main/main.js",
     "watch": "tsc -w --p ./src/main/tsconfig.json",
     "start": "cross-env NODE_ENV=dev node ./scripts/start.js",
     "start:dev": "cross-env DEV_SERVER=true NODE_ENV=dev node ./scripts/start.js",
@@ -38,6 +38,8 @@
     "@deepkit/type-compiler": "^1.0.1-alpha.71",
     "@monaco-editor/react": "^4.4.5",
     "@mtyk/events": "workspace:^1.0.0",
+    "@mtyk/logger": "workspace:^0.1.0",
+    "@mtyk/service": "workspace:^0.1.0",
     "@mtyk/types": "workspace:^1.0.0",
     "@nestjs/common": "^8.0.0",
     "@nestjs/config": "^1.1.5",

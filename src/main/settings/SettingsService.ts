@@ -3,7 +3,6 @@ import DBService from 'db/DbService'
 import * as path from 'path'
 import { BESService, getService, makeEvent } from '../core/Service'
 import { addAPIMethod, SocketMiddlemanService } from '../core/WebsocketToSocket'
-import { Setting } from '../db/entities/Setting'
 import { SettingTemplate } from './SettingsTypes'
 
 @Injectable()

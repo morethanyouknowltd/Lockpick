@@ -36,8 +36,8 @@ export class Mod extends Model({
   isDefault: prop<boolean>(false).withSetter(),
   actionCategories: prop<any>({}).withSetter(),
   version: prop<string>('').withSetter(),
-  actions: prop<ModAction[]>(() => []).withSetter(),
-  settings: prop<ModSetting[]>(() => []).withSetter(),
+  actions: prop<any>({}).withSetter(),
+  settings: prop<any>({}).withSetter(),
 }) {}
 
 @model('korus/ModsState')

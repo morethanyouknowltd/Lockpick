@@ -1,24 +1,28 @@
-import { Connection } from 'typeorm'
+import { Connection, EntityTarget, Repository } from 'typeorm'
 import { getDb } from './index'
 import { Project } from './entities/Project'
 import { ProjectTrack } from './entities/ProjectTrack'
 import { Setting } from './entities/Setting'
 import { Injectable } from '@nestjs/common'
 import { LazyGetter } from 'lazy-get-decorator'
+import { BESService } from 'core/Service'
 
 @Injectable()
-export default class DBService {
+export default class DBService extends BESService {
   db?: Connection
 
-  constructor() {}
-  async getRepository(Model: any) {
+  constructor() {
+    super('DBService')
+  }
+
+  async getRepository<M extends EntityTarget<any>>(Model: M): Promise<Repository<any>> {
     if (!this.db) {
       this.db = await getDb()
     }
     return this.db.getRepository(Model)
   }
 
-  makeAsyncable(promisedRepo) {
+  makeAsyncable<T>(promisedRepo: Promise<T>) {
     return new Proxy(
       {},
       {
@@ -28,7 +32,7 @@ export default class DBService {
           }
         },
       }
-    )
+    ) as Awaited<T>
   }
 
   @LazyGetter()

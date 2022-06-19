@@ -9,7 +9,6 @@ export default class AppService {
   constructor(protected settings: SettingsService) {}
 
   async onApplicationBootstrap() {
-    console.log(this.settings)
     await this.settings.insertSettingIfNotExist({
       key: 'userLibraryPath',
       value: '',
