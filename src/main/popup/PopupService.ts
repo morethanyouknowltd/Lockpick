@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { BrowserWindow } from 'electron'
 import { APP_NAME } from '../../connector/shared/Constants'
 import { containsPoint } from '../../connector/shared/Rect'
@@ -17,9 +18,12 @@ let nextId = 0
 // Popup opened for a specific period of time
 // While open, we can hover over to keep it open
 // Clicking opens a static, interactable version on the ClickableCanvas rather than standard canvas
+@Injectable()
 export class PopupService extends BESService {
   // Other services
-  settingsService = getService(SettingsService)
+  constructor(private readonly settingsService: SettingsService) {
+    super()
+  }
 
   // Internal state
   currentPopups: { [id: string]: OpenPopup } = {}
@@ -321,7 +325,7 @@ export class PopupService extends BESService {
 
   ensureCanvasShown() {}
 
-  async activate() {
+  async onModuleInit() {
     addAPIMethod('api/popups/data', async data => {
       this.log('Got popup data:', data)
       if (data.popupId in this.currentPopups) {
@@ -362,7 +366,7 @@ export class PopupService extends BESService {
     })
   }
 
-  async postActivate() {
+  async onApplicationBootstrap() {
     const uiService = getService(UIService)
     uiService.Mouse.on('keyup', event => {
       if (

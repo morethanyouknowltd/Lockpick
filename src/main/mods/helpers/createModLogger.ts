@@ -1,5 +1,5 @@
 import { lockpickFileLogger } from 'core/Log'
-import winston from 'winston'
+const winston = require('winston')
 import { Mod } from '../../../connector/shared/state/models/Mod.model'
 import * as path from 'path'
 import { getBuildModPath } from 'config'

@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { SerializedActionCallWithModelIdOverrides } from 'mobx-keystone'
 import { SOCKET_PORT, WEBSOCKET_PORT } from '../../connector/shared/Constants'
 import { logger } from './Log'
@@ -104,6 +105,7 @@ async function processInterceptors(
   }
 }
 
+@Injectable()
 export class SocketMiddlemanService extends BESService {
   events = {
     connected: makeEvent<boolean>(),

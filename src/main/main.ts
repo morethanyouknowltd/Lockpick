@@ -1,9 +1,13 @@
 require('app-module-path').addPath(__dirname)
+require('@cspotcode/source-map-support').install()
 
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './AppModule'
+import { app } from 'electron'
 
 async function bootstrap() {
-  const nestApp = await NestFactory.createApplicationContext(AppModule)
+  setTimeout(async () => {
+    const nestApp = await NestFactory.createApplicationContext(AppModule)
+  }, 1000 * 1)
 }
-bootstrap()
+app.whenReady().then(bootstrap)

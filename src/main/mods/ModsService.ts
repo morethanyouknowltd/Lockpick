@@ -31,12 +31,14 @@ import isModEnabled from './helpers/isModEnabled'
 import loadMod from './helpers/loadMod'
 import logForMod from './helpers/logForMod'
 import { ModInfo, SettingInfo } from './types'
+import { Injectable } from '@nestjs/common'
 const chokidar = require('chokidar')
 const colors = require('colors')
 const { app } = require('electron')
 
 let modsLoading = false
 
+@Injectable()
 export class ModsService extends BESService {
   constructor(
     protected settingsService: SettingsService,
@@ -87,7 +89,7 @@ export class ModsService extends BESService {
     return this.latestFoundModsMap[`mod/${modId}`]
   }
 
-  async activate() {
+  async onModuleInit() {
     interceptPacket('message', undefined, async ({ data: { msg } }) => {
       this.popupService.showMessage(msg)
     })
@@ -299,7 +301,7 @@ export class ModsService extends BESService {
   staticApi = {
     wait: wait,
     clamp: clamp,
-    showMessage: this.popupService.showMessage,
+    showMessage: (msg, opts) => this.popupService?.showMessage(msg, opts),
   }
 
   async refreshLocalMods() {

@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import DBService from 'db/DbService'
 import * as path from 'path'
 import { BESService, getService, makeEvent } from '../core/Service'
@@ -5,6 +6,7 @@ import { addAPIMethod, SocketMiddlemanService } from '../core/WebsocketToSocket'
 import { Setting } from '../db/entities/Setting'
 import { SettingTemplate } from './SettingsTypes'
 
+@Injectable()
 export class SettingsService extends BESService {
   events = {
     settingsUpdated: makeEvent<void>(),
@@ -17,9 +19,7 @@ export class SettingsService extends BESService {
     super('SettingsService')
   }
 
-  async activate() {
-    this.Settings = this.dbService.getRepository(Setting)
-
+  async onModuleInit() {
     addAPIMethod('api/settings/set', async setting => {
       await this.setSettingValue(setting.key, setting.value)
     })
@@ -65,7 +65,7 @@ export class SettingsService extends BESService {
   }
 
   async getSettingsForCategory(category: string) {
-    return this.Settings.find({ where: { category } })
+    return this.dbService.settings.find({ where: { category } })
   }
 
   preSave(setting: Partial<SettingTemplate>) {
@@ -91,11 +91,11 @@ export class SettingsService extends BESService {
   }
 
   async insertSettingIfNotExist(setting: SettingTemplate) {
-    const existingSetting = await this.Settings.findOne({ where: { key: setting.key } })
+    const existingSetting = await this.dbService.settings.findOne({ where: { key: setting.key } })
     if (!existingSetting) {
       const content = this.preSave(setting)
-      const newSetting = this.Settings.create(content)
-      await this.Settings.save(newSetting)
+      const newSetting = this.dbService.settings.create(content)
+      await this.dbService.settings.save(newSetting)
       this.log('Inserted new setting: ', newSetting)
       // this.events.settingsUpdated.emit()
       // this.events.settingUpdated.emit(content)
@@ -103,25 +103,25 @@ export class SettingsService extends BESService {
   }
 
   async removeAllForMod(modId: string) {
-    await this.Settings.delete({ mod: modId })
+    await this.dbService.settings.delete({ mod: modId })
   }
 
   async getSetting(key: string) {
-    const setting = await this.Settings.findOne({ where: { key } })
+    const setting = await this.dbService.settings.findOne({ where: { key } })
     return setting ? this.postload(setting) : null
   }
 
   async deleteSetting(key: string) {
-    await this.Settings.delete({ key })
+    await this.dbService.settings.delete({ key })
   }
 
   async settingExists(key: string) {
-    const setting = await this.Settings.findOne({ where: { key } })
+    const setting = await this.dbService.settings.findOne({ where: { key } })
     return !!setting
   }
 
   async getSettingValue(key: string) {
-    const setting = await this.Settings.findOne({ where: { key } })
+    const setting = await this.dbService.settings.findOne({ where: { key } })
     if (!setting) {
       throw new Error(`Setting ${key} not found`)
     }
@@ -129,7 +129,7 @@ export class SettingsService extends BESService {
   }
 
   async getSettingValueOrNull(key: string) {
-    const setting = await this.Settings.findOne({ where: { key } })
+    const setting = await this.dbService.settings.findOne({ where: { key } })
     if (!setting) {
       return null
     }
@@ -151,7 +151,7 @@ export class SettingsService extends BESService {
       throw new Error(`Setting ${key} not found`)
     }
     const update = this.preSave({ type: setting.type, value })
-    await this.Settings.update({ key }, update)
+    await this.dbService.settings.update({ key }, update)
 
     this.events.settingsUpdated.emit()
     this.events.settingUpdated.emit({

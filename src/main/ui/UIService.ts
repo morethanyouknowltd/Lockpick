@@ -1,4 +1,5 @@
 import { Geometry } from '@mtyk/types'
+import { forwardRef, Inject, Injectable } from '@nestjs/common'
 import { debounce } from 'lodash'
 import { wait } from '../../connector/shared/engine/Debounce'
 import { returnMouseAfter } from '../../connector/shared/EventUtils'
@@ -7,7 +8,7 @@ import { BESService, EventRouter, makeEvent } from '../core/Service'
 import { interceptPacket } from '../core/WebsocketToSocket'
 import { SettingsService } from '../settings/SettingsService'
 import { ShortcutsService } from '../shortcuts/ShortcutsService'
-const { app } = require('electron')
+import { app } from 'electron'
 const { Keyboard, Bitwig, UI, Mouse: NativeMouse, MainWindow } = require('bindings')('bes')
 
 /**
@@ -15,11 +16,12 @@ const { Keyboard, Bitwig, UI, Mouse: NativeMouse, MainWindow } = require('bindin
  * e.g. currently active tool, whether they are entering a value. Some of this stuff still remains in the mod service but we will
  * gradually move things over to here when it makes sense.
  */
+@Injectable()
 export class UIService extends BESService {
   constructor(
     protected settingsService: SettingsService,
     protected shortcutsService: ShortcutsService,
-    protected bitwigService: BitwigService
+    @Inject(forwardRef(() => BitwigService)) protected bitwigService: BitwigService
   ) {
     super('UIService')
   }
@@ -276,7 +278,7 @@ export class UIService extends BESService {
     }
   }, 250)
 
-  async activate() {
+  async onModuleInit() {
     app.on('before-quit', event => {
       this.log('Before quit')
       if (!this.isQuitting) {

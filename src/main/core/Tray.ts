@@ -9,9 +9,11 @@ import { BESService } from './Service'
 import { SettingsService } from '../settings/SettingsService'
 import { url } from './Url'
 import { addAPIMethod, interceptPacket, SocketMiddlemanService } from './WebsocketToSocket'
+import { Injectable } from '@nestjs/common'
 const path = require('path')
 const { Bitwig } = require('bindings')('bes')
 
+@Injectable()
 export class TrayService extends BESService {
   timer: any
   animationI = 0
@@ -27,7 +29,7 @@ export class TrayService extends BESService {
     super('TrayService')
   }
 
-  async activate() {
+  async onModuleInit() {
     const tray = new Tray(getResourcePath('/images/tray-0Template.png'))
 
     await this.settingsService.insertSettingIfNotExist({

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import AppService from 'app/AppService'
 import { BitwigService } from './bitwig/BitwigService'
 import { TrayService } from './core/Tray'
 import { SocketMiddlemanService } from './core/WebsocketToSocket'
@@ -12,13 +13,14 @@ import { UIService } from './ui/UIService'
 
 @Module({
   providers: [
+    BitwigService,
     SocketMiddlemanService,
+    AppService,
     StateService,
     SettingsService,
     DbService,
     PopupService,
     ShortcutsService,
-    BitwigService,
     UIService,
     ModsService,
     TrayService,

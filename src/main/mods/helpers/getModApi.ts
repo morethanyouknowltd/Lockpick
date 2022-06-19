@@ -1,3 +1,4 @@
+import DbService from 'db/DbService'
 import { clipboard } from 'electron'
 import * as _ from 'lodash'
 import { SettingTemplate } from 'settings/SettingsTypes'
@@ -11,9 +12,6 @@ import isLockpickActiveApplication from '../../core/helpers/isLockpickActiveAppl
 import { logger as mainLogger } from '../../core/Log'
 import { EventEmitter, getService } from '../../core/Service'
 import { interceptPacket } from '../../core/WebsocketToSocket'
-import { getDb } from '../../db'
-import { Project } from '../../db/entities/Project'
-import { ProjectTrack } from '../../db/entities/ProjectTrack'
 import { PopupService } from '../../popup/PopupService'
 import { SettingsService } from '../../settings/SettingsService'
 import { ActionSpec, ShortcutsService } from '../../shortcuts/ShortcutsService'
@@ -30,9 +28,8 @@ let nextId = 0
 const logger = mainLogger.child('modApi')
 
 export default async function getModApi(this: ModsService, mod: Mod) {
-  const db = await getDb()
-  const projectTracks = db.getRepository(ProjectTrack)
-  const projects = db.getRepository(Project)
+  const dbService = getService(DbService)
+  const { projects, projectTracks } = dbService
   const uiService = getService(UIService)
   const popupService = getService(PopupService)
   const shortcutsService = getService(ShortcutsService)

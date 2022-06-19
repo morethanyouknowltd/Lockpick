@@ -1,42 +1,31 @@
-import { Model, model, prop, tProp, types } from 'mobx-keystone'
-import { BitwigCueMarker } from '../../connector/shared/state/models/BitwigTrack.model'
-import { BESService, getService, makeEvent } from '../core/Service'
+import { Injectable } from '@nestjs/common'
 import { debounce } from 'lodash'
-import { SettingsService } from '../settings/SettingsService'
+import {
+  BitwigCueMarker,
+  BitwigState,
+  BitwigTrack,
+} from '../../connector/shared/state/models/BitwigTrack.model'
+import { BESService, makeEvent } from '../core/Service'
 import { interceptPacket } from '../core/WebsocketToSocket'
 import { CueMarker } from '../mods/types'
 import { PopupService } from '../popup/PopupService'
+import { SettingsService } from '../settings/SettingsService'
 import { ShortcutsService } from '../shortcuts/ShortcutsService'
 import getBitwigModApi from './helpers/getBitwigModApi'
 const { Bitwig } = require('bindings')('bes')
 
-@model('korus/BitwigTrack')
-class BitwigTrack extends Model({
-  name: prop<string>(''),
-  color: prop<string>('#ffffff'),
-  solo: prop<boolean>(false),
-  mute: prop<boolean>(false),
-  position: prop<number>(0),
-  volume: prop<number>(0),
-  volumeString: prop<string>('0db'),
-  type: prop<string>(),
-}) {}
-@model('korus/BitwigState')
-class BitwigState extends Model({
-  text: prop<string>('asdasd'),
-  transportState: prop<'stopped' | 'playing'>('stopped'),
-  browserIsOpen: prop<boolean>(),
-  tracks: tProp(types.array(types.model(BitwigTrack)), () => []),
-}) {}
-
 /**
  * Bitwig Service keeps track of Bitwig internal state, whether the browser is open etc.
  */
+@Injectable()
 export class BitwigService extends BESService {
-  // Other services
-  settingsService = getService(SettingsService)
-  shortcutsService = getService(ShortcutsService)
-  popupService = getService(PopupService)
+  constructor(
+    private readonly popupService: PopupService,
+    private readonly settingsService: SettingsService,
+    private readonly shortcutsService: ShortcutsService
+  ) {
+    super('BitwigService')
+  }
 
   // Internal state
   browserIsOpen = false
@@ -75,7 +64,7 @@ export class BitwigService extends BESService {
       .toLowerCase()
   }
 
-  async activate() {
+  async onModuleInit() {
     interceptPacket('browser/state', undefined, ({ data }) => {
       this.updateStore(store => {
         store.bitwig.setBrowserIsOpen(data.isOpen)

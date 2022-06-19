@@ -23,10 +23,10 @@ const modlels = {
   ModSetting,
   ModAction,
 }
-for (const model in modlels) {
-  // Try to stop webpack from removing unused variables
-  console.log(`Here is model`, model, modlels[model])
-}
+// for (const model in modlels) {
+//   // Try to stop webpack from removing unused variables
+//   console.log(`Here is model`, model, modlels[model])
+// }
 
 // for this example we will enable runtime data checking even in production mode
 setGlobalConfig({

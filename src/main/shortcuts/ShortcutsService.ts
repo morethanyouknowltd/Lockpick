@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { getAppPath } from '../../connector/shared/ResourcePath'
 import { isWindows } from '../core/Os'
 import { BESService, getService, makeEvent } from '../core/Service'
@@ -54,6 +55,7 @@ export interface ActionSpec extends BaseActionSpec {
 }
 type AnyActionSpec = ActionSpec | TempActionSpec
 
+@Injectable()
 export class ShortcutsService extends BESService {
   popupService = getService(PopupService)
 
