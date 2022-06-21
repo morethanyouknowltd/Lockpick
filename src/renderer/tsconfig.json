@@ -15,10 +15,7 @@
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["esnext", "dom"],
-    "useDefineForClassFields": true,
-    "paths": {
-      "mtyk-frontend/*": ["src/renderer/mtyk-frontend/*"]
-    }
+    "useDefineForClassFields": true
   },
   "include": ["src/renderer/**/*"]
 }

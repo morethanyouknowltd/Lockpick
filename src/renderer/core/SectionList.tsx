@@ -1,4 +1,4 @@
-import { Flex, Txt } from 'mtyk-frontend/core/components'
+import { Flex, Txt } from '@mtyk/frontend/core/components'
 import React from 'react'
 
 export interface SectionListProps<T> {

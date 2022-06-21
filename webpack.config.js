@@ -80,11 +80,6 @@ module.exports = {
     ],
   },
   resolve: {
-    alias: {
-      'mtyk-frontend': path.resolve(__dirname, './src/renderer/mtyk-frontend'),
-    },
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
-    modules: ['node_modules'],
-    symlinks: false,
   },
 }

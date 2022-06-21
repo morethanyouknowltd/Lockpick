@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite'
-import { Flex } from 'mtyk-frontend/core/components'
+import { Flex } from '@mtyk/frontend/core/components'
 import React, { useEffect } from 'react'
 import { sendPromise } from '../../bitwig-api/Bitwig'
 import { state } from '../../core/State'

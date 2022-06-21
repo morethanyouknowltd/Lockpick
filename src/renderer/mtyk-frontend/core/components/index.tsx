@@ -1,8 +1,0 @@
-export { default as Flex } from './Flex'
-export { default as Txt } from './Txt'
-export { default as TabProvider } from './TabProvider'
-export { default as TextArea } from './TextArea'
-export { default as TabSwitcher } from './TabSwitcher'
-export { default as Icon } from './Icon'
-export { default as Presser } from './Presser'
-export { default as Svg } from './Svg'

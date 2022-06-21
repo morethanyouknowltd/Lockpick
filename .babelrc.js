@@ -1,4 +1,4 @@
-const MTYKTransform = require('./src/renderer/mtyk-frontend/babel')
+const MTYKTransform = require('@mtyk/frontend/babel')
 
 module.exports = {
   presets: [

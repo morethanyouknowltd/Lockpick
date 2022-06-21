@@ -1,6 +1,6 @@
-import TabController from 'mtyk-frontend/controllers/controllers/TabController'
-import { Flex, Icon } from 'mtyk-frontend/core/components'
-import { MTYKIcon } from 'mtyk-frontend/core/components/Icon'
+import TabController from '@mtyk/frontend/controllers/controllers/TabController'
+import { Flex, Icon } from '@mtyk/frontend/core/components'
+import { MTYKIcon } from '@mtyk/frontend/core/components/Icon'
 import React from 'react'
 
 export interface TabButtonsProps {

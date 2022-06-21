@@ -1,6 +1,6 @@
 import Editor, { loader } from '@monaco-editor/react'
 import * as monaco from 'monaco-editor'
-import { Flex } from 'mtyk-frontend/core/components'
+import { Flex } from '@mtyk/frontend/core/components'
 import React, { useEffect, useRef, useState } from 'react'
 import { callAPI } from '../../bitwig-api/Bitwig'
 
