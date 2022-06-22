@@ -1,5 +1,3 @@
-const MTYKTransform = require('@mtyk/frontend/babel')
-
 module.exports = {
   presets: [
     [
@@ -14,7 +12,6 @@ module.exports = {
     '@babel/preset-react',
   ],
   plugins: [
-    MTYKTransform({ environment: 'browser' }),
     ['styled-components', { ssr: true }],
     'babel-plugin-transform-typescript-metadata',
     ['@babel/plugin-proposal-decorators', { legacy: true }],
