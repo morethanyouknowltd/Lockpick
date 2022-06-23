@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { forwardRef, Inject, Injectable } from '@nestjs/common'
 import { getAppPath } from '../../connector/shared/ResourcePath'
 import { isWindows } from '../core/Os'
 import { BESService, getService, makeEvent } from '../core/Service'
@@ -6,59 +6,15 @@ import { interceptPacket, SocketMiddlemanService } from '../core/WebsocketToSock
 import { PopupService } from '../popup/PopupService'
 import { SettingsService } from '../settings/SettingsService'
 import { UIService } from '../ui/UIService'
+import { ActionSpec, ShortcutInfo, AnyActionSpec } from './ShortcutTypes'
 const colors = require('colors')
 const { Keyboard, Bitwig } = require('bindings')('bes')
 
 let lastKeyPressed = new Date()
 let lastKey = ''
 
-type ShortcutInfo = {
-  keys: string[]
-  special: string
-}
-
-export interface BaseActionSpec {
-  /**
-   * A list of valid contexts this action should/shouldn't run in
-   * e.g. ['-browser'] to never run while popup browser is open
-   */
-  contexts?: string[]
-}
-export interface TempActionSpec extends BaseActionSpec {
-  defaultSetting: {
-    keys: String[]
-    doubleTap?: boolean
-  }
-  isTemp: true
-  id: string
-  title?: string
-  action: Function
-}
-export interface ActionSpec extends BaseActionSpec {
-  title: string
-  category?: string
-  id: string
-
-  /**
-   * Any extra info to attach to the action that may
-   * be helpful to event listeners etc
-   */
-  meta?: any
-
-  action: Function
-
-  defaultSetting?: {
-    keys?: String[]
-    doubleTap?: boolean
-  }
-  mod?: string
-}
-type AnyActionSpec = ActionSpec | TempActionSpec
-
 @Injectable()
 export class ShortcutsService extends BESService {
-  popupService = getService(PopupService)
-
   browserIsOpen
   enteringValue = false
   spotlightOpen = false
@@ -73,13 +29,20 @@ export class ShortcutsService extends BESService {
   newCache: { [shortcutCode: string]: Function[] } = {}
   pauseCacheUpdateVar = 0
 
-  socketService = getService(SocketMiddlemanService)
-  settingsService = getService(SettingsService)
   // searchWindow: BrowserWindow
   extraShortcuts: any[]
   events = {
     actionTriggered: makeEvent<AnyActionSpec>(),
     enteringValue: makeEvent<boolean>(),
+  }
+
+  constructor(
+    protected readonly settingsService: SettingsService,
+    @Inject(forwardRef(() => PopupService)) protected readonly popupService: PopupService,
+    @Inject(forwardRef(() => UIService)) protected readonly uiService: UIService,
+    protected readonly socketService: SocketMiddlemanService
+  ) {
+    super()
   }
 
   pause() {
@@ -252,7 +215,7 @@ export class ShortcutsService extends BESService {
   shortcutCodeWhileMouseDown = ''
   previousEvent
 
-  activate() {
+  async onModuleInit() {
     // this.searchWindow = new BrowserWindow({
     //     width: 370,
     //     height: 480,
@@ -449,7 +412,7 @@ export class ShortcutsService extends BESService {
     return didRun
   }
 
-  postActivate() {
+  onApplicationBootstrap() {
     const uiService = getService(UIService)
     uiService.Mouse.on('mouseup', event => {
       this.setEnteringValue(false)

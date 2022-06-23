@@ -1,21 +1,25 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "removeComments": false,
     "preserveConstEnums": true,
     "sourceMap": true,
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
     "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
-    "module": "es6",
-    "target": "es6",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "jsx": "react",
-    "baseUrl": "./",
+    "importHelpers": true,
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "baseUrl": "../../src",
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": ["esnext", "dom"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "useDefineForClassFields": true
   },
-  "include": ["src/renderer/**/*"]
+  "include": ["../renderer/**/*", "../connector/shared/**/*"],
+  "exclude": ["../main/**/*"]
 }

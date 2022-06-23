@@ -5,11 +5,13 @@ import {
   onActionMiddleware,
   serializeActionCall,
 } from 'mobx-keystone'
-import { RootState } from '../../../connector/shared/state/rootStore'
+import { loadModels, RootState } from '../../../connector/shared/state/rootStore'
 import { addPacketListener, callAPI } from '../../bitwig-api/Bitwig'
 
 let serverAction = false
 let korusState: RootState | undefined = undefined
+
+loadModels()
 
 export default function getKorusState(): RootState {
   if (!korusState) {

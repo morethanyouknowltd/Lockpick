@@ -13,7 +13,7 @@ import { ModsState, Mod, ModSetting, ModAction } from './models/Mod.model'
 import { Setting } from './models/Settings.model'
 import { Action } from './models/Actions.model'
 
-const modlels = {
+export const models = {
   Project,
   BitwigTrack,
   BitwigState,
@@ -23,6 +23,13 @@ const modlels = {
   ModSetting,
   ModAction,
 }
+
+export function loadModels() {
+  for (const model in models) {
+    console.log(`Registering model ${model}`)
+  }
+}
+
 // for (const model in modlels) {
 //   // Try to stop webpack from removing unused variables
 //   console.log(`Here is model`, model, modlels[model])

@@ -9,5 +9,4 @@ import { BESService } from '../core/Service'
  */
 @Injectable()
 class ReleasesService extends BESService {
-  activate() {}
 }

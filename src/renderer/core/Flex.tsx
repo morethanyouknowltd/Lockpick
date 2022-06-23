@@ -8,6 +8,9 @@ export const FlexGrow = styled.div`
   flex-grow: 1;
 `
 
+/**
+ * @deprecated
+ */
 export const Flex = ({ children, ...rest }) => {
   return <FlexWrap style={rest}>{children}</FlexWrap>
 }

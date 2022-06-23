@@ -116,7 +116,7 @@ export class SocketMiddlemanService extends BESService {
     return activeWebsockets
   }
 
-  activate() {
+  async onModuleInit() {
     this.log('Activating Socket...')
     const wss = new WebSocket.Server({ port: WEBSOCKET_PORT })
     const connectBitwig = () => {

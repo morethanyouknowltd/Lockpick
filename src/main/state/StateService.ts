@@ -16,7 +16,7 @@ export class StateService extends BESService {
     super('state')
   }
 
-  postActivate() {
+  async onModuleInit() {
     const dbLocation = jsonPath
     let initialState = new RootState({
       bitwig: new BitwigState({}),
