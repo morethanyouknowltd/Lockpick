@@ -20,13 +20,13 @@ export default class KorusStateServer {
   constructor(rootData: ModelData<RootState>) {
     this.serverRootStore = createRootStore(rootData)
     onActionMiddleware(this.serverRootStore, {
-      onFinish: (actionCall, ctx) => {
+      onStart: (actionCall, ctx) => {
         console.log('did it finish?')
         logger.info(`Ran ${ctx.actionName} on server, sending to client`)
+        // if the action does not come from the server cancel it silently
+        // and send it to the server
+        // it will then be replicated by the server and properly executed
         if (!this.clientAction) {
-          // if the action does not come from the server cancel it silently
-          // and send it to the server
-          // it will then be replicated by the server and properly executed
           this.sendToClient(serializeActionCall(actionCall, this.serverRootStore))
         }
       },

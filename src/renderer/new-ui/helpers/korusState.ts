@@ -1,10 +1,4 @@
-import {
-  ActionTrackingResult,
-  applySerializedActionAndSyncNewModelIds,
-  fromSnapshot,
-  onActionMiddleware,
-  serializeActionCall,
-} from 'mobx-keystone'
+import { applySerializedActionAndSyncNewModelIds, fromSnapshot } from 'mobx-keystone'
 import { loadModels, RootState } from '../../../connector/shared/state/rootStore'
 import { addPacketListener, callAPI } from '../../bitwig-api/Bitwig'
 
@@ -26,22 +20,22 @@ export function createRootState(cb) {
     cb(korusState)
 
     // also listen to local actions, cancel them and send them to the server
-    onActionMiddleware(korusState, {
-      onStart(actionCall, ctx) {
-        if (!serverAction) {
-          // If the action does not come from the server cancel it silently
-          // and send it to the server
-          // It will then be replicated by the server and properly executed
-          callAPI('/api/korus/message', serializeActionCall(actionCall, korusState!))
+    // onActionMiddleware(korusState, {
+    //   onStart(actionCall, ctx) {
+    //     if (!serverAction) {
+    //       // If the action does not come from the server cancel it silently
+    //       // and send it to the server
+    //       // It will then be replicated by the server and properly executed
+    //       callAPI('/api/korus/message', serializeActionCall(actionCall, korusState!))
 
-          // Cancel the action by returning undefined
-          return {
-            result: ActionTrackingResult.Return,
-            value: undefined,
-          }
-        }
-      },
-    })
+    //       // Cancel the action by returning undefined
+    //       return {
+    //         result: ActionTrackingResult.Return,
+    //         value: undefined,
+    //       }
+    //     }
+    //   },
+    // })
 
     addPacketListener(`korus/state-message`, ({ data: actionCall, type }) => {
       let wasServerAction = serverAction
@@ -50,7 +44,10 @@ export function createRootState(cb) {
         // in clients we use the sync new model ids version to make sure that
         // any model ids that were generated in the server side end up being
         // the same in the client side
+
         applySerializedActionAndSyncNewModelIds(korusState!, actionCall)
+      } catch (e) {
+        console.error(e)
       } finally {
         serverAction = wasServerAction
       }

@@ -1,15 +1,18 @@
-import { Model, model, prop, tProp, types } from 'mobx-keystone'
+import { idProp, Model, model, prop, tProp, types } from 'mobx-keystone'
 import { CueMarker } from 'mods/types'
 
 @model('korus/BitwigCueMarker')
 export class BitwigCueMarker extends Model({
   name: prop<string>('').withSetter(),
+  id: idProp,
   position: prop<number>(0).withSetter(),
   color: prop<string>('#ffffff').withSetter(),
 }) {}
+
 @model('korus/BitwigTrack')
 export class BitwigTrack extends Model({
   name: prop<string>('').withSetter(),
+  id: idProp,
   color: prop<string>('#ffffff').withSetter(),
   solo: prop<boolean>(false).withSetter(),
   mute: prop<boolean>(false).withSetter(),

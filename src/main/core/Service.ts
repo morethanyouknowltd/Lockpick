@@ -11,8 +11,9 @@ export class BESService extends MTYKService {
   name: string
   constructor(name?: string) {
     super(name)
-    this.logger = logger.child({ service: this.name })
-    servicesByName[this.name] = this
+    const _name = name ?? this.constructor.name
+    this.logger = logger.child({ service: _name })
+    servicesByName[_name] = this
   }
 
   updateStore(cb: (state: RootState) => void) {

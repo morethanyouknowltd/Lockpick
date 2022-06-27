@@ -36,7 +36,8 @@ export async function getProjectIdForName(
     where: { name: project },
   })
   if (!existingProject && create) {
-    const newProjectId = (await projects.save(projects.create({ name: project, data: {} }))).id
+    const newProjectId = (await projects.save(await projects.create({ name: project, data: {} })))
+      .id
     logger.log(`Created new project with id ${newProjectId}`)
     return newProjectId
   } else {
@@ -61,7 +62,7 @@ export async function createOrUpdateTrack(track: string, project: string, data: 
       data: { ...existingTrack.data, ...data },
     })
   } else {
-    const newTrack = projectTracks.create({
+    const newTrack = await projectTracks.create({
       name: track,
       project_id: projectId,
       data,

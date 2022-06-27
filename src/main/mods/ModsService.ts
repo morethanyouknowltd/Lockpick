@@ -89,7 +89,7 @@ export class ModsService extends BESService {
     return this.latestFoundModsMap[`mod/${modId}`]
   }
 
-  async onModuleInit() {
+  async onApplicationBootstrap() {
     interceptPacket('message', undefined, async ({ data: { msg } }) => {
       this.popupService.showMessage(msg)
     })
@@ -331,6 +331,9 @@ export class ModsService extends BESService {
         const mod = modsById[modId]
         await loadMod.call(this, mod)
       }
+      this.updateStore(store => {
+        store.mods.setMods(Object.values(modsById))
+      })
     } catch (e) {
       this.error(`Error loading mods`)
       console.error(e)

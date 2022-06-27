@@ -12,9 +12,6 @@ import { addAPIMethod, interceptPacket, sendPacketToBrowser } from '../core/Webs
 export class StateService extends BESService {
   server: KorusStateServer
   bitwigUpdateInterval: any
-  constructor() {
-    super('state')
-  }
 
   async onModuleInit() {
     const dbLocation = jsonPath

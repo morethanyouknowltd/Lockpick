@@ -93,7 +93,7 @@ export class SettingsService extends BESService {
     const existingSetting = await this.dbService.settings.findOne({ where: { key: setting.key } })
     if (!existingSetting) {
       const content = this.preSave(setting)
-      const newSetting = this.dbService.settings.create(content)
+      const newSetting = await this.dbService.settings.create(content)
       await this.dbService.settings.save(newSetting)
       this.log('Inserted new setting: ', newSetting)
       // this.events.settingsUpdated.emit()

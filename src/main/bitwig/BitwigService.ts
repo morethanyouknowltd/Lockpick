@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { debounce } from 'lodash'
+import { debounce, uniqBy } from 'lodash'
 import {
   BitwigCueMarker,
   BitwigState,
@@ -80,7 +80,9 @@ export class BitwigService extends BESService {
     })
     interceptPacket('cue-markers', undefined, async ({ data }) => {
       this.updateStore(store =>
-        store.bitwig.setCueMarkers(data.map(d => new BitwigCueMarker(data)))
+        store.bitwig.setCueMarkers(
+          data.map(d => new BitwigCueMarker({ ...data, id: String(d.position) }))
+        )
       )
     })
     interceptPacket(
@@ -110,7 +112,12 @@ export class BitwigService extends BESService {
       debounce(async ({ data: tracks }) => {
         this.updateStore(store => {
           // Start a mobx action
-          store.bitwig.setTracks(tracks.map(t => new BitwigTrack(t)))
+          store.bitwig.setTracks(
+            uniqBy(
+              tracks.map(t => new BitwigTrack({ ...t, id: t.name })),
+              'name'
+            )
+          )
           // store.bitwig.tracks = tracks
         })
       }, 1000)

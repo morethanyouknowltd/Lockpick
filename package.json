@@ -37,6 +37,7 @@
     "@monaco-editor/react": "^4.4.5",
     "@mtyk/events": "workspace:^1.0.0",
     "@mtyk/frontend": "workspace:^0.1.24",
+    "@mtyk/hawk": "^0.0.8",
     "@mtyk/logger": "workspace:^0.1.0",
     "@mtyk/service": "workspace:^0.1.0",
     "@mtyk/types": "workspace:^1.0.0",

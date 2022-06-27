@@ -7,7 +7,7 @@ import getKorusState, { createRootState } from '../new-ui/helpers/korusState'
 const SettingsInner = observer(() => {
   const state = getKorusState()
   return (
-    <Flex>
+    <Flex style={{ backgroundColor: '#444' }}>
       {state.mods.mods.map(mod => {
         return <div key={mod.id}>{mod.name}</div>
       })}
