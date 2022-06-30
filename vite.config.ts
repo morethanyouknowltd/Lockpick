@@ -14,6 +14,7 @@ export default defineConfig({
   root: resolve('./src/renderer'),
   server: {
     port: 8081,
+    hmr: { overlay: false },
     strictPort: true,
   },
 
