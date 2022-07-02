@@ -8,7 +8,7 @@ export async function createDirIfNotExist(path: string) {
     await fs.stat(path)
   } catch (e) {
     try {
-      await fs.mkdir(path)
+      await fs.mkdir(path, { recursive: true })
     } catch (e) {
       if (e?.code !== 'EEXIST') {
         throw e

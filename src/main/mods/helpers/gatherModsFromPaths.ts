@@ -4,6 +4,7 @@ import { getResourcePath } from '../../../connector/shared/ResourcePath'
 import { Mod } from '../../../connector/shared/state/models/Mod.model'
 import { logger as mainLogger } from '../../core/Log'
 import type { Keyed } from '@mtyk/types'
+import { getUserModsFolderPath } from './getModsFolderPaths'
 const colors = require('colors')
 const logger = mainLogger.child('gatherModsFromPaths')
 
@@ -16,6 +17,7 @@ export default async function gatherModsFromPaths(
   const modsById: Keyed<Mod> = {}
   // Load mods from all folders, with latter folders having higher precedence (overwriting by id)
   for (const modsFolder of paths) {
+    const isUserScript = modsFolder === (await getUserModsFolderPath())
     const files = await fs.readdir(modsFolder)
     for (const filePath of files) {
       const actualType = filePath.indexOf('bitwig.js') >= 0 ? 'bitwig' : 'local'
@@ -68,6 +70,7 @@ export default async function gatherModsFromPaths(
           osMatches,
           settingsKey,
           isBuiltIn: true, // FIXME
+          isUserScript,
           description,
           category,
           actionCategories: {},

@@ -62,13 +62,13 @@ export function send(newPacket: any, callback?: Function) {
   sendQueuedPackets()
 }
 
-export function sendPromise(newPacket): Promise<any> {
+export function sendPromise(newPacket: any): Promise<any> {
   return new Promise(resolve => {
     send(newPacket, resolve)
   })
 }
 
-export async function callAPI(endpoint, data = null): Promise<any> {
+export async function callAPI(endpoint: string, data: any = null): Promise<any> {
   console.log('calling api', endpoint, data)
   const result = await sendPromise({ type: endpoint, data })
   return result.data

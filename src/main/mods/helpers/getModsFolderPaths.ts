@@ -1,20 +1,21 @@
 const path = require('path')
-import { APP_NAME } from '../../../connector/shared/Constants'
-import { createDirIfNotExist, exists as fileExists } from '../../core/Files'
+import { Optional } from '@mtyk/types'
+import { createDirIfNotExist } from '../../core/Files'
 import { getService } from '../../core/Service'
 import { SettingsService } from '../../settings/SettingsService'
 import getDefaultModsFolderPath from './getDefaultModsFolderPath'
 
-export default async function getModsFolderPaths(): Promise<string[]> {
+export async function getUserModsFolderPath(): Promise<Optional<string>> {
   const settingsService = getService(SettingsService)
-  const userLibPath = await settingsService.userLibraryPath()
-  const exists = typeof userLibPath === 'string' && (await fileExists(userLibPath))
-  if (exists) {
-    await createDirIfNotExist(path.join(userLibPath!, APP_NAME))
-    await createDirIfNotExist(path.join(userLibPath!, APP_NAME, 'Mods'))
+  const userLibPath = await settingsService.lockpickLibraryLocation()
+  if (userLibPath) {
+    const modsFolder = path.join(userLibPath, 'Mods')
+    await createDirIfNotExist(modsFolder)
+    return modsFolder
   }
-  return [
-    getDefaultModsFolderPath(),
-    ...(exists ? [path.join((await settingsService.lockpickLibraryLocation())!, 'Mods')] : []),
-  ]
+}
+
+export default async function getModsFolderPaths(): Promise<string[]> {
+  const modsFolder = await getUserModsFolderPath()
+  return [getDefaultModsFolderPath(), ...(modsFolder ? [modsFolder] : [])]
 }

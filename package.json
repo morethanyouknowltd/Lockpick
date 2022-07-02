@@ -97,6 +97,7 @@
     "sqlite3": "^5.0.2",
     "styled-components": "^5.3.5",
     "titleizejs": "^1.0.2",
+    "typed-assert": "^1.0.9",
     "typeorm": "^0.2.25",
     "underscore": "^1.11.0",
     "uuid": "^3.3.3",

@@ -32,6 +32,7 @@ import loadMod from './helpers/loadMod'
 import logForMod from './helpers/logForMod'
 import { ModInfo, SettingInfo } from './types'
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common'
+import assignModActionRoutes from './actionRoutes'
 const chokidar = require('chokidar')
 const colors = require('colors')
 const { app } = require('electron')
@@ -169,6 +170,7 @@ export class ModsService extends BESService implements OnApplicationBootstrap {
       this.log('Got packet with id ' + id)
       return await this.shortcutsService.runAction(id)
     })
+    assignModActionRoutes()
 
     const refreshFolderWatcher = async () => {
       this.debug('Refreshing folder watcher')

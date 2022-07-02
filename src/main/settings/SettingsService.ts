@@ -1,6 +1,8 @@
+import { Optional } from '@mtyk/types'
 import { Injectable } from '@nestjs/common'
 import DBService from 'db/DbService'
 import * as path from 'path'
+import { APP_NAME } from '../../connector/shared/Constants'
 import { BESService, getService, makeEvent } from '../core/Service'
 import { addAPIMethod, SocketMiddlemanService } from '../core/WebsocketToSocket'
 import { SettingTemplate } from './SettingsTypes'
@@ -162,20 +164,20 @@ export class SettingsService extends BESService {
     })
   }
 
-  async userLibraryPath(): Promise<string | null> {
+  async userLibraryPath(): Promise<Optional<string>> {
     try {
       return await this.getSettingValue('userLibraryPath')
     } catch (e) {
-      return null
+      return undefined
     }
   }
 
-  async lockpickLibraryLocation(): Promise<string | null> {
+  async lockpickLibraryLocation(): Promise<Optional<string>> {
     try {
       const userLib = await this.getSettingValue('userLibraryPath')
-      return path.join(userLib, 'Lockpick')
+      return path.join(userLib, APP_NAME)
     } catch (e) {
-      return null
+      return undefined
     }
   }
 
