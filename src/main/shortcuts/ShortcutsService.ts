@@ -412,7 +412,7 @@ export class ShortcutsService extends BESService {
     return didRun
   }
 
-  onApplicationBootstrap() {
+  async onApplicationBootstrap() {
     const uiService = getService(UIService)
     uiService.Mouse.on('mouseup', event => {
       this.setEnteringValue(false)

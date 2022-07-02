@@ -8,7 +8,6 @@ const servicesByName: { [name: string]: BESService } = {}
 
 export class BESService extends MTYKService {
   logger: ReturnType<typeof logger.child>
-  name: string
   constructor(name?: string) {
     super(name)
     const _name = name ?? this.constructor.name

@@ -31,7 +31,7 @@ import isModEnabled from './helpers/isModEnabled'
 import loadMod from './helpers/loadMod'
 import logForMod from './helpers/logForMod'
 import { ModInfo, SettingInfo } from './types'
-import { Injectable } from '@nestjs/common'
+import { Injectable, OnApplicationBootstrap } from '@nestjs/common'
 const chokidar = require('chokidar')
 const colors = require('colors')
 const { app } = require('electron')
@@ -39,7 +39,7 @@ const { app } = require('electron')
 let modsLoading = false
 
 @Injectable()
-export class ModsService extends BESService {
+export class ModsService extends BESService implements OnApplicationBootstrap {
   constructor(
     protected settingsService: SettingsService,
     protected shortcutsService: ShortcutsService,
@@ -150,6 +150,11 @@ export class ModsService extends BESService {
         this.log(funcResolved, args2)
         funcResolved(...args2)
       }
+    })
+    addAPIMethod('api/doc', async () => {
+      console.log('here')
+      const docs = await fs.readFile(getResourcePath('/lockpick-mod-api.d.ts'))
+      return { data: docs.toString() }
     })
     addAPIMethod('api/mod/action', async ({ action, id }) => {
       if (action === 'resetToDefault') {

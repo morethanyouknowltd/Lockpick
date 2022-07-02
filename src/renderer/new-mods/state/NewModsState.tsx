@@ -1,10 +1,10 @@
+import { ArraySelectionStore, DocumentEditStore } from '@mtyk/frontend/mobx'
 import { makeAutoObservable } from 'mobx'
-import { ArraySelectionStore } from '@mtyk/frontend/mobx'
-import { Mod } from 'connector/shared/state/models/Mod.model'
+import { Mod } from '../../../connector/shared/state/models/Mod.model'
 
 export class NewModsState {
-  mods = new ArraySelectionStore({ autoSelectFirst: true })
-
+  mods = new ArraySelectionStore<Mod>({ autoSelectFirst: true })
+  modEditorState = new DocumentEditStore()
   constructor() {
     makeAutoObservable(this)
   }

@@ -3,14 +3,15 @@ import { observer } from 'mobx-react-lite'
 import { useState } from 'react'
 import React, { useEffect } from 'react'
 import getKorusState, { createRootState } from '../new-ui/helpers/korusState'
-import SidebarModsList from '../new-ui/components/sidebar/SidebarModsList'
-import { Txt } from '@mtyk/frontend/core/components'
+import Sidebar from '../new-ui/components/sidebar/Sidebar'
+import NewModView from '../new-mods/components/NewModView'
 
 const SettingsInner = observer(() => {
   const state = getKorusState()
   return (
-    <Flex style={{ backgroundColor: '#444' }}>
-      <SidebarModsList />
+    <Flex row stretch style={{ backgroundColor: '#444' }}>
+      <Sidebar />
+      <NewModView />
     </Flex>
   )
 })

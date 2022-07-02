@@ -7,7 +7,7 @@ const { Bitwig } = require('bindings')('bes')
 const async = require('async')
 const WebSocket = require('ws')
 const net = require('net')
-const logInOut = false
+const logInOut = true
 const RECONNECT_IN = 1000 * 3
 
 let nextId = 0
@@ -82,7 +82,10 @@ async function processInterceptors(
   }
 
   let didIntercept = false
-  if ((ceptors[packet.type] || []).length) {
+
+  const packetInterceptors = ceptors[packet.type] ?? []
+  console.log(packetInterceptors)
+  if (packetInterceptors.length) {
     const ceptorsForPacket = ceptors[packet.type]
     for (const cept of ceptorsForPacket) {
       try {
@@ -175,6 +178,7 @@ export class SocketMiddlemanService extends BESService {
             socketData
           )
           if (parsedBefore.type.split('/')[0] === 'api') {
+            console.log('not sending to bitwig, prefixed with api')
             // No need to do anything
           } else {
             sendToBitwig(messageFromBrowser)
@@ -279,6 +283,7 @@ export function interceptPacket(
 
 export function addAPIMethod<T>(typePath: string, handler: (packet: any) => Promise<T>) {
   interceptPacket(typePath, async packet => {
+    console.log('API method called:', typePath, packet)
     const { data } = packet
     const response = await handler(data)
     sendPacketToBrowser({ id: packet.id, data: response || {} })

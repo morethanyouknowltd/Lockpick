@@ -8,7 +8,7 @@ import {
 } from './helpers/settingTitle'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamation, faPlay } from '@fortawesome/free-solid-svg-icons'
-import { SettingShortcut } from './setting/SettingShortcut'
+import { SettingAction } from './setting/SettingShortcut'
 import _ from 'underscore'
 import { Warning } from '../core/Warning'
 import { Flex } from '../core/Flex'
@@ -175,7 +175,7 @@ const InfoPanel = ({ selectedSetting }) => {
             <h1>{settingTitle(selectedSetting)}</h1>
             <p>{settingShortDescription(selectedSetting)}</p>
             <div>
-              <SettingShortcut setting={selectedSetting} />
+              <SettingAction setting={selectedSetting} />
             </div>
           </div>
           <div style={{ flexGrow: 1 }} />

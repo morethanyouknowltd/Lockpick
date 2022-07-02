@@ -8,7 +8,7 @@ import { Toggle } from '../../core/Toggle'
 import { ModDebug } from '../ModDebug'
 import { ModError } from '../ModError'
 import { ShortcutsView } from '../ShortcutsView'
-import ModEditor from './ModEditor'
+import NewMonacoEditor from '../../new-mods/components/NewMonacoEditor'
 import { ModSettingItem } from './ModSettingItem'
 import {
   Badge,
@@ -55,7 +55,7 @@ export const ModView = observer(({ modId }: any) => {
               </SettingTitle>
               <Toggle onChange={onToggleChange} value={mod.value.enabled} />
             </Flex>
-            <ModEditor mod={mod} />
+            <NewMonacoEditor mod={mod} />
             {/* <SettingPath>{mod.path} <SearchIconWrap onClick={() => require('electron').remote.shell.showItemInFolder(mod.path)} /></SettingPath> */}
             <SettingDesc style={{ maxWidth: '40rem', fontSize: '.9em', marginTop: `1.2rem` }}>
               {mod.description}

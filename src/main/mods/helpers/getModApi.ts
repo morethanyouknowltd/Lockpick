@@ -20,6 +20,7 @@ import { ActionSpec } from '../../shortcuts/ShortcutTypes'
 import { UIService } from '../../ui/UIService'
 import type { ModsService } from '../ModsService'
 import { KeyboardEvent } from './KeyboardEvent'
+import loadAction from './loadAction'
 import { createOrUpdateTrack, getProjectIdForName, loadDataForTrack } from './loadData'
 import logForMod from './logForMod'
 import makeEmitterEventsFn from './makeEmitterEventsFn'
@@ -362,64 +363,7 @@ export default async function getModApi(this: ModsService, mod: Mod) {
         if (action.id.indexOf('mod/') === 0) {
           throw new Error(`"mod/" is a reserved prefix`)
         }
-        mod.setActions({
-          ...mod.actions,
-          [action.id]: {
-            ...omit(action, 'action'),
-          },
-        })
-
-        // Some of the functions below are async, and we'd rather not restrict mod
-        // authors to have to await registerAction() each time. So, we keep track of
-        // how many are waiting to fulfil and then update the shortcut cache when
-        // we know everything is done.
-        shortcutsService.pauseCacheUpdate()
-
-        const existingSetting = await settingsService.getSetting(action.id)
-        if (existingSetting && existingSetting.mod !== mod.id) {
-          modsService.error(
-            colors.red(`Action with id ${action.id} already exists for mod ${mod.id}. Overwriting`)
-          )
-          await settingsService.deleteSetting(action.id)
-        }
-
-        await settingsService.insertSettingIfNotExist({
-          key: action.id,
-          mod: mod.id,
-          value: {
-            keys: [],
-          },
-          type: 'shortcut',
-        })
-        logForMod(mod.id, 'info', colors.green(`Registered action: ${action.id}`))
-
-        try {
-          const settingValue = await settingsService.getSettingValue(action.id)
-          if (!mod.disabled) {
-            const wrappedAction = async (...args: any[]) => {
-              try {
-                await (async () => action.action(...args))()
-              } catch (e) {
-                logForMod(mod.id, 'error', colors.red(e))
-              }
-            }
-            shortcutsService.addActionToShortcutRegistry(
-              {
-                ...action,
-                action: wrappedAction,
-              },
-              settingValue
-            )
-            modsService.onReloadMods.push(() => {
-              shortcutsService.removeActionFromShortcutRegistry(action.id)
-            })
-          } else {
-            modsService.log(`Skipping action register ${action.id}, mod ${mod.id} not enabled`)
-          }
-        } catch (e) {
-          modsService.error(e)
-        }
-        shortcutsService.unpauseCacheUpdate()
+        await loadAction(mod, action)
       },
       registerActionsWithRange: (
         name: string,

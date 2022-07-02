@@ -1,3 +1,5 @@
+import { MaybePromise } from '@mtyk/types'
+
 export type ShortcutInfo = {
   keys: string[]
   special: string
@@ -23,6 +25,7 @@ export interface TempActionSpec extends BaseActionSpec {
 export interface ActionSpec extends BaseActionSpec {
   title: string
   category?: string
+  description?: string
   id: string
 
   /**
@@ -31,7 +34,7 @@ export interface ActionSpec extends BaseActionSpec {
    */
   meta?: any
 
-  action: Function
+  action: () => MaybePromise<void>
 
   defaultSetting?: {
     keys?: String[]

@@ -39,6 +39,7 @@ export default observer(function SidebarModsList(props: SidebarModsListProps) {
   return (
     <div>
       <SectionList
+        hideEmptySections
         sections={[
           { section: 'My Scripts', data: userCreated },
           { section: 'Installed Scripts', data: notUserCreated },
@@ -47,7 +48,7 @@ export default observer(function SidebarModsList(props: SidebarModsListProps) {
         renderSection={(section, props) => {
           return (
             <Flex>
-              <Txt bold style={{ marginBottom: '1.5em' }}>
+              <Txt bold style={{ maxWidth: '100%', overflow: 'hidden', marginBottom: '1.5em' }}>
                 {section.section}
               </Txt>
               <Flex gap={'.5em'}>{props.rows}</Flex>

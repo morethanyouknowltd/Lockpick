@@ -25,7 +25,7 @@ let state = {
   },
 }
 
-const logInOut = false
+const logInOut = true
 let nextId = 0
 let nextPacketId = 0
 type PacketListenerInfo = { cb: (packet: any) => void; id: number }
@@ -69,6 +69,7 @@ export function sendPromise(newPacket): Promise<any> {
 }
 
 export async function callAPI(endpoint, data = null): Promise<any> {
+  console.log('calling api', endpoint, data)
   const result = await sendPromise({ type: endpoint, data })
   return result.data
 }

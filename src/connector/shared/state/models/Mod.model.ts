@@ -1,9 +1,5 @@
 import { idProp, Model, model, prop, tProp, types } from 'mobx-keystone'
-
-@model('korus/ModAction')
-export class ModAction extends Model({
-  name: prop<string>('').withSetter(),
-}) {}
+import { Optional } from '@mtyk/types'
 
 @model('korus/ModSetting')
 export class ModSetting extends Model({
@@ -12,6 +8,17 @@ export class ModSetting extends Model({
   description: prop<string>('').withSetter(),
   value: prop<any>('').withSetter(),
 }) {}
+
+@model('korus/ModAction')
+export class ModAction extends Model({
+  title: prop<string>('').withSetter(),
+  id: prop<string>('').withSetter(),
+  description: prop<string>('').withSetter(),
+  defaultSetting: prop<any>({}).withSetter(),
+  setting: prop<ModSetting>(),
+}) {
+  action: () => void | Promise<void> = () => {}
+}
 
 @model('korus/Mod')
 export class Mod extends Model({
@@ -36,8 +43,8 @@ export class Mod extends Model({
   isDefault: prop<boolean>(false).withSetter(),
   actionCategories: prop<any>({}).withSetter(),
   version: prop<string>('').withSetter(),
-  actions: prop<any>({}).withSetter(),
-  settings: prop<any>({}).withSetter(),
+  actions: prop<ModAction[]>(() => []).withSetter(),
+  settings: prop<ModSetting[]>(() => []).withSetter(),
 }) {}
 
 @model('korus/ModsState')
