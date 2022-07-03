@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from 'styled-components'
+import styled from from 'styled-components'
 import { TransportNavPopup } from './TransportNavPopup'
 import { PopupLabel } from './popups/PopupLabel'
 import { send } from '../bitwig-api/Bitwig'

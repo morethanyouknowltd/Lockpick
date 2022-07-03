@@ -47,9 +47,7 @@ declare const Mod: {
   runAction: (actionId: string, ...args: any[]) => any
   runActions: (...actionIds: string[]) => void
   registerActionCategory: (categoryDetails: any) => any
-  registerSetting: (
-    settingSpec: any
-  ) => Promise<{
+  registerSetting: (settingSpec: any) => Promise<{
     value: boolean
     getValue: () => Promise<any>
     setValue: (value: any) => Promise<void>
@@ -110,6 +108,7 @@ interface BaseActionSpec {
 interface ActionSpec extends BaseActionSpec {
   title: string
   category?: string
+  description?: string
   id: string
 
   /**

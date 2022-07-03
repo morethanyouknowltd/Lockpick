@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from 'styled-components'
+import styled from from 'styled-components'
 import { shortcutToTextDescription } from '../settings/helpers/settingTitle'
 
 const Name = styled.div`

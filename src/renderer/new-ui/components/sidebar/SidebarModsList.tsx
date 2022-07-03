@@ -47,8 +47,11 @@ export default observer(function SidebarModsList(props: SidebarModsListProps) {
         renderRow={item => <SidebarListItem data={item} />}
         renderSection={(section, props) => {
           return (
-            <Flex>
-              <Txt bold style={{ maxWidth: '100%', overflow: 'hidden', marginBottom: '1.5em' }}>
+            <Flex style={{ marginBottom: '3em' }}>
+              <Txt
+                bold
+                color="#ccc"
+                style={{ maxWidth: '100%', overflow: 'hidden', marginBottom: '1.5em' }}>
                 {section.section}
               </Txt>
               <Flex gap={'.5em'}>{props.rows}</Flex>

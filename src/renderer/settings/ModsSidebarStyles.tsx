@@ -1,4 +1,4 @@
-import styled from 'styled-components'
+import styled from from 'styled-components'
 
 export const TopHalf = styled.div`
   -webkit-app-region: drag;

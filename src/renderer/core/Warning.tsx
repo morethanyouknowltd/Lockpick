@@ -1,7 +1,7 @@
 import { faExclamation } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import React from 'react'
-import styled from 'styled-components'
+import styled from from 'styled-components'
 const WarningIcon = styled.div`
   background: #ecec58;
   border-radius: 1000px;

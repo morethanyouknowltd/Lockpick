@@ -1,13 +1,14 @@
-import React from 'react'
-import { Txt, Flex, Icon } from '@mtyk/frontend/core/components'
-import useSelectedMod from '../hooks/useSelectedMod'
+import { Flex } from '@mtyk/frontend/core/components'
 import { observer } from 'mobx-react-lite'
+import compose from '@mtyk/frontend/react/helpers/compose'
+import useSelectedMod from '../hooks/useSelectedMod'
 import NewModEditor from './NewModEditor'
 import NewModShortcuts from './Shortcuts/NewModShortcuts'
+import { newModsState } from '../state/NewModsState'
 
 export interface NewModViewProps {}
 
-export default observer(function NewModView(props: NewModViewProps) {
+export default compose(observer)(function NewModView(props: NewModViewProps) {
   const {} = props
   const selectedMod = useSelectedMod()
   if (!selectedMod) {
@@ -16,7 +17,7 @@ export default observer(function NewModView(props: NewModViewProps) {
 
   return (
     <Flex row stretch style={{ height: '100vh' }} grow={1}>
-      <NewModEditor />
+      {newModsState.codeViewOpen ? <NewModEditor /> : null}
       <NewModShortcuts />
     </Flex>
   )

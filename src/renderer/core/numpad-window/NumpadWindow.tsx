@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from 'styled-components'
+import styled from from 'styled-components'
 import { withRouter, useParams, useLocation } from 'react-router-dom'
 import { TrackVolume } from '../../search/TrackVolume'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'

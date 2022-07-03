@@ -5,6 +5,15 @@ import { Mod } from '../../../connector/shared/state/models/Mod.model'
 export class NewModsState {
   mods = new ArraySelectionStore<Mod>({ autoSelectFirst: true })
   modEditorState = new DocumentEditStore()
+
+  private _codeViewOpen = true
+  public get codeViewOpen() {
+    return this._codeViewOpen
+  }
+  public set codeViewOpen(value) {
+    this._codeViewOpen = value
+  }
+
   constructor() {
     makeAutoObservable(this)
   }

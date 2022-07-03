@@ -1,11 +1,11 @@
-import { Flex } from '@mtyk/frontend/core/components'
+import compose from '@mtyk/frontend/react/helpers/compose'
 import { Optional } from '@mtyk/types'
 import { groupBy } from 'lodash'
 import { observer } from 'mobx-react-lite'
-import compose from '@mtyk/frontend/react/helpers/compose'
 import React, { useState } from 'react'
 import { ModAction } from '../../../../connector/shared/state/models/Mod.model'
 import { Warning } from '../../../core/Warning'
+import Panel from '../../../new-ui/components/Panel'
 import {
   settingTitle as actionTitle,
   shortcutToTextDescription,
@@ -15,10 +15,9 @@ import useSelectedMod from '../../hooks/useSelectedMod'
 import { ActionTd, ShortcutTableCell, TableWrap } from './ActionTd'
 import { InfoPanel } from './InfoPanel'
 import { PlayButton } from './PlayButton'
+import ShortcutsHeader from './ShortcutsHeader'
 
-export interface NewModShortcutsProps {
-  actions: ModAction[]
-}
+export interface NewModShortcutsProps {}
 
 export default compose(observer)(function NewModShortcuts(props: NewModShortcutsProps) {
   const [selectionAction, setSelectedAction] = useState<Optional<ModAction>>()
@@ -27,10 +26,9 @@ export default compose(observer)(function NewModShortcuts(props: NewModShortcuts
   const actionsByCategory = groupBy(actions, sett => 'Default')
   // sett.category ? sett.category.title : null
   // )
-  console.log(actions)
 
   return (
-    <Flex grow>
+    <Panel grow header={<ShortcutsHeader />}>
       <TableWrap enabled={!selectedMod.disabled}>
         <table>
           <thead>
@@ -76,11 +74,10 @@ export default compose(observer)(function NewModShortcuts(props: NewModShortcuts
                         <PlayButton action={action} />
                         {actionTitle(action)}
                       </ActionTd>
-                      {/* {selectedMod ? null : <td>{sett.modName}</td>} */}
                       <td onClick={onShortcutClick}>
-                        {/* {(sett.value?.keys?.length ?? 0) === 0 ? (
+                        {(action.setting.value?.keys?.length ?? 0) === 0 ? (
                           <span id="quickset">Click to set...</span>
-                        ) : null} */}
+                        ) : null}
                         <ShortcutTableCell>
                           {shortcutToTextDescription(action.setting)}
                           {shouldShortcutWarn(action.setting) ? (
@@ -90,7 +87,6 @@ export default compose(observer)(function NewModShortcuts(props: NewModShortcuts
                           ) : null}
                         </ShortcutTableCell>
                       </td>
-                      {/* <td></td> */}
                     </tr>
                   )
                 })
@@ -124,6 +120,6 @@ export default compose(observer)(function NewModShortcuts(props: NewModShortcuts
         </table>
       </TableWrap>
       {selectionAction ? <InfoPanel selectedAction={selectionAction} /> : null}
-    </Flex>
+    </Panel>
   )
 })

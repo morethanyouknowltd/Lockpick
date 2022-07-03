@@ -8,7 +8,7 @@ import {
   getTracks,
   getCueMarkersAtPosition,
 } from '../bitwig-api/Bitwig'
-import styled from 'styled-components'
+import styled from from 'styled-components'
 import { TrackResult } from './TrackResult'
 
 export interface SearchResult {

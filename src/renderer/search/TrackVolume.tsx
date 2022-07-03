@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from 'styled-components'
+import styled from from 'styled-components'
 import { send, getTrackById } from '../bitwig-api/Bitwig'
 import { clamp } from '../../connector/shared/Math'
 

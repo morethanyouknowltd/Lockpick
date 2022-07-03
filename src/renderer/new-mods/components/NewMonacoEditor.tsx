@@ -1,115 +1,108 @@
 import Editor, { loader } from '@monaco-editor/react'
-import * as monaco from 'monaco-editor'
 import { Flex } from '@mtyk/frontend/core/components'
-import React, { useEffect, useRef, useState } from 'react'
-import { callAPI } from '../../bitwig-api/Bitwig'
 import compose from '@mtyk/frontend/react/helpers/compose'
 import { observer } from 'mobx-react-lite'
+import * as monaco from 'monaco-editor'
+import {
+  forwardRef,
+  MutableRefObject,
+  Ref,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react'
+import { callAPI } from '../../bitwig-api/Bitwig'
+import { maybeFixModule } from '../helpers/maybeFixModule'
+import registerMonacoTheme from '../helpers/registerMonacoTheme'
+import setupMonaco from '../helpers/setupMonaco'
 import useSelectedMod from '../hooks/useSelectedMod'
+setupMonaco()
+registerMonacoTheme()
 
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
-import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
-import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
-;(self as any).MonacoEnvironment = {
-  getWorker(_: any, label: string) {
-    if (label === 'json') {
-      return new jsonWorker()
-    }
-    if (label === 'css' || label === 'scss' || label === 'less') {
-      return new cssWorker()
-    }
-    if (label === 'html' || label === 'handlebars' || label === 'razor') {
-      return new htmlWorker()
-    }
-    if (label === 'typescript' || label === 'javascript') {
-      return new tsWorker()
-    }
-    return new editorWorker()
-  },
+export interface NewMonacoEditorProps {
+  readOnly?: boolean
 }
-loader.config({
-  monaco,
-})
-
-export interface NewMonacoEditorProps {}
-
-function maybeFixModule(module: string) {
-  if (module.indexOf('export') === -1) {
-    return `${module}\n\nexport {}\n`
-  }
-  return module
+export interface NewMonacoEditorRefHandle {
+  editorRef: MutableRefObject<monaco.editor.IStandaloneCodeEditor | null>
 }
 
-const theme = monaco.editor.defineTheme('lockpick-dark', {
-  base: 'vs-dark',
-  inherit: true,
-  rules: [
-    { token: 'comment', foreground: '#808080' },
-    { token: 'string', foreground: '#5588D3' },
-    // { token: 'number', foreground: '#ff0000' },
-    // { token: 'identifier', foreground: '#C166F1' },
+export default compose(observer)(
+  forwardRef(function NewMonacoEditor(
+    props: NewMonacoEditorProps,
+    ref: Ref<NewMonacoEditorRefHandle>
+  ) {
+    const selectedMod = useSelectedMod()
+    const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+    const [dts, setDts] = useState(false)
 
-    // { token: 'keyword', foreground: '#4560BC' },
-    { token: 'keyword', foreground: '#C166F1' },
-  ],
-  colors: {
-    'editor.foreground': '#ffffff',
-  },
-})
-
-export default compose(observer)(function NewMonacoEditor({}: NewMonacoEditorProps) {
-  const selectedMod = useSelectedMod()
-
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
-  const [dts, setDts] = useState(false)
-
-  useEffect(() => {
-    if (editorRef.current) {
-      const editor = editorRef.current
-
-      const currModel = editor.getModel()
-      editor.setModel(null)
-      currModel?.dispose()
-
-      const newModel = monaco.editor.createModel(maybeFixModule(selectedMod.contents), 'typescript')
-      editor.setModel(newModel)
-    }
-  }, [selectedMod.id])
-
-  useEffect(() => {
-    callAPI('api/doc').then(({ data: dts }) => {
-      console.log(dts)
-      loader.init().then(() => {
-        console.log('hello???', selectedMod)
-        monaco.languages.typescript.typescriptDefaults.addExtraLib(dts)
-        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-          target: monaco.languages.typescript.ScriptTarget.ESNext,
-          module: monaco.languages.typescript.ModuleKind.ESNext,
-          allowNonTsExtensions: true,
-        })
-        setDts(true)
-      })
+    useImperativeHandle(ref, () => {
+      return {
+        editorRef,
+      }
     })
-  }, [])
 
-  function handleEditorDidMount(editor: any) {
-    editorRef.current = editor
-  }
+    useEffect(() => {
+      if (editorRef.current) {
+        const editor = editorRef.current
 
-  return (
-    <Flex grow={1}>
-      {dts ? (
-        <Editor
-          theme={'lockpick-dark'}
-          // height="100vh"
-          options={{ minimap: { enabled: false }, folding: false, fontSize: 12 }}
-          defaultLanguage="typescript"
-          defaultValue={maybeFixModule(selectedMod.contents)}
-          onMount={handleEditorDidMount}
-        />
-      ) : null}
-    </Flex>
-  )
-})
+        const currModel = editor.getModel()
+        editor.setModel(null)
+        currModel?.dispose()
+
+        const newModel = monaco.editor.createModel(
+          maybeFixModule(selectedMod.contents),
+          'typescript'
+        )
+
+        if (props.readOnly) {
+          editor.updateOptions({ readOnly: props.readOnly })
+        }
+
+        editor.setModel(newModel)
+      }
+    }, [selectedMod.id])
+
+    useEffect(() => {
+      callAPI('api/doc').then(({ data: dts }) => {
+        loader.init().then(() => {
+          monaco.languages.typescript.typescriptDefaults.addExtraLib(dts)
+          monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+            target: monaco.languages.typescript.ScriptTarget.ESNext,
+            module: monaco.languages.typescript.ModuleKind.ESNext,
+            allowNonTsExtensions: true,
+          })
+          setDts(true)
+        })
+      })
+    }, [])
+
+    function handleEditorDidMount(editor: any) {
+      editorRef.current = editor
+    }
+
+    return (
+      <Flex grow={1} style={{}}>
+        {dts ? (
+          <Editor
+            theme={'lockpick-dark'}
+            // height="100vh"
+            options={{
+              wordWrap: 'on',
+              glyphMargin: false,
+              folding: false,
+              lineNumbers: 'off',
+              lineDecorationsWidth: 0,
+              lineNumbersMinChars: 0,
+              minimap: { enabled: false },
+              fontSize: 12,
+            }}
+            defaultLanguage="typescript"
+            defaultValue={maybeFixModule(selectedMod.contents)}
+            onMount={handleEditorDidMount}
+          />
+        ) : null}
+      </Flex>
+    )
+  })
+)

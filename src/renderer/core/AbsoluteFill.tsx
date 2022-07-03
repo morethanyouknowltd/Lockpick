@@ -1,4 +1,4 @@
-import styled from 'styled-components'
+import styled from from 'styled-components'
 
 export const AbsoluteFill = styled.div`
   position: absolute;
