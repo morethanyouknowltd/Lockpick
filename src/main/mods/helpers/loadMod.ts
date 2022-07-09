@@ -3,6 +3,7 @@ import { getService } from 'core/Service'
 import * as isBuiltInModule from 'is-builtin-module'
 import * as path from 'path'
 import { PopupService } from 'popup/PopupService'
+import { getState } from 'state/StateService'
 import { Mod } from '../../../connector/shared/state/models/Mod.model'
 import { getBuildModPath as getBuiltModFolder } from '../../config'
 import { createDirIfNotExist, writeStrFile } from '../../core/Files'
@@ -23,6 +24,11 @@ export default async function loadMod(mod: Mod) {
   const { disabled, osMatches } = mod
   const modsService = getService(ModsService)
   const popupService = getService(PopupService)
+  const state = getState()
+  const existingLoaded = state.mods.mods.find(m => m.id === mod.id)
+  if (existingLoaded) {
+    existingLoaded.setLoading(true)
+  }
 
   if (mod.valid) {
     await createModSetting(mod)

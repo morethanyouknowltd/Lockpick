@@ -1,6 +1,6 @@
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import React from 'react'
 import { APP_NAME } from '../../connector/shared/Constants'
 import { callAPI, send, sendPromise } from '../bitwig-api/Bitwig'

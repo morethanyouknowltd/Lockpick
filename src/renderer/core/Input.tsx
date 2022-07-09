@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 
 const Style = styled.input`
   border: 1px solid #131313;

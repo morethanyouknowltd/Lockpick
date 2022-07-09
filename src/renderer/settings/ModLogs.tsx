@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { addPacketListener, send } from '../bitwig-api/Bitwig'
 import moment from 'moment'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import _ from 'underscore'
 import { default as AnsiUp } from 'ansi_up'
 

@@ -6,7 +6,6 @@
     "sourceMap": true,
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "node",
     "suppressImplicitAnyIndexErrors": true,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,

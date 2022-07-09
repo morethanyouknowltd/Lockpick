@@ -90,6 +90,7 @@
     "react-is": "^18.2.0",
     "react-loader-spinner": "^3.1.4",
     "react-router-dom": "^5.1.2",
+    "react-use": "^17.4.0",
     "reflect-metadata": "^0.1.13",
     "request": "^2.88.0",
     "rxjs": "^7.5.5",

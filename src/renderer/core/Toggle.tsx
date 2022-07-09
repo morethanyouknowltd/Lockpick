@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 
 export const toggleHeight = 1.1
 export const ToggleStyle = styled.div`

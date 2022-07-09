@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import { LockpickComponent } from '../core/LockpickComponent'
 import { shortcutToTextDescription } from '../settings/helpers/settingTitle'
 import { faBolt, faInfo } from '@fortawesome/free-solid-svg-icons'

@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import { MTYK_API_ROOT } from '../../connector/shared/Constants'
 
 const Wrap = styled.div`

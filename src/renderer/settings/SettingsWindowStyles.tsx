@@ -1,4 +1,4 @@
-import styled from from 'styled-components'
+import styled from 'styled-components'
 export const SearchIconWrapStyle = styled.div`
   font-size: 0.7em;
   background: #5f5f5f;

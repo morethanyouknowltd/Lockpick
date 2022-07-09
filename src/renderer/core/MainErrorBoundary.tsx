@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import { APP_NAME, MTYK_API_ROOT } from '../../connector/shared/Constants'
 import { Button } from './Button'
 import { send } from '../bitwig-api/Bitwig'

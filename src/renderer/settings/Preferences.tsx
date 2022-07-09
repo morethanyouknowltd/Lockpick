@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import { observer } from 'mobx-react-lite'
 import { state } from '../core/State'
 import { sendPromise } from '../bitwig-api/Bitwig'

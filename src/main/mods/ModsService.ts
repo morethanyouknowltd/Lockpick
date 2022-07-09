@@ -32,7 +32,7 @@ import loadMod from './helpers/loadMod'
 import logForMod from './helpers/logForMod'
 import { ModInfo, SettingInfo } from './types'
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common'
-import assignModActionRoutes from './actionRoutes'
+import assignModActionRoutes from './mods.routes'
 const chokidar = require('chokidar')
 const colors = require('colors')
 const { app } = require('electron')

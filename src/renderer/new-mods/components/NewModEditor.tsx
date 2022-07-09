@@ -1,5 +1,6 @@
 import { Flex, Txt } from '@mtyk/frontend/core/components'
 import compose from '@mtyk/frontend/react/helpers/compose'
+import { assert } from '@mtyk/util/assert'
 import { capitalize } from 'lodash'
 import { observer } from 'mobx-react-lite'
 import { Mod } from '../../../connector/shared/state/models/Mod.model'
@@ -7,12 +8,12 @@ import { callAPI } from '../../bitwig-api/Bitwig'
 import TextButton from '../../core/components/TextButton'
 import useSelectedMod from '../hooks/useSelectedMod'
 import NewMonacoEditor from './NewMonacoEditor'
-// import { useKey } from 'react-use'
+import { useKey } from 'react-use'
 import { ElementRef, useRef } from 'react'
 import wwith from '@mtyk/frontend/core/helpers/with'
-import assert from 'assert'
 import { newTheme } from '../../new-ui/helpers/newTheme'
 import Panel from '../../new-ui/components/Panel'
+import ModEditorStatusBar from './ModEditorStatusBar'
 
 export interface NewModEditorProps {}
 
@@ -72,6 +73,7 @@ export default compose(observer)(function NewModEditor(props: NewModEditorProps)
         </Flex>
       }>
       <NewMonacoEditor ref={monacoEditorRef} readOnly={editability === ModEditability.ReadOnly} />
+      <ModEditorStatusBar />
     </Panel>
   )
 })

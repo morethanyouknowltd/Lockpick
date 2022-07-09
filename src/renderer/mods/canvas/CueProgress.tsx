@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import moment from 'moment'
 
 const Wrap = styled.div`

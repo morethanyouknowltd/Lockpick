@@ -35,6 +35,7 @@ export class Mod extends Model({
   creator: prop<string>('').withSetter(),
   disabled: prop<boolean>(false).withSetter(),
   noReload: prop<boolean>(false).withSetter(),
+  loading: prop<boolean>(false).withSetter(),
   settingsKey: prop<string>('').withSetter(),
   path: prop<string>('').withSetter(),
   osMatches: prop<boolean>(false).withSetter(),

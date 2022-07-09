@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import moment from 'moment'
 import { TWITCH_CHAT_HEIGHT, TWITCH_CHAT_WIDTH } from './constants'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 
 const Wrap = styled.div`
   width: ${TWITCH_CHAT_WIDTH}px;

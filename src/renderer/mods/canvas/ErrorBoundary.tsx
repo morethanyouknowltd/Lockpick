@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 
 const Wrap = styled.div`
   background: rgba(0, 0, 0, 0.7);

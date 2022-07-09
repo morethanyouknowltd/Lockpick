@@ -5,7 +5,7 @@ import { BitwigState } from '../../connector/shared/state/models/BitwigTrack.mod
 import { ModsState } from '../../connector/shared/state/models/Mod.model'
 import { RootState } from '../../connector/shared/state/rootStore'
 import { jsonPath } from '../config'
-import { BESService } from '../core/Service'
+import { BESService, getService } from '../core/Service'
 import { addAPIMethod, interceptPacket, sendPacketToBrowser } from '../core/WebsocketToSocket'
 
 @Injectable()
@@ -47,4 +47,8 @@ export class StateService extends BESService {
       console.log(state)
     })
   }
+}
+
+export function getState() {
+  return getService(StateService).server.store
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import { sendPromise } from '../bitwig-api/Bitwig'
 import { Footer, VersionInfoWrap, SettingsIcon } from './SettingsFooterStyles'
 import { Button } from '../core/Button'

@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import { TrackSearchView } from './TrackSearchView'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFont, faMapPin, faInfo, faLock } from '@fortawesome/free-solid-svg-icons'

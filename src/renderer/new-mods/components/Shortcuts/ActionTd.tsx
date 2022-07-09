@@ -1,4 +1,4 @@
-import styled from from 'styled-components'
+import styled from 'styled-components'
 
 export const PlayButtonWrap = styled.div`
   opacity: 0;

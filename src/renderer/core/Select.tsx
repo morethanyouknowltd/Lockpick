@@ -1,4 +1,4 @@
-import styled from from 'styled-components'
+import styled from 'styled-components'
 
 export const Select = styled.select`
   background: #333;

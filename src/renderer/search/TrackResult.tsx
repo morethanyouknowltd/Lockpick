@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { send, getCueMarkerAtPosition } from '../bitwig-api/Bitwig'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import {
   faWaveSquare,
   faMusic,

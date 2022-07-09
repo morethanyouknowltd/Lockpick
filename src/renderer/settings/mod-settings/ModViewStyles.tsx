@@ -1,4 +1,4 @@
-import styled from from 'styled-components'
+import styled from 'styled-components'
 
 export const Wrap = styled.div`
   background: #1e1e1e;

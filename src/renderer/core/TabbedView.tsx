@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 
 const TabsWrap = styled.div`
   display: flex;

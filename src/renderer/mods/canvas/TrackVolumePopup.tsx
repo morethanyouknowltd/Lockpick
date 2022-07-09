@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from from 'styled-components'
+import styled from 'styled-components'
 import { getVolumeString } from '../../bitwig-api/tracks'
 import { ClickableCanvas } from '../ClickableCanvas'
 
