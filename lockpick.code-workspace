@@ -4,12 +4,6 @@
       "path": "."
     },
     {
-      "path": "../lockpick-shared"
-    },
-    {
-      "path": "../lockpick-website"
-    },
-    {
       "path": "../korus-api"
     }
   ],

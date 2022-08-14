@@ -17,7 +17,9 @@ export default defineConfig({
     hmr: { overlay: false },
     strictPort: true,
   },
-
+  resolve: {
+    preserveSymlinks: true,
+  },
   build: {
     outDir: resolve('./dist/renderer'),
     emptyOutDir: true,

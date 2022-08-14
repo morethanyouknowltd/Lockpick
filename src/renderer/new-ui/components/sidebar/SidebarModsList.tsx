@@ -1,28 +1,12 @@
 import { observer } from 'mobx-react-lite'
 import { Flex, Txt } from '@mtyk/frontend/core/components'
-import { Mod } from '../../../../connector/shared/state/models/Mod.model'
 import SectionList from '../../../core/SectionList'
 import getKorusState from '../../helpers/korusState'
 import { newModsState } from '../../../new-mods/state/NewModsState'
 import { useEffect } from 'react'
+import { SidebarListItem } from './SidebarListItem'
 
 export interface SidebarModsListProps {}
-
-const SidebarListItem = observer(function ItemComponent({ data }: { data: Mod }) {
-  const state = getKorusState()
-  const isModSelected = newModsState.mods.isItemSelected(data)
-  const color = isModSelected ? '#E45AFF' : data.active ? '#ffffff' : '#666'
-  return (
-    <Txt
-      color={color}
-      onClick={() => {
-        newModsState.mods.selectedItem = data
-        state.mods.setSelectedModId(data.id)
-      }}>
-      {data.name}
-    </Txt>
-  )
-})
 
 export default observer(function SidebarModsList(props: SidebarModsListProps) {
   const {} = props

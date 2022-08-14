@@ -4,6 +4,7 @@ import { FrontendAction } from '@mtyk/frontend/core/CoreTypes'
 import { border } from '@mtyk/frontend/styles/helpers/styleObjects'
 import { renderWithTheme } from '@mtyk/frontend/theming'
 import React, { ComponentProps } from 'react'
+import HoverableThing from '@mtyk/frontend/tooltips/components/HoverableThing'
 
 export interface ButtonProps {
   action: FrontendAction
@@ -16,15 +17,20 @@ export interface ButtonProps {
 }
 
 function BaseButton(props: ButtonProps) {
-  const { action, icon, iconProps, children, style } = props
+  const { action, icon, iconProps, children, style, ...rest } = props
   const renderIcon = () =>
     icon ? renderWithTheme(icon, { icon }, () => <Icon icon={icon} {...iconProps} />) : null
   return (
-    <Flex style={{ ...style, display: 'inline-flex', width: 'fit-content' }} onClick={action}>
-      {!props.iconOnRight && renderIcon()}
-      {children}
-      {props.iconOnRight && renderIcon()}
-    </Flex>
+    <HoverableThing tooltip={props.description ?? 'hasldkasld'}>
+      <Flex
+        {...rest}
+        style={{ ...style, cursor: 'pointer', display: 'inline-flex', width: 'fit-content' }}
+        onClick={action}>
+        {!props.iconOnRight && renderIcon()}
+        {children}
+        {props.iconOnRight && renderIcon()}
+      </Flex>
+    </HoverableThing>
   )
 }
 
