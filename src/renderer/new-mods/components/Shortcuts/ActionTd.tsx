@@ -39,12 +39,10 @@ export const ShortcutTableCell = styled.div`
   justify-content: center;
 `
 export const InfoPanelWrap = styled.div`
-  position: absolute;
-  top: 0;
-  left: 63.8%;
   font-size: 0.9em;
-  bottom: 0;
-  right: 0;
+  width: 27em;
+  height: 100%;
+
   overflow-y: auto;
   background: #121212;
   border-left: 1px solid black;
@@ -70,12 +68,8 @@ export const InfoPanelWrap = styled.div`
 `
 
 export const TableWrap = styled.div<{ enabled: boolean }>`
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 36.2%;
   overflow-y: auto;
+  flex-grow: 1;
 
   tbody tr {
     &:not(.nonrow) {
@@ -111,8 +105,9 @@ export const TableWrap = styled.div<{ enabled: boolean }>`
   }
   td {
     opacity: ${(props: any) => (props.enabled ? '1' : '.2')};
-    font-size: 0.9em;
+    font-size: 1.05em;
     /* color: #ccc; */
+    border-bottom: 1px solid #444;
     color: #b6b6b6;
     &:not(:first-child) {
       color: #555;

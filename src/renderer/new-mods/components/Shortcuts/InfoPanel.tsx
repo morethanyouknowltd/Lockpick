@@ -1,6 +1,7 @@
 import { faPlay } from '@fortawesome/free-solid-svg-icons'
 import { Flex } from '@mtyk/frontend/core/components'
 import React from 'react'
+import PanelPaddingOffset from '../../../../renderer/new-ui/components/PanelPaddingOffset'
 import { ModAction } from '../../../../connector/shared/state/models/Mod.model'
 import { send } from '../../../bitwig-api/Bitwig'
 import { Button } from '../../../core/Button'
@@ -38,6 +39,7 @@ export const InfoPanel = ({ selectedAction: action }: { selectedAction: ModActio
       </InfoPanelWrap>
     )
   } else {
+    return null
     return (
       <InfoPanelWrap>{/* <div>Select a setting to see more info.</div>         */}</InfoPanelWrap>
     )

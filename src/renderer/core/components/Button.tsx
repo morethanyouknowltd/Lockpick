@@ -5,6 +5,7 @@ import { border } from '@mtyk/frontend/styles/helpers/styleObjects'
 import { renderWithTheme } from '@mtyk/frontend/theming'
 import React, { ComponentProps } from 'react'
 import HoverableThing from '@mtyk/frontend/tooltips/components/HoverableThing'
+import PopoverWrap from './PopoverWrap'
 
 export interface ButtonProps {
   action: FrontendAction
@@ -21,7 +22,8 @@ function BaseButton(props: ButtonProps) {
   const renderIcon = () =>
     icon ? renderWithTheme(icon, { icon }, () => <Icon icon={icon} {...iconProps} />) : null
   return (
-    <HoverableThing tooltip={props.description ?? 'hasldkasld'}>
+    <HoverableThing
+      tooltip={props.description ? <PopoverWrap>{props.description}</PopoverWrap> : null}>
       <Flex
         {...rest}
         style={{ ...style, cursor: 'pointer', display: 'inline-flex', width: 'fit-content' }}

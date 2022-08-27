@@ -1,10 +1,11 @@
 import { observer } from 'mobx-react-lite'
 import { Flex, Txt } from '@mtyk/frontend/core/components'
-import SectionList from '../../../core/SectionList'
 import getKorusState from '../../helpers/korusState'
 import { newModsState } from '../../../new-mods/state/NewModsState'
 import { useEffect } from 'react'
+import { SectionList } from '@mtyk/ui'
 import { SidebarListItem } from './SidebarListItem'
+import { newTheme } from '../../../../renderer/new-ui/helpers/newTheme'
 
 export interface SidebarModsListProps {}
 
@@ -31,11 +32,20 @@ export default observer(function SidebarModsList(props: SidebarModsListProps) {
         renderRow={item => <SidebarListItem data={item} />}
         renderSection={(section, props) => {
           return (
-            <Flex style={{ marginBottom: '3em' }}>
+            <Flex style={{ paddingTop: '3em' }}>
               <Txt
                 bold
                 color="#ccc"
-                style={{ maxWidth: '100%', overflow: 'hidden', marginBottom: '1.5em' }}>
+                style={{
+                  backgroundColor: newTheme.sidebarBg,
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+
+                  padding: '.7em 0',
+                  zIndex: 500,
+                  position: 'sticky',
+                  top: 0,
+                }}>
                 {section.section}
               </Txt>
               <Flex gap={'.5em'}>{props.rows}</Flex>

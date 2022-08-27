@@ -36,6 +36,7 @@
     "@mtyk/logger": "workspace:^",
     "@mtyk/service": "workspace:^",
     "@mtyk/types": "workspace:^",
+    "@mtyk/ui": "workspace:^",
     "@mtyk/util": "workspace:^",
     "@nestjs/common": "^8.0.0",
     "@nestjs/config": "^1.1.5",

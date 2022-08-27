@@ -55,7 +55,7 @@ export default compose(observer)(function NewModEditor(props: NewModEditorProps)
 
   return (
     <Panel
-      style={{ width: '40%', background: newTheme.modEditorBg }}
+      style={{ width: '40%', background: newTheme.modEditorBg, padding: 0 }}
       header={
         <Flex gap={'.7em'}>
           <Txt color="#72587E">

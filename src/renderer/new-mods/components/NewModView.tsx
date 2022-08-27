@@ -16,7 +16,7 @@ export default compose(observer)(function NewModView(props: NewModViewProps) {
   }
 
   return (
-    <Flex row stretch style={{ height: '100vh' }} grow={1}>
+    <Flex row stretch style={{ height: '100vh', overflow: 'hidden' }} grow={1}>
       {newModsState.codeViewOpen ? <NewModEditor /> : null}
       <NewModShortcuts />
     </Flex>

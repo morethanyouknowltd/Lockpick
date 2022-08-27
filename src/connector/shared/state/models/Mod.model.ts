@@ -25,7 +25,7 @@ export class Mod extends Model({
   name: prop<string>('').withSetter(),
   id: idProp,
   isUserScript: prop<boolean>(false).withSetter(),
-  active: prop<string>('#ffffff').withSetter(),
+  active: prop<boolean>(false).withSetter(),
   applications: prop<string[]>(() => []).withSetter(),
   contents: prop<string>('').withSetter(),
   description: prop<string>('').withSetter(),

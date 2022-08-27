@@ -17,7 +17,11 @@
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "useDefineForClassFields": true
+    "useDefineForClassFields": true,
+    "paths": {
+      "renderer": ["./*"],
+      "connector": ["../connector/*"]
+    }
   },
   "include": ["../renderer/**/*", "../connector/shared/**/*"],
   "exclude": ["../main/**/*"]
