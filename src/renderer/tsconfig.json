@@ -23,6 +23,6 @@
       "connector": ["../connector/*"]
     }
   },
-  "include": ["../renderer/**/*", "../connector/shared/**/*"],
+  "include": ["./**/*", "../connector/shared/**/*"],
   "exclude": ["../main/**/*"]
 }

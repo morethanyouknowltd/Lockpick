@@ -31,6 +31,7 @@ export const SidebarListItem = observer(function ItemComponent({ data }: { data:
           style={{
             position: 'relative',
             overflow: 'hidden',
+            fontWeight: isModSelected ? 'bold' : 'normal',
             whiteSpace: 'nowrap',
             textOverflow: 'ellipsis',
           }}>

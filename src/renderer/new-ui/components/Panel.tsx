@@ -16,12 +16,18 @@ export default compose()(function Panel(props: PanelProps) {
     <Flex
       {...rest}
       style={{
-        padding: `${newTheme.panelPaddingYPX}px ${newTheme.panelPaddingXPX}px`,
+        borderLeft: `1px solid #333`,
         background: '#222',
         ...style,
       }}>
       {header}
-      {children}
+      <Flex
+        grow
+        style={{
+          padding: `${newTheme.panelPaddingYPX}px ${newTheme.panelPaddingXPX}px`,
+        }}>
+        {children}
+      </Flex>
     </Flex>
   )
 })

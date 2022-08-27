@@ -1,6 +1,7 @@
 import React from 'react'
 import { Txt, Flex, Icon } from '@mtyk/frontend/core/components'
 import SidebarModsList from './SidebarModsList'
+import SidebarButtons from './SidebarButtons'
 
 export interface SidebarProps {}
 function SidebarSection({ children, ...rest }) {
@@ -48,6 +49,11 @@ export default function Sidebar(props: SidebarProps) {
       </SidebarSection>
       <SidebarSection grow style={{ overflowY: 'auto' }}>
         <SidebarModsList />
+      </SidebarSection>
+      <SidebarSection
+        style={{ height: '7.5em', paddingTop: 0, paddingBottom: 0 }}
+        justifyContent="center">
+        <SidebarButtons />
       </SidebarSection>
     </Flex>
   )

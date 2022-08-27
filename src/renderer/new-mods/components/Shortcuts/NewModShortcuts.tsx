@@ -32,7 +32,7 @@ export default compose(observer)(function NewModShortcuts(props: NewModShortcuts
 
   return (
     <Panel grow header={<ShortcutsHeader />}>
-      <Flex row stretch style={{ ...absoluteFill(), top: '6em' }}>
+      <Flex row stretch style={{ ...absoluteFill() }}>
         <TableWrap enabled={!selectedMod.disabled} style={{}}>
           <table>
             <thead>

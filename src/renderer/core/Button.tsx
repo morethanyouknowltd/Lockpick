@@ -1,6 +1,5 @@
-import React from 'react'
+import { Icon } from '@mtyk/frontend/core/components'
 import styled from 'styled-components'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const ButtonStyle = styled.button`
   -webkit-appearance: none;
@@ -30,6 +29,9 @@ const ButtonStyle = styled.button`
   }
   border-radius: 0.2em;
 `
+/**
+ * @deprecated look for LockpickButton instead
+ */
 export const Button = ({
   icon,
   children,
@@ -45,7 +47,7 @@ export const Button = ({
   }
   return (
     <ButtonStyle {...rest}>
-      {icon ? <FontAwesomeIcon icon={icon} /> : null}
+      {icon ? <Icon icon={icon} /> : null}
       {children}
     </ButtonStyle>
   )

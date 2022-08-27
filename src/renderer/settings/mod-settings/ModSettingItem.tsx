@@ -1,4 +1,3 @@
-import React from 'react'
 import { sendPromise } from '../../bitwig-api/Bitwig'
 import { Flex, FlexGrow } from '../../core/Flex'
 import { state } from '../../core/State'

@@ -31,7 +31,7 @@ export const InfoPanel = ({ selectedAction: action }: { selectedAction: ModActio
           </div>
           <div style={{ flexGrow: 1 }} />
           <div>
-            <Button onClick={onTestAction} icon={faPlay} style={{ width: '100%' }}>
+            <Button onClick={onTestAction} style={{ width: '100%' }}>
               Test Action
             </Button>
           </div>

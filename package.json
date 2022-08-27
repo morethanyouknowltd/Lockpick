@@ -30,6 +30,7 @@
     "@fortawesome/react-fontawesome": "^0.1.6",
     "@monaco-editor/react": "^4.4.5",
     "@mtyk/dev-client": "workspace:^",
+    "@mtyk/dev-react": "workspace:^",
     "@mtyk/events": "workspace:^",
     "@mtyk/frontend": "workspace:^",
     "@mtyk/hawk": "^0.0.8",
@@ -129,7 +130,8 @@
     "ts-morph": "^13.0.2",
     "ts-node": "^10.9.1",
     "tslint": "^5.8.0",
-    "typescript": "^4.8.2"
+    "typescript": "^4.8.2",
+    "vite-tsconfig-paths": "^3.5.0"
   },
   "gypfile": true,
   "version": "0.0.15"

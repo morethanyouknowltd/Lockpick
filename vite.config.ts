@@ -1,6 +1,7 @@
 import { resolve } from 'path'
 import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import react from '@vitejs/plugin-react'
+import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
   plugins: [
@@ -13,6 +14,7 @@ export default defineConfig({
         }
       },
     },
+    tsconfigPaths(),
     react({
       babel: {
         parserOpts: {
@@ -21,6 +23,9 @@ export default defineConfig({
       },
     }),
   ],
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+  },
   optimizeDeps: {
     exclude: ['@mtyk/ui'],
   },

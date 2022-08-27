@@ -1,6 +1,9 @@
 import titleize from 'titleizejs'
 
 export const humanise = value => {
+  if (!value) {
+    return 'unnamed'
+  }
   const camelMatch = /([A-Z0-9])/g
   const underscoreDashMatch = /[_-]/g
 

@@ -89,7 +89,9 @@ export const TableWrap = styled.div<{ enabled: boolean }>`
   }
   th,
   td {
-    padding: 0.3em 2rem;
+    /* white-space: nowrap; */
+
+    padding: 0.9em 2rem;
     user-select: none;
 
     &:not(:last-child) {

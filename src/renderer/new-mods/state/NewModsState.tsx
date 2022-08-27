@@ -5,6 +5,13 @@ import { Mod } from '../../../connector/shared/state/models/Mod.model'
 export class NewModsState {
   mods = new ArraySelectionStore<Mod>({ autoSelectFirst: true })
   modEditorState = new DocumentEditStore()
+  private _modTab: 'shortcuts' | 'settings' = 'shortcuts'
+  public get modTab() {
+    return this._modTab
+  }
+  public set modTab(value) {
+    this._modTab = value
+  }
 
   private _codeViewOpen = true
   public get codeViewOpen() {

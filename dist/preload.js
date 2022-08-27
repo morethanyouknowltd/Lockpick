@@ -10,6 +10,9 @@ const toExport = {
     isMac: () => os.platform() === 'darwin',
     isWindows: () => os.platform() === 'win32',
   },
+  openUrl: url => {
+    require('electron').shell.openExternal(url)
+  },
   isDev: process.env.NODE_ENV === 'dev',
   path: _.pick(path, ['join']),
   clipboard: _.pick(

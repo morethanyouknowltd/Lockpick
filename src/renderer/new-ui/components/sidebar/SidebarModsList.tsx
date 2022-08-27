@@ -22,14 +22,15 @@ export default observer(function SidebarModsList(props: SidebarModsListProps) {
   const userCreated = mods.filter(m => m.isUserScript)
   const notUserCreated = mods.filter(m => !m.isUserScript)
   return (
-    <div>
+    <div style={{ fontSize: '.95em' }}>
       <SectionList
         hideEmptySections
         sections={[
           { section: 'My Scripts', data: userCreated },
-          { section: 'Installed Scripts', data: notUserCreated },
+          { section: 'Built-in Scripts', data: notUserCreated },
         ]}
         renderRow={item => <SidebarListItem data={item} />}
+        i
         renderSection={(section, props) => {
           return (
             <Flex style={{ paddingTop: '3em' }}>
@@ -41,14 +42,16 @@ export default observer(function SidebarModsList(props: SidebarModsListProps) {
                   maxWidth: '100%',
                   overflow: 'hidden',
 
-                  padding: '.7em 0',
+                  padding: '.9em 0',
                   zIndex: 500,
                   position: 'sticky',
                   top: 0,
                 }}>
                 {section.section}
               </Txt>
-              <Flex gap={'.5em'}>{props.rows}</Flex>
+              <Flex gap={'.5em'} style={{ paddingTop: '.5em' }}>
+                {props.rows}
+              </Flex>
             </Flex>
           )
         }}

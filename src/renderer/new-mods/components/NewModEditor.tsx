@@ -58,9 +58,9 @@ export default compose(observer)(function NewModEditor(props: NewModEditorProps)
       style={{ width: '40%', background: newTheme.modEditorBg, padding: 0 }}
       header={
         <Flex gap={'.7em'}>
-          <Txt color="#72587E">
-            {selectedMod.name} {shortenedPath(selectedMod.path)}
-          </Txt>
+          {/* <Txt color="#72587E"> */}
+          {/* {selectedMod.name} {shortenedPath(selectedMod.path)} */}
+          {/* </Txt> */}
 
           {editability === ModEditability.ReadOnly ? (
             <Flex row gap={'.8em'}>

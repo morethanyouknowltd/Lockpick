@@ -12,6 +12,7 @@ export default compose()(function PopoverWrap(props: PopoverWrapProps) {
     <Flex
       padding={[10, 10]}
       style={{
+        borderRadius: '.5em',
         zIndex: 99999,
         background: 'black',
       }}>
