@@ -1,7 +1,14 @@
 {
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true,
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  },
   "compilerOptions": {
-    "module": "CommonJS",
-    "target": "ES2017"
+    "module": "ES2022",
+    "target": "ES2022",
+    "moduleResolution": "node"
   },
   "include": ["./**/*"]
 }

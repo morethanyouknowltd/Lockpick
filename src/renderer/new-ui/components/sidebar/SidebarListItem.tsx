@@ -8,7 +8,9 @@ import getKorusState from '../../helpers/korusState'
 
 export const SidebarListItem = observer(function ItemComponent({ data }: { data: Mod }) {
   const state = getKorusState()
-  const isModSelected = newModsState.mods.isItemSelected(data)
+  const isModSelected = newModsState.mods.selectedItem?.id === data.id
+
+  // console.log({ isModSelected, mods: newModsState.mods.map(mod => mod._id) })
   const color = isModSelected ? '#E45AFF' : data.active ? '#ffffff' : '#666'
   return (
     <TextButton
@@ -18,16 +20,16 @@ export const SidebarListItem = observer(function ItemComponent({ data }: { data:
         state.mods.setSelectedModId(data.id)
       }}
       style={{ position: 'relative' }}>
-      {isModSelected ? 'hello' : null}
       {isModSelected ? (
         <Flex
           style={{
             position: 'absolute',
             top: '50%',
             ...circle(6),
-            backgroundColor: '#fff',
+            backgroundColor: 'purple',
             right: '100%',
-            transform: `translate(-50%, -50%)`,
+
+            transform: `translate(-150%, -50%)`,
           }}
         />
       ) : null}

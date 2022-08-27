@@ -11,6 +11,8 @@ import { TransportNavPopup } from './mods/TransportNavPopup'
 import { Canvas } from './mods/Canvas'
 import { useState } from 'react'
 import { ClickableCanvas } from './mods/ClickableCanvas'
+import { init } from '@mtyk/dev-client'
+init({ name: 'lockpick-renderer', wrapDefaultConsole: true })
 
 // function removeAllListeners() {
 //     app.removeAllListeners('browser-window-focus')
